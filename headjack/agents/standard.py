@@ -44,10 +44,10 @@ class StandardAgent(Agent):
             tool_body.append(f"if TOOL=='{tool.ref_name}':")
             tool_body.append(f'                    "Tool Input: {tool.input_schema.body}\\n"')
             tool_body.append(
-                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice); print(action)",
+                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice)",
             )
             tool_body.append(
-                f"                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(observation)",
+                f"                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action",
             )
             tool_body.append(r"                '{observation}\n'")
         self.tool_body = "\n".join(tool_body)
