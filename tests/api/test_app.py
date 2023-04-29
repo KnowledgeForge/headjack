@@ -1,7 +1,7 @@
 """
 Tests for app.py
 """
-from headjack_server.models import Document, KnowledgeDocument
+from headjack.models import Document, KnowledgeDocument
 
 
 def test_healthcheck(client):

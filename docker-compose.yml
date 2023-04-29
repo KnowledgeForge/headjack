@@ -17,7 +17,7 @@ services:
       - DOTENV_FILE=.env
     volumes:
       - .:/code
-    command: uvicorn headjack_server.api.app:app --host 0.0.0.0 --port 16400 --reload
+    command: uvicorn headjack.api.app:app --host 0.0.0.0 --port 16400 --reload
     ports:
       - "16400:16400"
     depends_on:

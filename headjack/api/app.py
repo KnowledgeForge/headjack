@@ -7,7 +7,7 @@ from typing import List
 from chromadb.api.local import LocalAPI
 from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect, Request, Response
 from pydantic import BaseModel
-from headjack_server.config import get_chroma_client
+from headjack.config import get_chroma_client
 from fastapi.templating import Jinja2Templates
 import asyncio
 

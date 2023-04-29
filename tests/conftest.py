@@ -9,8 +9,8 @@ from chromadb.api.local import LocalAPI
 from chromadb.api.models import Collection
 from fastapi.testclient import TestClient
 
-from headjack_server.api.app import app
-from headjack_server.config import get_chroma_client, get_headjack_collection
+from headjack.api.app import app
+from headjack.config import get_chroma_client, get_headjack_collection
 
 
 @pytest.fixture
