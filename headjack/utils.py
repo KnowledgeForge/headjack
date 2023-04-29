@@ -1,26 +1,22 @@
 import inspect
 import re
-from functools import lru_cache
-from itertools import chain
 from typing import Callable
 
 SOURCE_PATCH = {}
 
 
-
-
 def add_source(object: Callable, source: str):
-    SOURCE_PATCH[object]=source
-    
+    SOURCE_PATCH[object] = source
+
+
+getsourcelines = inspect.getsourcelines
+
+
 def monkey_patch_getsourcelines(object):
     if object in SOURCE_PATCH:
         return SOURCE_PATCH[object].splitlines(keepends=True), 0
     return getsourcelines(object)
 
-# try:
-#     getsourcelines
-# except NameError:
-#     getsourcelines = inspect.getsourcelines
 
 inspect.getsourcelines = monkey_patch_getsourcelines
 

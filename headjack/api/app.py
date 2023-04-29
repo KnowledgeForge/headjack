@@ -5,11 +5,11 @@ import logging
 from typing import List
 
 from chromadb.api.local import LocalAPI
-from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect, Request, Response
-from pydantic import BaseModel
-from headjack.config import get_chroma_client
+from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
-import asyncio
+from pydantic import BaseModel
+
+from headjack.config import get_chroma_client
 
 _logger = logging.getLogger(__name__)
 
@@ -18,10 +18,12 @@ app = FastAPI()
 # locate templates
 templates = Jinja2Templates(directory="web")
 
+
 @app.get("/healthcheck/")
 async def health_check(*, chroma_client: LocalAPI = Depends(get_chroma_client)):
     chroma_client.heartbeat()
     return {"status": "OK"}
+
 
 @app.get("/")
 def get_home(request: Request):
@@ -74,10 +76,7 @@ async def chat(websocket: WebSocket):
     sender = websocket.cookies.get("X-Authorization")
     if sender:
         await manager.connect(websocket, sender)
-        response = {
-            "sender": sender,
-            "message": "got connected"
-        }
+        response = {"sender": sender, "message": "got connected"}
         await manager.broadcast(response)
         try:
             while True:
@@ -85,5 +84,5 @@ async def chat(websocket: WebSocket):
                 await manager.broadcast(data)
         except WebSocketDisconnect:
             manager.disconnect(websocket, sender)
-            response['message'] = "left"
+            response["message"] = "left"
             await manager.broadcast(response)

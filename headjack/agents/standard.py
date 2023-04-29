@@ -7,12 +7,11 @@ An agent that can handle common tasks
 "Are these metrics compatible"
 "Tell me about the dimensions that are available for metric x..."
 """
-from typing import (
-    Set,
-    Type,cast
-)
-from headjack.models import Agent, Utterance, User, Answer
-from headjack.agents.prompt_queries.standard import standard_query
+from typing import Set, Type, cast
+
+from headjack.agents.query_templates.standard import standard_query
+from headjack.models.utterance import Agent, Answer, User, Utterance
+
 
 class StandardAgent(Agent):
     "A standard agent that can answer queries and solve tasks with tools."
@@ -44,10 +43,10 @@ class StandardAgent(Agent):
             tool_body.append(f"if TOOL=='{tool.ref_name}':")
             tool_body.append(f'                    "Tool Input: {tool.input_schema.body}\\n"')
             tool_body.append(
-                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice)",
+                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice)",  # noqa: E501
             )
             tool_body.append(
-                f"                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action",
+                "                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action",
             )
             tool_body.append(r"                '{observation}\n'")
         self.tool_body = "\n".join(tool_body)

@@ -1,14 +1,14 @@
-from itertools import chain
+"""
+Standard react query
+"""
 
-import chromadb
-import lmql
-import requests
-from chromadb.utils import embedding_functions
+from headjack.models.utterance import Utterance
+from headjack.models.agent import Agent
 
 
 async def standard_query(
-    agent,
-    utterance,
+    agent: Agent,
+    utterance: Utterance,
     history_length,
     history_utterances,
     loop_limit,

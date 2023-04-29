@@ -5,6 +5,8 @@ import chromadb
 from chromadb.config import Settings
 
 CHROMA = None
+
+
 def get_chroma_client():  # pragma: no cover
     """
     Get a chromadb client
