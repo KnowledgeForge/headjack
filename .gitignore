@@ -128,4 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-./notebooks/Development.ipynb
+# playground notebook
+notebooks/playground.ipynb
+
+# .chroma
+.chroma

@@ -4,18 +4,14 @@ from typing import (
     TypedDict,
 )
 
-import chromadb
-import lmql
-import pandas as pd
-import requests
-from chromadb.utils import embedding_functions
+from headjack.models import Tool, Action, Observation, ToolSchema
 
 
 @dataclass
 class KnowledgeSearchTool(Tool):
     default_description = "Search for knowledge documents."
     default_ref_name = "knowledge_search"
-    input_schema = ToolSchema(TypedDict("KnowledgeQuery", {"query": str}))
+    input_schema = ToolSchema(TypedDict("KnowledgeQueryActionSchema", {"query": str}))
     n_docs: int = 3
     threshold: float = 0.0
 

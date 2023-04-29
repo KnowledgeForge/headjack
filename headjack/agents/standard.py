@@ -7,18 +7,12 @@ An agent that can answer basic questions
 "Are these metrics compatible"
 "Tell me about the dimensions that are available for metric x..."
 """
-from itertools import chain
 from typing import (
     Set,
-    Type,
+    Type,cast
 )
-
-import chromadb
-import lmql
-import pandas as pd
-import requests
-from chromadb.utils import embedding_functions
-
+from headjack.models import Agent, Utterance, User, Answer
+from headjack.agents.prompt_queries.standard import standard_query
 
 class StandardAgent(Agent):
     "A standard agent that can answer queries and solve tasks with tools."
@@ -36,7 +30,7 @@ class StandardAgent(Agent):
     ):
         super().__init__(
             query=query,
-            description=description or StandardAgent.__doc__,
+            description=description or cast(str, StandardAgent.__doc__),
             ref_name=ref_name,
             **kwargs,
         )

@@ -3,7 +3,6 @@ import inspect
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from itertools import chain
 from typing import (
     Any,
     AsyncGenerator,
@@ -24,12 +23,10 @@ from typing import (
 )
 from uuid import UUID, uuid4
 
-import chromadb
 import lmql
-import pandas as pd
-import requests
+from headjack.utils import add_source
 from chromadb.utils import embedding_functions
-
+from headjack.config import get_chroma_client
 
 @dataclass
 class VectorStore:
@@ -37,7 +34,7 @@ class VectorStore:
 
     def __post_init__(self):
         ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-        self.client = get_chroma()
+        self.client = get_chroma_client()
         self.collection = self.client.get_or_create_collection(self.collection_name, embedding_function=ef)
 
 
@@ -65,10 +62,10 @@ class ToolSchema:
     Final answer value produced from an agent
     """
 
-    schema_dict: TypedDict
+    schema_dict: Type[TypedDict]
     _compiled: bool = field(init=False, default=False)
     _body: Optional[str] = field(init=False, default=None)
-    _where: bool = field(init=False, default=False)
+    _where: Optional[str] = field(init=False, default=None)
 
     @property
     def body(self):
@@ -78,7 +75,7 @@ class ToolSchema:
     @property
     def code(self):
         self._compile()
-        return self.body.replace('\\"[', "").replace("]", "").replace('\\"', '"').strip()[1:-1]
+        return cast(str, self.body).replace('\\"[', "").replace("]", "").replace('\\"', '"').strip()[1:-1]
 
     @property
     def where(self):
@@ -94,7 +91,6 @@ class ToolSchema:
             self._where = ""
             return
         where = []
-        code = []
         prefix = self.schema_dict.__name__ + "_"
 
         def _helper(schema, key, end=False):
@@ -363,12 +359,13 @@ class Agent:
         return await self._run(self, *args)
 
     def _compile_query(self, f: Callable[["Agent", Any, ...], Coroutine[Any, Any, Utterance]]):
+        assert f.__doc__, "query must have a docstring"
         sig = inspect.signature(f)
-        assert list(sig.parameters.values())[0].name == "agent", "First parameter to query must be `agent`"
+        assert [arg.name for arg in sig.parameters.values()]:2 == ["agent", 'utterance'], "First parameters to query must be `agent, utterance`"
         source = "async def _f" + str(sig) + ":\n" + ("    '''" + f.__doc__.format(**self.__dict__) + "\n    '''")
         #         print(source)
         exec(source)
-        SOURCE_PATCH[locals().get("_f")] = source
+        add_source(locals().get("_f"), source)
         return lmql.query(locals().get("_f"))
 
     async def __call__(
