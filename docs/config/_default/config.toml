@@ -1,0 +1,7 @@
+baseURL = ''
+languageCode = 'en-us'
+title = 'Headjack'
+theme = 'DoIt'
+
+[markup.goldmark.renderer]
+  unsafe = true

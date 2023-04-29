@@ -1,0 +1,83 @@
+version: '3.9'
+
+networks:
+  headjack-network:
+    driver: bridge
+
+services:
+  headjack:
+    container_name: headjack
+    profiles: ["server"]
+    build:
+      context: ./
+      dockerfile: ./.docker/headjack.dockerfile
+    networks:
+      - headjack-network
+    environment:
+      - DOTENV_FILE=.env
+    volumes:
+      - .:/code
+    command: uvicorn headjack_server.api.app:app --host 0.0.0.0 --port 16400 --reload
+    ports:
+      - "16400:16400"
+    depends_on:
+      - chromadb
+
+  jupyter-headjack:
+    container_name: jupyter-headjack
+    profiles: ["notebook"]
+    build:
+      context: ./
+      dockerfile: ./.docker/jupyter-headjack.dockerfile
+    networks:
+      - headjack-network
+    ports:
+      - "16401:8888"
+    volumes:
+      - .:/code
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+
+  chromadb:
+    container_name: chromadb
+    profiles: ["server", "notebook"]
+    build:
+      context: ./docker/chroma
+      dockerfile: Dockerfile
+    volumes:
+      - ./docker/chroma:/chroma
+      - index_data:/index_data
+    command: uvicorn chromadb.app:app --reload --workers 1 --host 0.0.0.0 --port 16402 --log-config log_config.yml
+    environment:
+      - CHROMA_DB_IMPL=duckdb+parquet
+      - PERSIST_DIRECTORY=/index_data
+    ports:
+      - 16402:16402
+    networks:
+      - headjack-network
+
+  create-collectionss:
+    container_name: create-collections
+    profiles: ["server", "notebook"]
+    image: curlimages/curl
+    command: >-
+      curl
+      -X POST
+      --data '{"name": "nodes", "metadata": {}, "get_or_create": true}'
+      -H "Content-Type: application/json"
+      -H "Accept: application/json"
+      http://chromadb:16402/api/v1/collections &&
+      curl
+      -X POST
+      --data '{"name": "knowledge", "metadata": {}, "get_or_create": true}'
+      -H "Content-Type: application/json"
+      -H "Accept: application/json"
+      http://chromadb:16402/api/v1/collections
+    restart: on-failure
+    networks:
+      - headjack-network
+
+volumes:
+  index_data:
+    driver: local

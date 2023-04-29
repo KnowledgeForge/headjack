@@ -1,0 +1,30 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "headjack"
+version = "0.0.1a1"
+description = ""
+authors = ["Nick Ouellet <nicholas.p.ouellet@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+pytest = "7.2.2"
+pytest-checkdocs = "2.9.0"
+pre-commit = "3.2.1"
+coverage = "^7.2.3"
+
+[tool.black]
+line-length = 130
+
+[tool.flake8]
+max-line-length = 130
+
+[tool.isort]
+profile = "black"
+line_length = 130
+skip_gitignore = true

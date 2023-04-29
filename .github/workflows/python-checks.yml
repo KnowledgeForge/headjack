@@ -1,0 +1,38 @@
+name: "Python: Lint, Test, & Coverage"
+on:
+  push:
+    branches:
+    - 'master'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ['3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: pip install poetry
+      run: pip install poetry
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+        cache: poetry
+        cache-dependency-path: |
+          ./poetry.lock
+    - name: Poetry install
+      working-directory: ./
+      run: |
+        poetry install
+    - name: Run Linters
+      working-directory: ./
+      run: make lint
+    - name: Run Tests and Coverage
+      working-directory: ./
+      run: make coverage

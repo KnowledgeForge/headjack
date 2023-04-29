@@ -1,0 +1,62 @@
+"""
+An agent that can answer basic questions
+
+"Are there any metrics about..."
+"Are there any metrics pertaining to..."
+"Tell me about this metric..."
+"Are these metrics compatible"
+"Tell me about the dimensions that are available for metric x..."
+"""
+from itertools import chain
+from typing import (
+    Set,
+    Type,
+)
+
+import chromadb
+import lmql
+import pandas as pd
+import requests
+from chromadb.utils import embedding_functions
+
+
+class StandardAgent(Agent):
+    "A standard agent that can answer queries and solve tasks with tools."
+
+    def __init__(
+        self,
+        *,
+        description: str = "",
+        ref_name: str = "standard",
+        query=standard_query,
+        loop_limit: int = 5,
+        history_length: int = 3,
+        history_utterances: Set[Type[Utterance]] = {User, Answer},
+        **kwargs,
+    ):
+        super().__init__(
+            query=query,
+            description=description or StandardAgent.__doc__,
+            ref_name=ref_name,
+            **kwargs,
+        )
+        self.loop_limit = loop_limit
+        self.history_length = history_length
+        self.history_utterances = history_utterances
+        self.tools_prompt = "\n".join(f"            {tool.ref_name}: {tool.description}" for tool in self.tools)
+        self.tool_refs = {tool.ref_name: tool for tool in self.tools}
+        tool_body = []
+        for tool in self.tools:
+            tool_body.append(f"if TOOL=='{tool.ref_name}':")
+            tool_body.append(f'                    "Tool Input: {tool.input_schema.body}\\n"')
+            tool_body.append(
+                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice); print(action)",
+            )
+            tool_body.append(
+                f"                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(observation)",
+            )
+            tool_body.append(r"                '{observation}\n'")
+        self.tool_body = "\n".join(tool_body)
+        self.tool_conditions = " and\n".join(tool.input_schema.where for tool in self.tools)
+        self.tool_names = list(self.tool_refs.keys())
+        self._run = self._compile_query(self.query)
