@@ -1,5 +1,5 @@
 """
-An agent that can answer basic questions
+An agent that can handle common tasks
 
 "Are there any metrics about..."
 "Are there any metrics pertaining to..."
