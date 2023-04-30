@@ -2,25 +2,20 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import (
-    ClassVar,
-    Dict,
-    Optional,
-    Set,
-    Type,
-    Union,
-    TYPE_CHECKING, cast
-)
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Set, Type, Union, cast
 from uuid import UUID, uuid4
+
 
 class SessionStatus(Enum):
     DISCONNECTED = "DISCONNECTED"
     LIVE = "LIVE"
     TIMEOUT = "TIMEOUT"
 
+
 if TYPE_CHECKING:
-    from headjack.models.utterance import Action, Observation, Thought, Answer, Utterance, User
     from headjack.models.agent import Agent
+from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance
+
 
 @dataclass
 class Session:

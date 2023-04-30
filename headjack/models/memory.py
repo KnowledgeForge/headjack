@@ -1,15 +1,13 @@
 from dataclasses import dataclass
-
-from typing import (
-    Optional,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, Optional
 
 from chromadb.utils import embedding_functions
+
 from headjack.config import get_chroma_client
 
 if TYPE_CHECKING:
     from headjack.models.utterance import Utterance
+
 
 @dataclass
 class VectorStore:

@@ -1,19 +1,16 @@
 from dataclasses import dataclass, field
-from typing import (
-    ClassVar,
-    Optional,
-    cast,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation
-    
+
+
 @dataclass
 class ToolSchema:
     """
     Final answer value produced from an agent
     """
+
     schema_name: str
     schema_dict: dict
     _compiled: bool = field(init=False, default=False)

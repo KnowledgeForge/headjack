@@ -1,9 +1,4 @@
-from typing import (
-    Callable,
-    Protocol,
-    Type,
-    TypeVar,
-)
+from typing import Callable, Protocol, Type, TypeVar
 
 T = TypeVar("T")
 

@@ -1,28 +1,22 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import (
-    ClassVar,
-    Generator,
-    Optional,
-    Set,
-    Type,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, ClassVar, Generator, Optional, Set, Type
 from uuid import UUID, uuid4
 
+import headjack.models.agent as agent_model
+import headjack.models.tool as tool_model
 from headjack.models.utils import required_value
 
-import headjack.models.agent as agent
-import headjack.models.tool as tool
 if TYPE_CHECKING:
-    from headjack.models.utils import Stringable
-    from headjack.models.session import Session
     from headjack.models.agent import Agent
+    from headjack.models.session import Session
     from headjack.models.tool import Tool
+    from headjack.models.utils import Stringable
+
 
 @dataclass
 class Utterance:
-    utterance_: Stringable
+    utterance_: "Stringable"
     timestamp: datetime = field(default_factory=datetime.utcnow)
     context: str = ""
     parent_: Optional["Utterance"] = None
@@ -47,7 +41,7 @@ class Utterance:
         return self.marker + self.utterance
 
     def history(self, n: Optional[int] = None) -> Generator:
-        n_ = n or float("inf") #type: ignore
+        n_ = n or float("inf")  # type: ignore
         curr = self
         while n_ > 0 and (curr is not None):
             yield curr
@@ -60,7 +54,7 @@ class Utterance:
         utterance_kinds: Optional[Set[Type["Utterance"]]] = None,
     ) -> str:
         history = []
-        n = n or float("inf")#type: ignore
+        n = n or float("inf")  # type: ignore
         utterance_kinds = utterance_kinds or {User, Answer}
         for utterance in self.history():
             if type(utterance) in utterance_kinds:
@@ -104,7 +98,7 @@ class Observation(Utterance):
     """
 
     marker = "Observation: "
-    tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool.Tool))
+    tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
 
 
 @dataclass
@@ -115,7 +109,7 @@ class Action(Utterance):
 
     utterance_: dict
     marker = "Action: "
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for an Action.", agent.Agent))
+    agent: "Agent" = field(default_factory=required_value("`agent` is required for an Action.", agent_model.Agent))
 
 
 @dataclass
@@ -124,7 +118,7 @@ class Thought(Utterance):
     Value produced from an agent
     """
 
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Thought.", agent.Agent))
+    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Thought.", agent_model.Agent))
     marker = "Thought: "
 
 
@@ -134,5 +128,5 @@ class Answer(Utterance):
     Final answer value produced from an agent
     """
 
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Answer.", agent.Agent))
+    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Answer.", agent_model.Agent))
     marker = "Answer: "

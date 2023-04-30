@@ -10,7 +10,8 @@ An agent that can handle common tasks
 from typing import Set, Type, cast
 
 from headjack.agents.query_templates.standard import standard_query
-from headjack.models.utterance import Agent, Answer, User, Utterance
+from headjack.models.utterance import Answer, User, Utterance
+from headjack.models.agent import Agent
 
 
 class StandardAgent(Agent):
@@ -43,10 +44,10 @@ class StandardAgent(Agent):
             tool_body.append(f"if TOOL=='{tool.ref_name}':")
             tool_body.append(f'                    "Tool Input: {tool.input_schema.body}\\n"')
             tool_body.append(
-                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice)",  # noqa: E501
+                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice); print(action)",  # noqa: E501
             )
             tool_body.append(
-                "                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action",
+                "                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(observation)",
             )
             tool_body.append(r"                '{observation}\n'")
         self.tool_body = "\n".join(tool_body)

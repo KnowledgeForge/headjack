@@ -2,8 +2,8 @@
 Standard react query
 """
 
-from headjack.models.utterance import Utterance
 from headjack.models.agent import Agent
+from headjack.models.utterance import Utterance
 
 
 async def standard_query(
@@ -41,19 +41,23 @@ async def standard_query(
         for _ in range(loop_limit):
             "Thought: [THOUGHT]\\n"
             thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = utterance)
+            print(answer)
             await agent.asend(thought)
             if THOUGHT == 'I should use a tool.':
                 "Tool: [TOOL]\\n"
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=thought)
+                print(answer)
                 await agent.asend(tool_choice)
                 {tool_body}
             elif THOUGHT.startswith('I can answer the user'):
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = tool_choice)
+                print(answer)
                 await agent.asend(answer)
                 break
             else:
                 answer = Answer(utterance_ = "I apologize, but I did not find an answer.", agent = agent, parent_ = thought)
+                print(answer)
                 await agent.asend(answer)
                 break
     from

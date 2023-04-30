@@ -1,4 +1,3 @@
-import asyncio
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
@@ -68,31 +67,39 @@ html_template = f"""
 </html>
 """
 
+
 @app.get("/")
 async def get():
     return HTMLResponse(content=html_template)
 
-from headjack.tools.knowledge_search import KnowledgeSearchTool
+
 from headjack.agents.standard import StandardAgent
 from headjack.models.session import Session
+from headjack.tools.knowledge_search import KnowledgeSearchTool
 
 tools = [KnowledgeSearchTool()]
+# agent = StandardAgent(
+#     model_identifier="chatgpt",
+#     tools=tools,
+#     decoder="argmax(openai_chunksize=4)",
+# )
 agent = StandardAgent(
-    model_identifier="chatgpt",
+    model_identifier="openai/text-ada-001",
     tools=tools,
-    decoder="argmax(openai_chunksize=4)",
+    decoder="argmax",
 )
-
 session = Session(agent)
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
+        print(data)
         async for response in session(str(data)):
             await websocket.send_text(str(response))
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8679)
