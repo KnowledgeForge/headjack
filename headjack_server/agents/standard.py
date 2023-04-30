@@ -9,9 +9,9 @@ An agent that can handle common tasks
 """
 from typing import Set, Type, cast
 
-from headjack.agents.query_templates.standard import standard_query
-from headjack.models.utterance import Answer, User, Utterance
-from headjack.models.agent import Agent
+from headjack_server.agents.query_templates.standard import standard_query
+from headjack_server.models.utterance import Answer, User, Utterance, Thought, Action, Observation
+from headjack_server.models.agent import Agent
 
 
 class StandardAgent(Agent):

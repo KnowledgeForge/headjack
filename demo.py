@@ -3,7 +3,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
-PORT = 8679
+PORT = 8769
 html_template = f"""
 <!DOCTYPE html>
 <html>
@@ -73,33 +73,42 @@ async def get():
     return HTMLResponse(content=html_template)
 
 
-from headjack.agents.standard import StandardAgent
-from headjack.models.session import Session
-from headjack.tools.knowledge_search import KnowledgeSearchTool
+from headjack_server.agents.standard import StandardAgent
+from headjack_server.models.session import Session
+from headjack_server.tools.knowledge_search import KnowledgeSearchTool
 
+import logging
+_logger = logging.getLogger(__name__)
+
+from fastapi import Depends
 tools = [KnowledgeSearchTool()]
 # agent = StandardAgent(
 #     model_identifier="chatgpt",
 #     tools=tools,
 #     decoder="argmax(openai_chunksize=4)",
 # )
-agent = StandardAgent(
-    model_identifier="openai/text-ada-001",
-    tools=tools,
-    decoder="argmax",
-)
-session = Session(agent)
 
+def get_agent_session():
+    agent = StandardAgent(
+        model_identifier="openai/text-ada-001",
+        tools=tools,
+        decoder="argmax(chatty_openai=True)",
+    )
+    return Session(agent)
 
+import asyncio
+from headjack_server.models.utterance import User, Answer
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends(get_agent_session)):
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
-        print(data)
-        async for response in session(str(data)):
-            await websocket.send_text(str(response))
+        print(f"User message: {data}")
+        # await asyncio.sleep(2)
+        # async for response in session(str(data)):
+        response = await session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], [])
+        await websocket.send_text(str(response))
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8679)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

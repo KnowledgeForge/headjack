@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDis
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from headjack.config import get_chroma_client
+from headjack_server.config import get_chroma_client
 
 _logger = logging.getLogger(__name__)
 

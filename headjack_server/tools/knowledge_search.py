@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from headjack.models.tool import Tool, ToolSchema
-from headjack.models.utterance import Action, Observation
+from headjack_server.models.tool import Tool, ToolSchema
+from headjack_server.models.utterance import Action, Observation
 
 
 @dataclass

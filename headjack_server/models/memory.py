@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING, Optional
 
 from chromadb.utils import embedding_functions
 
-from headjack.config import get_chroma_client
+from headjack_server.config import get_chroma_client
 
 if TYPE_CHECKING:
-    from headjack.models.utterance import Utterance
+    from headjack_server.models.utterance import Utterance
 
 
 @dataclass

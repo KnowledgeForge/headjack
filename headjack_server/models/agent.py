@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List
 
 import lmql
 
-from headjack.utils import add_source
+from headjack_server.utils import add_source
 
 if TYPE_CHECKING:
-    from headjack.models.memory import VectorStoreMemory
-    from headjack.models.tool import Tool
-    from headjack.models.utterance import User, Utterance
+    from headjack_server.models.memory import VectorStoreMemory
+    from headjack_server.models.tool import Tool
+    from headjack_server.models.utterance import User, Utterance
 
 
 @dataclass
@@ -42,10 +42,11 @@ class Agent:
         sig = inspect.signature(f)
         arg_names = tuple([arg.name for arg in sig.parameters.values()])
         assert arg_names[:2] == ("agent", "utterance"), "First parameters to query must be `agent, utterance`"
-        # import pdb; pdb.set_trace()
+        
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + f.__doc__.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        exec(source)
+        from headjack_server.models.utterance import Action, Observation, Thought, Answer, User, Utterance
+        exec(source, globals(), locals())
         assert locals().get("_f") is not None, "failed to compile query"
         add_source(cast(Callable, locals().get("_f")), source)
         return lmql.query(cast(Callable, locals().get("_f")))

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
 if TYPE_CHECKING:
-    from headjack.models.utterance import Action, Observation
+    from headjack_server.models.utterance import Action, Observation
 
 
 @dataclass

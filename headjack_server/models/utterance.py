@@ -3,15 +3,15 @@ from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar, Generator, Optional, Set, Type
 from uuid import UUID, uuid4
 
-import headjack.models.agent as agent_model
-import headjack.models.tool as tool_model
-from headjack.models.utils import required_value
+import headjack_server.models.agent as agent_model
+import headjack_server.models.tool as tool_model
+from headjack_server.models.utils import required_value
 
 if TYPE_CHECKING:
-    from headjack.models.agent import Agent
-    from headjack.models.session import Session
-    from headjack.models.tool import Tool
-    from headjack.models.utils import Stringable
+    from headjack_server.models.agent import Agent
+    from headjack_server.models.session import Session
+    from headjack_server.models.tool import Tool
+    from headjack_server.models.utils import Stringable
 
 
 @dataclass
