@@ -42,6 +42,9 @@ html_template = f"""
 
         ws.onmessage = (event) => {{
             const item = document.createElement('div');
+            if (event.data.startsWith("User:")) {{
+                item.classList.add('text-blue-500', 'font-semibold');
+            }}
             item.textContent = event.data;
             messages.appendChild(item);
             messages.scrollTo(0, messages.scrollHeight);
@@ -60,6 +63,11 @@ html_template = f"""
             submitText.classList.add('hidden');
             submitLoading.classList.remove('hidden');
             ws.send(input.value);
+            const item = document.createElement('div');
+            item.classList.add('text-right', 'italic', 'text-gray-500');
+            item.textContent = 'User: ' + input.value;
+            messages.appendChild(item);
+            messages.scrollTo(0, messages.scrollHeight);
             input.value = '';
         }};
     </script>
@@ -83,25 +91,26 @@ _logger = logging.getLogger(__name__)
 
 from fastapi import Depends
 
-tools = [KnowledgeSearchTool()]
-# agent = StandardAgent(
-#     model_identifier="chatgpt",
-#     tools=tools,
-#     decoder="argmax(openai_chunksize=4)",
-# )
+
 
 
 def get_agent_session():
+    tools = [KnowledgeSearchTool()]
     agent = StandardAgent(
-        model_identifier="openai/text-ada-001",
+        model_identifier="chatgpt",
         tools=tools,
-        decoder="argmax(chatty_openai=True)",
+        decoder="argmax(openai_chunksize=4)",
     )
+    # agent = StandardAgent(
+    #     model_identifier="openai/text-ada-001",
+    #     tools=tools,
+    #     decoder="argmax(chatty_openai=True)",
+    # )
     return Session(agent)
 
 
 from headjack_server.models.utterance import Answer, User
-
+import asyncio
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends(get_agent_session)):
@@ -111,8 +120,9 @@ async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends
         print(f"User message: {data}")
         # await asyncio.sleep(2)
         # async for response in session(str(data)):
-        response = await session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], [])
-        await websocket.send_text(str(response))
+        fin = asyncio.create_task(session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], []))
+        while not (fin.done() and session.agent.queue.empty()):
+            await websocket.send_text(str(await session.agent.queue.get()))
 
 
 if __name__ == "__main__":

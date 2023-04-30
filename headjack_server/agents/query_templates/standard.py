@@ -17,7 +17,6 @@ async def standard_query(
 ):
     '''lmql
     {decoder}
-        import pdb; pdb.set_trace()
         """
         You are a chatbot Agent that helps users answer questions.
         The Agent uses thoughful reasoning like so:
@@ -38,28 +37,28 @@ async def standard_query(
 
         Conversation:
         {{utterance.convo(history_length, history_utterances)}}"""
-        print("made it into the prompt")
+        
         for _ in range(loop_limit):
             "Thought: [THOUGHT]\\n"
             thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = utterance)
             print(thought)
-            # await agent.asend(thought)
+            await agent.asend(thought)
             if THOUGHT == 'I should use a tool.':
                 "Tool: [TOOL]\\n"
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=thought)
                 print(tool_choice)
-                # await agent.asend(tool_choice)
+                await agent.asend(tool_choice)
                 {tool_body}
             elif THOUGHT.startswith('I can answer the user'):
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = tool_choice)
                 print(answer)
-                # await agent.asend(answer)
+                await agent.asend(answer)
                 break
             else:
                 answer = Answer(utterance_ = "I apologize, but I did not find an answer.", agent = agent, parent_ = thought)
                 print(answer)
-                # await agent.asend(answer)
+                await agent.asend(answer)
                 break
     from
         "{model_identifier}"
