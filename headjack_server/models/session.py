@@ -65,6 +65,7 @@ class Session:
             response = await self.agent.queue.get()
             if self.check_quit(response):
                 self.agent.queue.task_done()
+                print(await responding)
                 return
             self.utterance = response
             # only send utterances we're asked to send
