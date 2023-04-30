@@ -60,6 +60,7 @@ async def standard_query(
                 print(answer)
                 await agent.asend(answer)
                 break
+        await agent.asend(None)
     from
         "{model_identifier}"
     where

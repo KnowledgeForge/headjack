@@ -59,7 +59,8 @@ class Session:
         self.utterance = user
         responding = asyncio.create_task(self.agent(self.utterance))
         # agent gives all it's utterances in response to the user utterance
-        while not (responding.done() and self.agent.queue.empty()):
+        while True:
+            print(responding.done(), self.agent.queue.empty())
             print("responding")
             response = await self.agent.queue.get()
             if self.check_quit(response):

@@ -1,6 +1,16 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
+import logging
+
+from headjack_server.agents.standard import StandardAgent
+from headjack_server.models.session import Session
+from headjack_server.tools.knowledge_search import KnowledgeSearchTool
+
+_logger = logging.getLogger(__name__)
+
+from fastapi import Depends
+
 
 app = FastAPI()
 PORT = 8769
@@ -30,6 +40,7 @@ html_template = f"""
             </button>
         </form>
     </div>
+    
     <script>
         const messages = document.getElementById('messages');
         const form = document.getElementById('form');
@@ -48,11 +59,14 @@ html_template = f"""
             item.textContent = event.data;
             messages.appendChild(item);
             messages.scrollTo(0, messages.scrollHeight);
-            input.disabled = false;
-            submitButton.disabled = false;
-            submitButton.classList.remove('opacity-50');
-            submitText.classList.remove('hidden');
-            submitLoading.classList.add('hidden');
+            console.log(event)
+            if (event.data == ""){{
+                input.disabled = false;
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50');
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }}
         }};
 
         form.onsubmit = async (event) => {{
@@ -81,15 +95,7 @@ async def get():
     return HTMLResponse(content=html_template)
 
 
-import logging
 
-from headjack_server.agents.standard import StandardAgent
-from headjack_server.models.session import Session
-from headjack_server.tools.knowledge_search import KnowledgeSearchTool
-
-_logger = logging.getLogger(__name__)
-
-from fastapi import Depends
 
 
 
@@ -121,6 +127,7 @@ async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends
         # await asyncio.sleep(2)
         async for response in session(str(data)):
             await websocket.send_text(str(response))
+        await websocket.send_text("")
         # fin = asyncio.create_task(session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], []))
         # while not (fin.done() and session.agent.queue.empty()):
         #     await websocket.send_text(str(await session.agent.queue.get()))
