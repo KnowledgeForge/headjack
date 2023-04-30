@@ -73,20 +73,23 @@ async def get():
     return HTMLResponse(content=html_template)
 
 
+import logging
+
 from headjack_server.agents.standard import StandardAgent
 from headjack_server.models.session import Session
 from headjack_server.tools.knowledge_search import KnowledgeSearchTool
 
-import logging
 _logger = logging.getLogger(__name__)
 
 from fastapi import Depends
+
 tools = [KnowledgeSearchTool()]
 # agent = StandardAgent(
 #     model_identifier="chatgpt",
 #     tools=tools,
 #     decoder="argmax(openai_chunksize=4)",
 # )
+
 
 def get_agent_session():
     agent = StandardAgent(
@@ -96,8 +99,10 @@ def get_agent_session():
     )
     return Session(agent)
 
-import asyncio
-from headjack_server.models.utterance import User, Answer
+
+from headjack_server.models.utterance import Answer, User
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends(get_agent_session)):
     await websocket.accept()

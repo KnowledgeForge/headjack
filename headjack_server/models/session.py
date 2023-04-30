@@ -1,9 +1,12 @@
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Set, Type, Union, cast
 from uuid import UUID, uuid4
+
+from headjack_server.models.utterance import Action, Answer, Observation, Thought, User, Utterance
 
 
 class SessionStatus(Enum):
@@ -14,10 +17,10 @@ class SessionStatus(Enum):
 
 if TYPE_CHECKING:
     from headjack_server.models.agent import Agent
-from headjack_server.models.utterance import Action, Answer, Observation, Thought, User, Utterance
 
-import logging
+
 _logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Session:
@@ -42,8 +45,8 @@ class Session:
         return False
 
     async def __call__(self, input: Optional[str]):
-        _logger.info(f'input: {input}')
-        print((f'input: {input}'))
+        _logger.info(f"input: {input}")
+        print((f"input: {input}"))
         # wait for user input
         user: Optional[User] = User(input) if input is not None else input
 
@@ -57,7 +60,7 @@ class Session:
         responding = asyncio.create_task(self.agent(self.utterance))
         # agent gives all it's utterances in response to the user utterance
         while not (responding.done() and self.agent.queue.empty()):
-            print('responding')
+            print("responding")
             response = await self.agent.queue.get()
             if self.check_quit(response):
                 self.agent.queue.task_done()

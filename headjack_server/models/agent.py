@@ -42,10 +42,11 @@ class Agent:
         sig = inspect.signature(f)
         arg_names = tuple([arg.name for arg in sig.parameters.values()])
         assert arg_names[:2] == ("agent", "utterance"), "First parameters to query must be `agent, utterance`"
-        
+
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + f.__doc__.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        from headjack_server.models.utterance import Action, Observation, Thought, Answer, User, Utterance
+        from headjack_server.models.utterance import Action, Answer, Observation, Thought, User, Utterance  # noqa: F401
+
         exec(source, globals(), locals())
         assert locals().get("_f") is not None, "failed to compile query"
         add_source(cast(Callable, locals().get("_f")), source)
