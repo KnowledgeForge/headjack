@@ -119,10 +119,11 @@ async def websocket_endpoint(websocket: WebSocket, *, session: Session = Depends
         data = await websocket.receive_text()
         print(f"User message: {data}")
         # await asyncio.sleep(2)
-        # async for response in session(str(data)):
-        fin = asyncio.create_task(session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], []))
-        while not (fin.done() and session.agent.queue.empty()):
-            await websocket.send_text(str(await session.agent.queue.get()))
+        async for response in session(str(data)):
+            await websocket.send_text(str(response))
+        # fin = asyncio.create_task(session.agent.run(User(str(data)), 3, {User, Answer}, 4, [], []))
+        # while not (fin.done() and session.agent.queue.empty()):
+        #     await websocket.send_text(str(await session.agent.queue.get()))
 
 
 if __name__ == "__main__":
