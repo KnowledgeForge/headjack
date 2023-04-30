@@ -19,7 +19,7 @@ import lmql
 from headjack.utils import add_source
 
 if TYPE_CHECKING:
-    from headjack.models.utterance import Utterance, Observation, Thought, Answer
+    from headjack.models.utterance import Utterance, User
     from headjack.models.memory import VectorStoreMemory
     from headjack.models.tool import Tool
 
@@ -61,6 +61,6 @@ class Agent:
         return lmql.query(cast(Callable, locals().get("_f")))
 
     async def __call__(
-        self, utterances: Set[Union[Type[Observation], Type[Thought], Type[Answer]]],
+        self, user: User
     ) -> AsyncGenerator[Optional[Utterance], Utterance]:
         raise NotImplementedError()

@@ -53,3 +53,6 @@ class StandardAgent(Agent):
         self.tool_conditions = " and\n".join(tool.input_schema.where for tool in self.tools)
         self.tool_names = list(self.tool_refs.keys())
         self._run = self._compile_query(self.query)
+
+    async def __call__(self, user: User):
+        return await self.run(user, self.history_length, self.history_utterances, self.loop_limit, [], [])
