@@ -75,11 +75,11 @@ html_template = f"""
                 .then(res => res.json())
                 .then(data => {{
                     access_token = data.access_token;
-                    ws = new WebSocket(`ws://localhost:{PORT}/ws/${{access_token}}`);
                     messages.classList.remove('disabled');
                     form.classList.remove('disabled');
                     input.disabled = false;
                     submitButton.disabled = false;
+                    ws = new WebSocket(`ws://localhost:{PORT}/ws/${{access_token}}`);
                     ws.onmessage = onMessage;
                     newSession.style.display = 'none';
                 }})
@@ -87,13 +87,14 @@ html_template = f"""
 
         function onMessage(event) {{
             const data = JSON.parse(event.data);
-
+    
             let item;
-            if (data.kind === 'User' || (debug.checked && data.kind !== 'Answer')) {{
+            if (data.kind === 'User') {{
                 item = document.createElement('div');
                 item.classList.add('text-right', 'bg-blue-100');
                 item.textContent = data.message;
-            }} else {{
+            }} 
+            if (data.kind!=="" && (data.kind === 'Answer' || debug.checked)) {{
                 item = document.createElement('div');
                 item.classList.add('text-left', 'bg-gray-100');
                 item.textContent = data.message;
@@ -104,15 +105,15 @@ html_template = f"""
             item.appendChild(info);
             messages.appendChild(item);
             messages.scrollTo(0, messages.scrollHeight);
-        }}
-        if (data.message !== "") {{
-            input.disabled = false;
-            submitButton.disabled = false;
-            submitButton.classList.remove('opacity-50');
-            submitText.classList.remove('hidden');
-            submitLoading.classList.add('hidden');
-        }}
         
+            if (data.message !== "") {{
+                input.disabled = false;
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50');
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+            }}
+        }}
 
         form.onsubmit = async (event) => {{
             event.preventDefault();
@@ -170,18 +171,15 @@ class ConnectionManager:
         self.active_connections: dict[str, WebSocket] = {}
 
     async def connect(self, access_token: str, websocket: WebSocket):
-        session_id = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])['session_id']
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
+        session_id = payload["session_id"]
         await websocket.accept()
         self.active_connections[session_id]=websocket
 
-    def disconnect(self, websocket: WebSocket):
-        k= None
-        for k, v in self.active_connections.items():
-            if v == websocket:
-                break
-        if k is not None:
-            del self.active_connections[k]
-
+    def disconnect(self, access_token: str):
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
+        session_id = payload["session_id"]
+        del self.active_connections[session_id]
 
 manager = ConnectionManager()
 
@@ -189,6 +187,7 @@ manager = ConnectionManager()
 async def websocket_endpoint(websocket: WebSocket, access_token: str):
     await manager.connect(access_token, websocket)
     session = get_agent_session(access_token)
+
     while True:
         try:
             data = await websocket.receive_json()
@@ -198,7 +197,7 @@ async def websocket_endpoint(websocket: WebSocket, access_token: str):
                 await websocket.send_json({'message':str(response.utterance_), 'marker':response.marker, 'kind': response.__class__.__name__, "time": response.timestamp.strftime('%Y-%m-%d %H:%M:%S')})
             await websocket.send_json({'message':"", "marker": "", "kind":"", "time":""})
         except WebSocketDisconnect:
-            manager.disconnect(websocket)
-            
+            manager.disconnect(access_token)
+
 if __name__ == "__main__":     
     uvicorn.run(app, host="0.0.0.0", port=PORT)
