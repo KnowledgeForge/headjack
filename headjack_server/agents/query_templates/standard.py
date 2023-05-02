@@ -37,7 +37,7 @@ async def standard_query(
 
         Conversation:
         {{utterance.convo(history_length, history_utterances)}}"""
-        
+
         for _ in range(loop_limit):
             "Thought: [THOUGHT]\\n"
             thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = utterance)

@@ -1,15 +1,16 @@
+import logging
 from uuid import UUID, uuid4
+
+import jwt
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
-import logging
-from headjack_server.models.utterance import Answer, User
-import asyncio
-from headjack_server.agents.standard import StandardAgent 
-from headjack_server.models.session import Session
-from headjack_server.tools.knowledge_search import KnowledgeSearchTool
 from fastapi.middleware.cors import CORSMiddleware
-import jwt
+from fastapi.responses import HTMLResponse
+
+from headjack_server.agents.standard import StandardAgent
+from headjack_server.models.session import Session
+from headjack_server.models.utterance import Answer, User
+from headjack_server.tools.knowledge_search import KnowledgeSearchTool
 
 _logger = logging.getLogger(__name__)
 
@@ -56,11 +57,11 @@ html_template = f"""
             </button>
         </form>
     </div>
-    
+
     <script>
         let ws;
         let access_token;
-        
+
         const messages = document.getElementById('messages');
         const form = document.getElementById('form');
         const input = document.getElementById('input');
@@ -69,7 +70,7 @@ html_template = f"""
         const submitLoading = document.getElementById('submit-loading');
         const newSession = document.getElementById('new_session');
         const debug = document.getElementById('debug');
-        
+
         newSession.addEventListener('click', () => {{
             fetch('/session')
                 .then(res => res.json())
@@ -87,13 +88,13 @@ html_template = f"""
 
         function onMessage(event) {{
             const data = JSON.parse(event.data);
-    
+
             let item;
             if (data.kind === 'User') {{
                 item = document.createElement('div');
                 item.classList.add('text-right', 'bg-blue-100');
                 item.textContent = data.message;
-            }} 
+            }}
             if (data.kind!=="" && (data.kind === 'Answer' || debug.checked)) {{
                 item = document.createElement('div');
                 item.classList.add('text-left', 'bg-gray-100');
@@ -105,7 +106,7 @@ html_template = f"""
             item.appendChild(info);
             messages.appendChild(item);
             messages.scrollTo(0, messages.scrollHeight);
-        
+
             if (data.message !== "") {{
                 input.disabled = false;
                 submitButton.disabled = false;
@@ -142,20 +143,23 @@ html_template = f"""
 </html>
 """
 
+
 @app.get("/")
 def get():
     return HTMLResponse(html_template)
+
 
 @app.get("/session")
 def new_session():
     access_token = jwt.encode({"session_id": str(uuid4())}, SECRET_KEY, algorithm="HS256")
     return {"access_token": access_token}
 
+
 def get_agent_session(access_token: str):
     payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
     session_id = payload["session_id"]
     session_uuid = UUID(session_id)
-    if session:=Session.sessions.get(session_uuid):
+    if session := Session.sessions.get(session_uuid):
         return session
     tools = [KnowledgeSearchTool()]
     agent = StandardAgent(
@@ -166,6 +170,7 @@ def get_agent_session(access_token: str):
     session = Session(agent, session_id=session_uuid)
     return session
 
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, WebSocket] = {}
@@ -174,14 +179,16 @@ class ConnectionManager:
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
         session_id = payload["session_id"]
         await websocket.accept()
-        self.active_connections[session_id]=websocket
+        self.active_connections[session_id] = websocket
 
     def disconnect(self, access_token: str):
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
         session_id = payload["session_id"]
         del self.active_connections[session_id]
 
+
 manager = ConnectionManager()
+
 
 @app.websocket("/ws/{access_token}")
 async def websocket_endpoint(websocket: WebSocket, access_token: str):
@@ -191,13 +198,21 @@ async def websocket_endpoint(websocket: WebSocket, access_token: str):
     while True:
         try:
             data = await websocket.receive_json()
-            message = data['message']
+            message = data["message"]
             _logger.info(f"User message: {message}")
             async for response in session(message):
-                await websocket.send_json({'message':str(response.utterance_), 'marker':response.marker, 'kind': response.__class__.__name__, "time": response.timestamp.strftime('%Y-%m-%d %H:%M:%S')})
-            await websocket.send_json({'message':"", "marker": "", "kind":"", "time":""})
+                await websocket.send_json(
+                    {
+                        "message": str(response.utterance_),
+                        "marker": response.marker,
+                        "kind": response.__class__.__name__,
+                        "time": response.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    },
+                )
+            await websocket.send_json({"message": "", "marker": "", "kind": "", "time": ""})
         except WebSocketDisconnect:
             manager.disconnect(access_token)
 
-if __name__ == "__main__":     
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=PORT)

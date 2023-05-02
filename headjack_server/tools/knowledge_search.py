@@ -1,4 +1,7 @@
+import urllib.parse
 from dataclasses import dataclass
+
+import requests
 
 from headjack_server.models.tool import Tool, ToolSchema
 from headjack_server.models.utterance import Action, Observation
