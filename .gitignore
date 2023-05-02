@@ -133,3 +133,5 @@ notebooks/playground.ipynb
 
 # .chroma
 .chroma
+
+*.db

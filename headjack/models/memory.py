@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from chromadb.utils import embedding_functions
-
 from headjack_server.config import get_chroma_client
 
 if TYPE_CHECKING:

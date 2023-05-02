@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
 
 import lmql
-
 from headjack_server.utils import add_source
 
 if TYPE_CHECKING:

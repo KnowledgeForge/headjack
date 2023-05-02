@@ -78,6 +78,18 @@ services:
     networks:
       - headjack-network
 
+  headjack-alembic:
+    container_name: headjack-alembic
+    networks:
+      - headjack-network
+    build:
+      context: ./
+      dockerfile: ./.docker/headjack.dockerfile
+    volumes:
+      - .:/code
+    command: alembic upgrade head
+    restart: on-failure
+
 volumes:
   index_data:
     driver: local
