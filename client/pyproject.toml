@@ -3,7 +3,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "headjack"
+name = "headjack-client"
 version = "0.0.1a1"
 description = ""
 authors = ["Nick Ouellet <nicholas.p.ouellet@gmail.com>"]

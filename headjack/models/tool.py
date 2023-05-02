@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
+from sqlmodel import Field, SQLModel
+
 if TYPE_CHECKING:
-    from headjack_server.models.utterance import Action, Observation
+    from headjack.models.utterance import Action, Observation
 
 
-@dataclass
 class ToolSchema:
     """
     Final answer value produced from an agent
@@ -69,7 +70,8 @@ class ToolSchema:
 
 
 @dataclass
-class Tool:
+class Tool(SQLModel, table=True):  # type: ignore
+    id: Optional[int] = Field(default=None, primary_key=True)
     default_description: ClassVar[str]
     default_ref_name: ClassVar[str]
     input_schema: ClassVar[ToolSchema]

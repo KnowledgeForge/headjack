@@ -7,9 +7,8 @@ from typing import List
 from chromadb.api.local import LocalAPI
 from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-
 from headjack_server.config import get_chroma_client
+from pydantic import BaseModel
 
 _logger = logging.getLogger(__name__)
 

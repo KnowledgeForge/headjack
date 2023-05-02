@@ -6,7 +6,6 @@ import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
 from headjack_server.agents.standard import StandardAgent
 from headjack_server.models.session import Session
 from headjack_server.models.utterance import Answer, User
