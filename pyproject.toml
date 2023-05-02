@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [tool.poetry]
 name = "headjack"
@@ -12,10 +12,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 lmql = { git = "https://github.com/eth-sri/lmql.git", branch = "tiktoken" }
-langchain = ">= 0.0.147"
 chromadb = "0.3.21"
 fastapi = ">= 0.71.0"
 sqlmodel = ">= 0.0.8"
+PyJWT = ">= 2.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "7.2.2"
@@ -35,3 +35,31 @@ exclude = "demo.py"
 profile = "black"
 line_length = 130
 skip_gitignore = true
+
+[tool.pdm]
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest==7.2.2",
+    "pytest-checkdocs==2.9.0",
+    "pre-commit==3.2.1",
+    "coverage<8.0.0,>=7.2.3",
+    "httpx>=0.24.0",
+]
+
+[tool.pdm.build]
+includes = []
+
+[project]
+name = "headjack-server"
+version = "0.0.1a1"
+description = ""
+authors = [
+    {name = "circargs", email = "nick@ouellet.dev"},
+    {name = "Nick Ouellet", email = "nick@ouellet.dev"},
+]
+dependencies = ["lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken", "chromadb==0.3.21", "fastapi>=0.71.0", "PyJWT>=2.6.0"]
+requires-python = ">=3.10,<4.0"
+readme = "README.md"
+license = {text = "Aache 2.0"}
+
+[project.urls]

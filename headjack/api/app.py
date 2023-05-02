@@ -2,86 +2,115 @@
 Headjack web server
 """
 import logging
-from typing import List
-
-from chromadb.api.local import LocalAPI
-from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDisconnect
+from typing import Any, Dict
+from uuid import UUID, uuid4
+import uvicorn
+import jwt
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from headjack_server.config import get_chroma_client
 from pydantic import BaseModel
 
+import os
+
+from headjack_server.models.session import Session
+
 _logger = logging.getLogger(__name__)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+SECRET_KEY = os.environ.get('HEADJACK_SECRET', "headjack_secret")
+PORT = os.environ.get('HEADJACK_PORT', "8679")
 
 # locate templates
 templates = Jinja2Templates(directory="web")
 
 
-@app.get("/healthcheck/")
-async def health_check(*, chroma_client: LocalAPI = Depends(get_chroma_client)):
-    chroma_client.heartbeat()
-    return {"status": "OK"}
-
-
 @app.get("/")
-def get_home(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+def get_home():
+    import pdb; pdb.set_trace()
+    return templates.TemplateResponse("chat-demo.html", {"PORT": app.server.port})
 
 
-@app.get("/chat")
-def get_chat(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request})
+@app.get("/session")
+def new_session():
+    access_token = jwt.encode({"session_id": str(uuid4())}, SECRET_KEY, algorithm="HS256")
+    return {"access_token": access_token}
 
 
-@app.get("/api/current_user")
-def get_user(request: Request):
-    return request.cookies.get("X-Authorization")
+def decode_token(access_token: str) -> Dict[str, Any]:
+    return jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
 
 
-class RegisterValidator(BaseModel):
-    username: str
+def get_agent_session(access_token: str):
+    payload = decode_token(access_token)
+    session_id = payload["session_id"]
+    session_uuid = UUID(session_id)
+    if session := Session.sessions.get(session_uuid):
+        return session
+    from headjack_server.agents.standard import StandardAgent
+    from headjack_server.tools.knowledge_search import KnowledgeSearchTool
+    tools = [KnowledgeSearchTool()]
+    agent = StandardAgent(
+        model_identifier="chatgpt",
+        tools=tools,
+        decoder="argmax(openai_chunksize=4)",
+    )
+    session = Session(agent, session_id=session_uuid)
+    return session
 
-    class Config:
-        orm_mode = True
 
-
-@app.post("/api/register")
-def register_user(user: RegisterValidator, response: Response):
-    response.set_cookie(key="X-Authorization", value=user.username, httponly=True)
-
-
-class SocketManager:
+class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[(WebSocket, str)] = []
+        self.active_connections: Dict[str, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket, user: str):
+    async def connect(self, access_token: str, websocket: WebSocket):
+        payload = decode_token(access_token)
+        session_id = payload["session_id"]
         await websocket.accept()
-        self.active_connections.append((websocket, user))
+        self.active_connections[session_id] = websocket
 
-    def disconnect(self, websocket: WebSocket, user: str):
-        self.active_connections.remove((websocket, user))
-
-    async def broadcast(self, data: dict):
-        for connection in self.active_connections:
-            await connection[0].send_json(data)
+    def disconnect(self, access_token: str):
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
+        session_id = payload["session_id"]
+        del self.active_connections[session_id]
 
 
-manager = SocketManager()
+manager = ConnectionManager()
 
 
-@app.websocket("/api/chat")
-async def chat(websocket: WebSocket):
-    sender = websocket.cookies.get("X-Authorization")
-    if sender:
-        await manager.connect(websocket, sender)
-        response = {"sender": sender, "message": "got connected"}
-        await manager.broadcast(response)
+@app.websocket("/chat/{access_token}")
+async def websocket_endpoint(websocket: WebSocket, access_token: str):
+    await manager.connect(access_token, websocket)
+    session = get_agent_session(access_token)
+
+    while True:
         try:
-            while True:
-                data = await websocket.receive_json()
-                await manager.broadcast(data)
+            data = await websocket.receive_json()
+            message = data["message"]
+            _logger.info(f"User message: {message}")
+            async for response in session(message):
+                await websocket.send_json(
+                    {
+                        "message": str(response.utterance_),
+                        "marker": response.marker,
+                        "kind": response.__class__.__name__,
+                        "time": response.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    },
+                )
+            await websocket.send_json({"message": "", "marker": "", "kind": "", "time": ""})
         except WebSocketDisconnect:
-            manager.disconnect(websocket, sender)
-            response["message"] = "left"
-            await manager.broadcast(response)
+            manager.disconnect(access_token)
+
+            
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=int(PORT))
