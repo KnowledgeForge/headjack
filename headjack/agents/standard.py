@@ -37,21 +37,21 @@ class StandardAgent(Agent):
         self.loop_limit = loop_limit
         self.history_length = history_length
         self.history_utterances = history_utterances
-        self.tools_prompt = "\n".join(f"            {tool.ref_name}: {tool.description}" for tool in self.tools)
+        self.tools_prompt = "\n".join(f"            {tool.name}: {tool.description}" for tool in self.tools)
         self.tool_refs = {tool.ref_name: tool for tool in self.tools}
         tool_body = []
         for tool in self.tools:
             tool_body.append(f"if TOOL=='{tool.ref_name}':")
-            tool_body.append(f'                    "Tool Input: {tool.input_schema.body}\\n"')
+            tool_body.append(f'                    "Tool Input: \\n{tool.schema.}\\n"')
             tool_body.append(
-                f"                    action = Action(utterance_ = {tool.input_schema.code}, agent = agent, parent_ = tool_choice); await agent.asend(action); print(action)",  # noqa: E501
+                f"                    action = Action(utterance_ = {tool.schema.payload_code()}, agent = agent, parent_ = tool_choice); await agent.asend(action)",  # noqa: E501
             )
             tool_body.append(
-                "                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; await agent.asend(observation); print(observation)",  # noqa: E501
+                "                    observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; await agent.asend(observation)",  # noqa: E501
             )
             tool_body.append(r"                '{observation}\n'")
         self.tool_body = "\n".join(tool_body)
-        self.tool_conditions = " and\n".join(tool.input_schema.where for tool in self.tools)
+        self.tool_conditions = " and\n".join(tool.schema.where for tool in self.tools)
         self.tool_names = list(self.tool_refs.keys())
         self._run = self._compile_query(self.query)
 

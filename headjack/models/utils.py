@@ -13,3 +13,4 @@ def required_value(message: str, return_type: Type[T]) -> Callable[[], T]:
 class Stringable(Protocol):
     def __str__(self) -> str:
         pass
+
