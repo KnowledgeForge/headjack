@@ -9,7 +9,7 @@ from sqlmodel import SQLModel, create_engine
 
 from alembic import context
 from headjack.config import get_settings
-from headjack.models.tool import Tool  # noqa: F401
+from headjack.models.tool import ToolSchema, Param  # noqa: F401
 
 settings = get_settings()
 

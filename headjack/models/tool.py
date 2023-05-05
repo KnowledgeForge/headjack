@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, JSON
+from sqlalchemy.sql.schema import Column
 
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation
 
 
-from pydantic import BaseModel, ValidationError, validator, Field, root_validator
+from pydantic import BaseModel, ValidationError, validator, root_validator
 from typing import Dict, List, Union, Type, Literal, Optional, Any, TypeVar
 from dataclasses import dataclass, field
 from headjack.utils import fetch
@@ -26,16 +28,19 @@ class Compilation:
     where: List[str] = field(default_factory=list)
     code_var: Optional[str] = None
 
+class ParamType(str, Enum):
+    string = "string"
+    integer = "integer"
+    boolean = "boolean"
 
-class Param(BaseModel):
-    type: Literal["string"] | Literal["integer"] | Literal["boolean"] | List[
-        "Param"
-    ]
+class Param(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    type: str
+    tool_schema_name: Optional[str] = Field(default=None, foreign_key="toolschema.name")
+    tool_schema: "ToolSchema" = Relationship(back_populates="parameters")
     name: Optional[str] = None
     description: Optional[str] = None
-    options: Optional[
-        List[str] | List[int] | List[bool]
-    ] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
+    options: List[str] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
     length: Optional[
         int
     ] = None  # if length is set we ignore the min_length, max_length
@@ -262,7 +267,7 @@ for _ in range({self.length}):
                 "max_value must be set if setting min_value for non-string"
             )
         return values
-    @validator("description")
+    @validator("description", check_fields=False)
     def description_length(cls, v):
         if len(v) > 100:
             raise ValueError("description length can be at most 100 chars")
@@ -278,18 +283,21 @@ for _ in range({self.length}):
             return self._compilation.code_var
         return "["+", ".join(p.format_payload() for p in self.type)+"]"
 
-JSON = Dict[str, Union[Dict[str, Param], Param]]
+class Verb(str, Enum):
+    GET = "GET"
+    PUT = "PUT"
+    POST = "POST"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
 
-
-class ToolSchema(BaseModel):
-    name: str
+class ToolSchema(SQLModel, table=True):
+    name: str = Field(nullable=False, unique=True, primary_key=True)
     description: str
-    parameters: Optional[List[Param]] = None
-    json_: Optional[Dict[str, Any]] = Field(default=None, alias="json")
-    url: Optional[str] = None
-    verb: Union[Literal['GET'], Literal['PUT'], Literal['POST'], None] = None
-    results_schema: Optional[Dict[str, Any]] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
-
+    parameters: List[Param] = Relationship(back_populates="tool_schema")
+    json_: Optional[Dict[str, Any]] = Field(default={}, sa_column=Column(JSON))
+    url: Optional[str] = Field(nullable=True)
+    verb: Optional[Verb] = Field(nullable=True)
+    results_schema: Optional[Dict[str, Any]] = Field(default={}, sa_column=Column(JSON)) # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
     
     @root_validator
     def results_schema_if_url(cls, values):
@@ -297,7 +305,7 @@ class ToolSchema(BaseModel):
             raise ValueError("given a url, must also give a verb")
         return values
         
-    @validator("json_", "results_schema")
+    @validator("json_", "results_schema", check_fields=False)
     def json_dict_or_param(cls, v):
         def param_cast_check(value, key: Optional[str] = None):
             if type(value) not in (str, list, int, dict, bool):

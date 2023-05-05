@@ -136,3 +136,4 @@ notebooks/playground.ipynb
 
 *.db
 .pdm-python
+.DS_Store
