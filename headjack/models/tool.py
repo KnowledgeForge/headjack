@@ -132,7 +132,6 @@ for _ in range({self.length}):
             compilation.where.append(f"{variable} in {self.options}")
         
         if append_var:
-            import pdb; pdb.set_trace()
             compilation.body+=f"\n{append_var}.append({code_var})"
         
         object.__setattr__(self, "_compilation", compilation)
@@ -276,7 +275,7 @@ for _ in range({self.length}):
     
     def format_payload(self):
         if not isinstance(self.type, list):
-            return f"{self._compilation.code_var} or None"
+            return self._compilation.code_var
         return "["+", ".join(p.format_payload() for p in self.type)+"]"
 
 JSON = Dict[str, Union[Dict[str, Param], Param]]
@@ -384,7 +383,7 @@ class ToolSchema(BaseModel):
                 return sum([helper(v) for v in value], [])
             return []
 
-        return "\nand\n".join(helper(self.json_)+sum([helper(p) for p in self.parameters], []))
+        return " and\n".join(helper(self.json_)+sum([helper(p) for p in self.parameters], []))
     
     def compile(self):
         def helper(value, key = None):
@@ -412,13 +411,13 @@ class ToolSchema(BaseModel):
         return self
     
     async def fetch(self, payload: Dict[str, Any]):
-        if self.url is None:
-            raise ValueError("no url for tool schema")
-        return await fetch(self.format_url(payload), self.verb, self.format_body(payload), self.results_schema is not None)
+        if self.url is None or self.verb is None:
+            raise ValueError("no url and verb for tool schema")
+        return await fetch(self.format_url(payload['parameters']), self.verb, payload['json'], self.results_schema is not None)
        
-class Tool(SQLModel, table=True):  # type: ignore
-    id: Optional[int] = Field(default=None, primary_key=True)
-    schema: ClassVar[ToolSchema]
+@dataclass
+class Tool:
+    schema: ToolSchema
     model_identifier: Optional[str] = None
     description_: Optional[str] = None
     name_: Optional[str] = None
@@ -433,7 +432,6 @@ class Tool(SQLModel, table=True):  # type: ignore
         return self.name_ or self.schema.name
 
     async def __call__(self, action: "Action") -> "Observation":
-        payload = eval(str(self.schema.json_), action.utterance_)
         if self.schema.url is not None:
-            return Observation(utterance_=await self.schema.fetch(payload), tool=self)
+            return Observation(utterance_=await self.schema.fetch(action.utterance_), tool=self)
         raise NotImplementedError()

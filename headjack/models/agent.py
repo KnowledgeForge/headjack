@@ -4,12 +4,12 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
 
 import lmql
-from headjack_server.utils import add_source
+from headjack.utils import add_source
 
 if TYPE_CHECKING:
-    from headjack_server.models.memory import VectorStoreMemory
-    from headjack_server.models.tool import Tool
-    from headjack_server.models.utterance import User, Utterance
+    from headjack.models.memory import VectorStoreMemory
+    from headjack.models.tool import Tool
+    from headjack.models.utterance import User, Utterance
 
 
 @dataclass
@@ -44,9 +44,10 @@ class Agent:
 
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + f.__doc__.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        from headjack_server.models.utterance import Action, Answer, Observation, Thought, User, Utterance  # noqa: F401
+        from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance  # noqa: F401
 
         exec(source, globals(), locals())
+        print(source)
         assert locals().get("_f") is not None, "failed to compile query"
         add_source(cast(Callable, locals().get("_f")), source)
         return lmql.query(cast(Callable, locals().get("_f")))

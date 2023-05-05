@@ -2,8 +2,8 @@
 Standard react query
 """
 
-from headjack_server.models.agent import Agent
-from headjack_server.models.utterance import Utterance
+from headjack.models.agent import Agent
+from headjack.models.utterance import Utterance
 
 
 async def standard_query(
@@ -32,7 +32,7 @@ async def standard_query(
         Thought: I have tried all my tools and still could not find an answer.
         Answer: Agent says it could not find an answer
 
-        Here are the tools you choose from:
+        Here are the tools you may choose from:
         {tools_prompt}
 
         Conversation:
@@ -77,9 +77,9 @@ async def standard_query(
             if thought not in thought_filter
         ] and
         TOOL in [
-            thought
-            for thought in {tool_names}
-            if thought not in tool_filter
+            tool
+            for tool in {tool_names}
+            if tool not in tool_filter
         ] and
         STOPS_AT(THOUGHT, "\\n") and
         STOPS_AT(TOOL, "\\n") and
