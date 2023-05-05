@@ -10,12 +10,11 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from headjack_server.config import get_chroma_client
-from pydantic import BaseModel
+from headjack.config import get_chroma_client
 
 import os
 
-from headjack_server.models.session import Session
+from headjack.models.session import Session
 
 _logger = logging.getLogger(__name__)
 
