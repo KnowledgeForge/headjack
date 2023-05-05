@@ -37,8 +37,7 @@ templates = Jinja2Templates(directory="web")
 
 @app.get("/")
 def get_home():
-    import pdb; pdb.set_trace()
-    return templates.TemplateResponse("chat-demo.html", {"PORT": app.server.port})
+    return templates.TemplateResponse("chat-demo.html", {"PORT": PORT})
 
 
 @app.get("/session")
@@ -57,9 +56,26 @@ def get_agent_session(access_token: str):
     session_uuid = UUID(session_id)
     if session := Session.sessions.get(session_uuid):
         return session
-    from headjack_server.agents.standard import StandardAgent
-    from headjack_server.tools.knowledge_search import KnowledgeSearchTool
-    tools = [KnowledgeSearchTool()]
+    from headjack.agents.standard import StandardAgent
+    from headjack.models.tool import ToolSchema, Tool
+
+    knowledge_search_schema = ToolSchema(
+        **{
+            "name": "Knowledge Search",
+            "description": "Tool used to search for general knowledge."
+            "Multiple queries can be provided for relevant results for each.",
+            "parameters": [
+                {
+                    "name": "query",
+                    "description": "Distinct queries",
+                    "type": "string",
+                    "max_length": 3,
+                },
+            ],
+        }
+    )
+    knowledge_search = Tool(knowledge_search_schema)
+    tools = [knowledge_search]
     agent = StandardAgent(
         model_identifier="chatgpt",
         tools=tools,
@@ -67,7 +83,6 @@ def get_agent_session(access_token: str):
     )
     session = Session(agent, session_id=session_uuid)
     return session
-
 
 class ConnectionManager:
     def __init__(self):
