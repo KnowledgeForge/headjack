@@ -1,34 +1,35 @@
 """
 Module containing all config related things
 """
-from typing import Optional
+from typing import Iterator, Optional
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from pydantic import BaseSettings
-
-CHROMA = None
+from sqlalchemy.engine import Engine
+from sqlmodel import Session, create_engine
 
 
 def get_chroma_client():  # pragma: no cover
     """
     Get a chromadb client
     """
-    global CHROMA
-    if CHROMA is None:
-        CHROMA = chromadb.Client(
-            ChromaSettings(
-                chroma_api_impl="rest",
-                chroma_server_host="chromadb",
-                chroma_server_http_port="16402",
-            ),
-        )
-    return CHROMA
+    with chromadb.Client(
+        ChromaSettings(
+            chroma_api_impl="rest",
+            chroma_server_host="chromadb",
+            chroma_server_http_port="16402",
+        ),
+    ) as chroma_client:
+        yield chroma_client
 
 
 class Settings(BaseSettings):
     """
     Headjack config
+    
+    Config values can be overriden by environment variables.
+    Environment variables are expected to be prefixed by HEADJACK_, i.e. HEADJACK_METADATA_DB
     """
 
     metadata_db: str = "sqlite:///headjack.db?check_same_thread=False"
@@ -40,3 +41,18 @@ class Settings(BaseSettings):
 
 def get_settings():
     return Settings()
+
+def get_engine() -> Engine:
+    """
+    Create the metadata engine.
+    """
+    settings = get_settings()
+    engine = create_engine(settings.metadata_db)
+
+    return engine
+
+def get_session() -> Iterator[Session]:
+    engine = get_engine()
+
+    with Session(engine, autoflush=False) as session:  # pragma: no cover
+        yield session
