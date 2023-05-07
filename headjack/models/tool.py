@@ -123,9 +123,9 @@ for _ in range({self.length}):
                 compilation.body += f"\"[{variable}]\\n\"\n"
                 compilation.body += f"{code_var}={variable}\n"
             if self.max_value is not None:
-                compilation.where.append(f"len({variable})<={self.max_value}")
+                compilation.where.append(f"len({variable})<{self.max_value+1}")
             if self.min_value is not None:
-                compilation.where.append(f"len({variable})>={self.min_value}")
+                compilation.where.append(f"len({variable})>{self.min_value-1}")
 
         # list[param]
         if isinstance(self.type, list):
@@ -389,7 +389,7 @@ class ToolSchema(SQLModel, table=True):
                 return sum([helper(v) for v in value], [])
             return []
 
-        return " and\n".join(helper(self.json_)+sum([helper(p) for p in self.parameters], []))
+        return " and ".join(helper(self.json_)+sum([helper(p) for p in self.parameters], []))
     
     def compile(self):
         def helper(value, key = None):
@@ -440,6 +440,8 @@ class Tool:
         return self.name_ or self.schema.name
 
     async def __call__(self, action: "Action") -> "Observation":
+        # import pdb; pdb.set_trace()
         if self.schema.url is not None:
+            from headjack.models.utterance import Observation
             return Observation(utterance_=await self.schema.fetch(action.utterance_), tool=self)
         raise NotImplementedError()

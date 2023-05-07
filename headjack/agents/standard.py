@@ -51,7 +51,7 @@ class StandardAgent(Agent):
             )
             tool_body.append(indent(r"'{observation}\n'", ' '*16))
         self.tool_body = "\n".join(tool_body)
-        self.tool_conditions = " and\n".join(tool.schema.where() for tool in self.tools)
+        self.tool_conditions = " and ".join(tool.schema.where() for tool in self.tools)
         self.tool_names = list(self.tool_refs.keys())
         self._run = self._compile_query(self.query)
 

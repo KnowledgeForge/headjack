@@ -75,8 +75,9 @@ def get_agent_session(access_token: str):
         parameters=[
             Param(
                 name="text",
-                description="A query for semantic search.",
+                description="A succinct piece of text that asks a targeted question to find relevant knowledge documents.",
                 type="string",
+                max_value=50
             ),
             Param(name="collection", type="string", options=["knowledge"]),
         ],
