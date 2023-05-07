@@ -30,13 +30,21 @@ app.add_middleware(
 SECRET_KEY = os.environ.get('HEADJACK_SECRET', "headjack_secret")
 PORT = os.environ.get('HEADJACK_PORT', "8679")
 
+from os import path
+
+basepath = path.dirname(__file__)
+template_path = path.abspath(path.join(basepath, "..", "..", "web/chat-demo.html"))
 # locate templates
-templates = Jinja2Templates(directory="web")
+with open(template_path) as f:
+    template=f.read()
+
 
 
 @app.get("/")
 def get_home():
-    return templates.TemplateResponse("chat-demo.html", {"PORT": PORT})
+    # import pdb; pdb.set_trace()
+    return HTMLResponse(template.replace("PORT", PORT))
+# templates.TemplateResponse("chat-demo.html", context={"request":request, "PORT": PORT})
 
 
 @app.get("/session")
@@ -56,22 +64,26 @@ def get_agent_session(access_token: str):
     if session := Session.sessions.get(session_uuid):
         return session
     from headjack.agents.standard import StandardAgent
-    from headjack.models.tool import ToolSchema, Tool
+    from headjack.models.tool import ToolSchema, Tool, Verb, Param
 
     knowledge_search_schema = ToolSchema(
-        **{
-            "name": "Knowledge Search",
-            "description": "Tool used to search for general knowledge."
-            "Multiple queries can be provided for relevant results for each.",
-            "parameters": [
-                {
-                    "name": "query",
-                    "description": "Distinct queries",
-                    "type": "string",
-                    "max_length": 3,
-                },
-            ],
-        }
+    url="http://0.0.0.0:16410/query",
+    verb=Verb.GET,
+    name="Knowledge Search",
+    description="Tool used to search for general knowledge."
+    "Multiple queries can be provided for relevant results for each.",
+        parameters=[
+            Param(
+                name="text",
+                description="A query for semantic search.",
+                type="string",
+            ),
+            Param(name="collection", type="string", options=["knowledge"]),
+        ],
+        results_schema={
+            "ids": Param(type="string", max_length=100),
+            "documents": Param(type="string", max_length=100),
+        },
     )
     knowledge_search = Tool(knowledge_search_schema)
     tools = [knowledge_search]
@@ -111,6 +123,7 @@ async def websocket_endpoint(websocket: WebSocket, access_token: str):
         try:
             data = await websocket.receive_json()
             message = data["message"]
+            print(message)
             _logger.info(f"User message: {message}")
             async for response in session(message):
                 await websocket.send_json(

@@ -6,7 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Set, Type, Union, cast
 from uuid import UUID, uuid4
 
-from headjack_server.models.utterance import Action, Answer, Observation, Thought, User, Utterance
+from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance
 
 
 class SessionStatus(Enum):
@@ -16,7 +16,7 @@ class SessionStatus(Enum):
 
 
 if TYPE_CHECKING:
-    from headjack_server.models.agent import Agent
+    from headjack.models.agent import Agent
 
 
 _logger = logging.getLogger(__name__)

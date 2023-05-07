@@ -52,7 +52,7 @@
                     form.classList.remove('disabled');
                     input.disabled = false;
                     submitButton.disabled = false;
-                    ws = new WebSocket(`ws://localhost:{{PORT}}/chat/${access_token}`);
+                    ws = new WebSocket(`ws://localhost:PORT/chat/${access_token}`);
                     ws.onmessage = onMessage;
                     newSession.style.display = 'none';
                 })

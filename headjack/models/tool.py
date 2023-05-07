@@ -8,7 +8,7 @@ from sqlalchemy.sql.schema import Column
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation
 
-
+import os
 from pydantic import BaseModel, ValidationError, validator, root_validator
 from typing import Dict, List, Union, Type, Literal, Optional, Any, TypeVar
 from dataclasses import dataclass, field
@@ -287,8 +287,6 @@ class Verb(str, Enum):
     GET = "GET"
     PUT = "PUT"
     POST = "POST"
-    PATCH = "PATCH"
-    DELETE = "DELETE"
 
 class ToolSchema(SQLModel, table=True):
     name: str = Field(nullable=False, unique=True, primary_key=True)
@@ -330,17 +328,17 @@ class ToolSchema(SQLModel, table=True):
     def format_url(self, parameters: list):
         if self.url is None:
             raise ValueError("no url for tool schema")
-        params=""
-        query_params=""
+        params=[]
+        query_params=[]
         if self.parameters:
             for value, p in zip(parameters, self.parameters):
                 if p.required and value is None:
                     raise ValueError("required value is None")
                 if p.name is None:
-                    params+="/"+str(value)
+                    params.append(str(value))
                 else:
-                    query_params+="&"+f"{p.name}={value}"
-        return self.url+params+"?"+query_params
+                    query_params.append(f"{p.name}={value}")
+        return os.path.join(self.url, "/".join(params), "?"+"&".join(query_params))
     
 
 
@@ -431,6 +429,8 @@ class Tool:
     name_: Optional[str] = None
     max_uses_per_query: int = cast(int, float("inf"))
 
+    def __post_init__(self):
+        self.schema = self.schema.compile()
     @property
     def description(self):
         return self.description_ or self.schema.description
