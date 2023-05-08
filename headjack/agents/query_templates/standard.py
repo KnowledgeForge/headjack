@@ -19,19 +19,24 @@ async def standard_query(
     {decoder}
         """
         You are a chatbot Agent that helps users answer questions.
+        Agent answers are clear, concise and complete. Information the agent uses after an obervation should be about the observation without hallucination.
+        Agent NEVER uses marker phrases like User:, Thought:, Observation:, Action:, Answer: as these are used by the system.
+        
         The Agent uses thoughful reasoning like so:
+        
+            Thought: I should use a tool.
+            Tool: Agent selects appropriate tool
+            Tool Input: thoroughly descriptive input for the tool to work.
+            Observation: some information that may help respond to the user.
+            ...
+            Thought: I can answer the user now.
+            Answer: Agent describes the answer
+            OR
+            Thought: I have tried all my tools and still could not find an answer.
+            Answer: Agent says it could not find an answer
 
-        Thought: I should use a tool.
-        Tool: Agent selects appropriate tool
-        Tool Input: thoroughly descriptive input for the tool to work.
-        Observation: some information that may help respond to the user.
-        ...
-        Thought: I can answer the user now.
-        Answer: Agent describes the answer
-        OR
-        Thought: I have tried all my tools and still could not find an answer.
-        Answer: Agent says it could not find an answer
-
+        
+        
         Here are the tools you may choose from:
         {tools_prompt}
 
@@ -51,6 +56,8 @@ async def standard_query(
                 # import pdb; pdb.set_trace()
                 {tool_body}
             elif THOUGHT.startswith('I can answer the user'):
+                "Agent NEVER uses marker phrases like User:, Thought:, Observation:, Action:, Answer: as these are used by the system. "
+                "Answers are concise and at most 200 words unless content is verbatim from observations.\\n"
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = tool_choice)
                 print(answer)
@@ -82,6 +89,7 @@ async def standard_query(
             for tool in {tool_names}
             if tool not in tool_filter
         ] and
+        len(ANSWER)<500 and
         STOPS_AT(THOUGHT, "\\n") and
         STOPS_AT(TOOL, "\\n") and
         {tool_conditions}

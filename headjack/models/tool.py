@@ -379,10 +379,10 @@ class ToolSchema(BaseModel):
     name: str
     description: str
     parameters: Optional[List[Param]] = None
-    json_: Optional[Dict[str, Any]] = Field(default=None, alias="json")
+    json_: Union[Any, Dict[str, Any], None] = Field(default=None, alias="json")
     url: Optional[str] = None
     verb: Optional[HTTPVerb] = None
-    results_schema: Optional[Dict[str, Any]] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
+    results_schema: Union[Any, Dict[str, Any], None] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
     code: Union[None, str, ToolCode] = None
 
     @root_validator
@@ -418,7 +418,7 @@ class ToolSchema(BaseModel):
                     return {k: param_cast_check(v) for k, v in value.items()}
             return value
 
-        return {key: param_cast_check(value) for key, value in v.items()}
+        return param_cast_check(v)
 
     def format_url(self, parameters: list):
         if self.url is None:
@@ -549,7 +549,7 @@ class Tool:
             result = await self.schema.fetch(result)
         if self.schema.code is not None and self.schema.code.process_observation is not None:
             modified = True
-            result = (await self.schema.code.process_observation(action_input)) if inspect.iscoroutinefunction(self.schema.code.process_observation) else self.schema.code.process_observation(action_input)
+            result = (await self.schema.code.process_observation(action_input, result)) if inspect.iscoroutinefunction(self.schema.code.process_observation) else self.schema.code.process_observation(action_input, result)
         if modified:
             from headjack.models.utterance import Observation
             return Observation(utterance_=result, tool=self)

@@ -9,8 +9,6 @@ import jwt
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from headjack.config import get_chroma_client
 
 import os
 
@@ -84,8 +82,11 @@ def get_agent_session(access_token: str):
             "ids": {"type": "string", "max_length": 100},
             "documents": {"type": "string", "max_length": 100},
         },
+        code="""
+def process_observation(action_input, observation_input):
+    return "\\n".join(str(doc) for doc in [i for j in observation_input['documents'] for i in j])
+        """
     )
-
     knowledge_search = Tool(knowledge_search_schema)
 
     metric_search_schema = ToolSchema(
@@ -110,10 +111,11 @@ def get_agent_session(access_token: str):
             #     "max_length": 4,
             # },
         ],
-        results_schema={
-            "ids": {"type": "string", "max_length": 100},
-            "documents": {"type": "string", "max_length": 100},
-        },
+        results_schema={"type": "string"},
+        code="""
+def process_observation(action_input, observation_input):
+    return "\\n".join(str(doc) for doc in [i for j in observation_input['documents'] for i in j])
+        """
     )
 
     metric_search = Tool(metric_search_schema)
