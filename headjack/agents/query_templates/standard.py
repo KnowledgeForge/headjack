@@ -48,6 +48,7 @@ async def standard_query(
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=thought)
                 print(tool_choice)
                 await agent.asend(tool_choice)
+                # import pdb; pdb.set_trace()
                 {tool_body}
             elif THOUGHT.startswith('I can answer the user'):
                 "Answer: [ANSWER]\\n"

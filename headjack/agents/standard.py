@@ -37,19 +37,20 @@ class StandardAgent(Agent):
         self.loop_limit = loop_limit
         self.history_length = history_length
         self.history_utterances = history_utterances
-        self.tools_prompt = "\n".join(indent("tool.name"+": " +tool.description.replace('\n', ' '), ' '*8) for tool in self.tools)
+        self.tools_prompt = "\n".join(indent(tool.name+": " +tool.description.replace('\n', ' '), ' '*8) for tool in self.tools)
         self.tool_refs = {tool.name: tool for tool in self.tools}
         tool_body = []
         for tool in self.tools:
-            tool_body.append(f"if TOOL=='{tool.name}':")
+            tool_body.append("\n")
+            tool_body.append(indent(f"if TOOL=='{tool.name}':", " "*16))
             tool_body.append(indent(f'"Tool Input: \\n"{tool.schema.body()}\n', ' '*20))
             tool_body.append(
-                indent(f"action = Action(utterance_ = {tool.schema.payload_code()}, agent = agent, parent_ = tool_choice); await agent.asend(action)", ' '*20)  # noqa: E501
+                indent(f"action = Action(utterance_ = {tool.schema.payload_code()}, agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)  # noqa: E501
             )
             tool_body.append(
-                indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; await agent.asend(observation)", ' '*20)# noqa: E501
+                indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(action); await agent.asend(observation)", ' '*20)# noqa: E501
             )
-            tool_body.append(indent(r"'{observation}\n'", ' '*16))
+            tool_body.append(indent(r"'{observation}\n'", ' '*20))
         self.tool_body = "\n".join(tool_body)
         self.tool_conditions = " and ".join(tool.schema.where() for tool in self.tools)
         self.tool_names = list(self.tool_refs.keys())

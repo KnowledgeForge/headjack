@@ -2,7 +2,7 @@ import asyncio
 import inspect
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
-
+from textwrap import dedent
 import lmql
 from headjack.utils import add_source
 
@@ -38,11 +38,12 @@ class Agent:
 
     def _compile_query(self, f: Callable[["Agent", "Utterance", Any], Coroutine[Any, Any, "Utterance"]]):
         assert f.__doc__, "query must have a docstring"
+        doc = dedent(f.__doc__)
         sig = inspect.signature(f)
         arg_names = tuple([arg.name for arg in sig.parameters.values()])
         assert arg_names[:2] == ("agent", "utterance"), "First parameters to query must be `agent, utterance`"
 
-        source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + f.__doc__.format(**self.__dict__) + "\n    '''")
+        source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + doc.format(**self.__dict__) + "\n    '''")
         #         print(source)
         from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance  # noqa: F401
 

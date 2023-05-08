@@ -14,6 +14,53 @@ from typing import Dict, List, Union, Type, Literal, Optional, Any, TypeVar
 from dataclasses import dataclass, field
 from headjack.utils import fetch
 import uuid
+from textwrap import indent
+import re
+import ast
+import inspect
+from dataclasses import dataclass
+from types import FunctionType
+from typing import Callable, Optional
+
+@dataclass
+class ToolCode:
+    process_action: Optional[Callable] = None
+    process_observation: Optional[Callable] = None
+    
+    @classmethod
+    def from_str(cls, code: str) -> "ToolCode":
+        # Check if the code contains 'process_action' or 'process_observation' functions
+        if not re.search(r"\b(?:process_action|process_observation)\b", code):
+            raise ValueError(
+                "Code must contain at least one of 'process_action' or 'process_observation' functions."
+            )
+
+        # Execute the code in a sandbox
+        sandbox = {}
+        exec(code, sandbox, sandbox)
+
+        # Check if 'process_action' function exists and if it takes one argument
+        if "process_action" in sandbox:
+            if not isinstance(sandbox["process_action"], FunctionType):
+                raise TypeError("'process_action' must be a function.")
+
+            sig = inspect.signature(sandbox["process_action"])
+            if len(sig.parameters) != 1:
+                raise ValueError("'process_action' function must take exactly one argument for tool payload.")
+
+        # Check if 'process_observation' function exists and if it takes two arguments
+        if "process_observation" in sandbox:
+            if not isinstance(sandbox["process_observation"], FunctionType):
+                raise TypeError("'process_observation' must be a function.")
+
+            sig = inspect.signature(sandbox["process_observation"])
+            if len(sig.parameters) != 2:
+                raise ValueError(
+                    "'process_observation' function must take exactly two arguments for tool payload and tool observation."
+                )
+                
+        return cls(process_action = sandbox.get('process_action'), process_observation = sandbox.get('process_observation'))
+        
 T = TypeVar('T')
 def var():
     unique_id = uuid.uuid4()
@@ -33,14 +80,15 @@ class ParamType(str, Enum):
     integer = "integer"
     boolean = "boolean"
 
-class Param(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    type: str
-    tool_schema_name: Optional[str] = Field(default=None, foreign_key="toolschema.name")
-    tool_schema: "ToolSchema" = Relationship(back_populates="parameters")
+class Param(BaseModel):
+    type: Literal["string"] | Literal["integer"] | Literal["boolean"] | List[
+        "Param"
+    ]
     name: Optional[str] = None
     description: Optional[str] = None
-    options: List[str] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
+    options: Optional[
+        List[str] | List[int] | List[bool]
+    ] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
     length: Optional[
         int
     ] = None  # if length is set we ignore the min_length, max_length
@@ -55,6 +103,8 @@ class Param(SQLModel, table=True):
     ] = None  # if max_value is set defaults to 0 for integer and 1 for string
     max_value: Optional[int] = None
     required: bool = True
+    default: Optional[str] = None
+
     _compilation: Optional[Compilation] = None
 
     def compile(self, append_var = None):
@@ -63,31 +113,23 @@ class Param(SQLModel, table=True):
         variable = compilation.variable
         code_var = variable.lower()
         compilation.code_var = code_var
-        compilation.body+="#"*35+"\n"+f"#name={self.name}; desc={self.description}\n"+"#"*35
-        compilation.body+=f"\n{code_var}=None\n"
-        if (self.name or self.description) and self.max_length is None:
-            temp = (
+        compilation.body+=f"\n{code_var}={repr(self.default)}\n"
+        variable_prompt = (
                 (self.name + " " if self.name else "")
                 + (f"({self.description})" if self.description else "")
-                + ": "
             )
-            compilation.body += f'"{temp}"'
+        count_prompt = ""
+        req_prompt=""
+        default_prompt = ""
 
         if self.max_length is not None:
             compilation.code_var = code_var
             min_length = self.min_length or 1
             count_var = variable + "_COUNT"
-            temp = " | There are ["+count_var+"] needed."
-            if self.name or self.description:
-                temp = (
-                    (self.name + " " if self.name else "")
-                    + (f"({self.description} {temp})" if self.description else "")
-                    + ": "
-                )
+            count_prompt = f"'From at least {min_length} to at most {self.max_length}, there needs to be ["+count_var+"].'"
             count_range = [str(i) for i in range(min_length, self.max_length + 1)]
             compilation.where.append(f"{count_var} in {count_range}")
             compilation.body += f"""
-"{temp}"
 {code_var} = []
 for _ in range(int({count_var})):
     "[{variable}], "
@@ -120,8 +162,9 @@ for _ in range({self.length}):
 
         if self.type == "string":
             if self.length is None and self.max_length is None:
-                compilation.body += f"\"[{variable}]\\n\"\n"
+                compilation.body += f'\'"[{variable}]\\n\'\n'
                 compilation.body += f"{code_var}={variable}\n"
+                compilation.where.append(f'STOPS_AT({variable}, \'"\')')
             if self.max_value is not None:
                 compilation.where.append(f"len({variable})<{self.max_value+1}")
             if self.min_value is not None:
@@ -134,14 +177,57 @@ for _ in range({self.length}):
                 param.compile(code_var)
 
         if self.options:
-            compilation.where.append(f"{variable} in {self.options}")
+            if len(self.options)==1:
+                compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
+                compilation.where = []
+                default_prompt=repr(self.options[0])
+            else:
+                compilation.where.append(f"{variable} in {self.options}")
         
         if append_var:
             compilation.body+=f"\n{append_var}.append({code_var})"
         
+        
+        if not self.required:
+            req_var = variable + "_REQ"
+            compilation.where.append(f"{req_var} in ['True', 'False']")
+            req_prompt=f" (This value, which is optional to use this tool, is needed?: [{req_var}])"
+
+            compilation.body=f"""
+if {req_var}=='True':
+{indent(count_prompt, " "*4)}
+{indent(compilation.body, " "*4)}
+"""
+        compilation.body=f'"{variable_prompt}{req_prompt}: {default_prompt}"'+compilation.body
+        compilation.body="#"*35+"\n"+f"#name={self.name}; desc={self.description}\n"+"#"*35+"\n"+compilation.body
         object.__setattr__(self, "_compilation", compilation)
         return self
 
+    @root_validator
+    def default_when_not_required(cls, values):
+        required = values.get("required")
+        default = values.get('default')
+        if not required and default is None:
+            raise ValueError("default missing for optional param.")
+        return values
+
+
+    @root_validator
+    def list_param_must_be_required(cls, values):
+        required = values.get("required")
+        type = values.get('type')
+        if not required and isinstance(type, list):
+            raise ValueError("param lists are always required.")
+        return values
+    
+    @root_validator
+    def default_cast(cls, values):
+        default = values.get('default')
+        if default is not None:
+            if type := {"string": str, "integer": int, 'boolean': bool}.get(values.get("type")):
+                values['default']=str(type(default))
+        return values
+            
     @root_validator
     def length_must_be_positive(cls, values):
         v = values.get("length")
@@ -267,6 +353,7 @@ for _ in range({self.length}):
                 "max_value must be set if setting min_value for non-string"
             )
         return values
+    
     @validator("description", check_fields=False)
     def description_length(cls, v):
         if len(v) > 100:
@@ -283,20 +370,28 @@ for _ in range({self.length}):
             return self._compilation.code_var
         return "["+", ".join(p.format_payload() for p in self.type)+"]"
 
-class Verb(str, Enum):
+class HTTPVerb(str, Enum):
     GET = "GET"
     PUT = "PUT"
     POST = "POST"
 
-class ToolSchema(SQLModel, table=True):
-    name: str = Field(nullable=False, unique=True, primary_key=True)
+class ToolSchema(BaseModel):
+    name: str
     description: str
-    parameters: List[Param] = Relationship(back_populates="tool_schema")
-    json_: Optional[Dict[str, Any]] = Field(default={}, sa_column=Column(JSON))
-    url: Optional[str] = Field(nullable=True)
-    verb: Optional[Verb] = Field(nullable=True)
-    results_schema: Optional[Dict[str, Any]] = Field(default={}, sa_column=Column(JSON)) # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
-    
+    parameters: Optional[List[Param]] = None
+    json_: Optional[Dict[str, Any]] = Field(default=None, alias="json")
+    url: Optional[str] = None
+    verb: Optional[HTTPVerb] = None
+    results_schema: Optional[Dict[str, Any]] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
+    code: Union[None, str, ToolCode] = None
+
+    @root_validator
+    def validate_tool_code(cls, values):
+        if code := values.get("code"):
+            if isinstance(code, str):
+                values['code'] = ToolCode.from_str(code)
+        return values
+
     @root_validator
     def results_schema_if_url(cls, values):
         if values.get('url') is not None and values.get('verb') is None:
@@ -373,8 +468,11 @@ class ToolSchema(SQLModel, table=True):
             if isinstance(value, list):
                 return "\n".join(helper(v) for v in value)
             return ""
-        return "\n".join(helper(p) for p in self.parameters)+"\n"+helper(self.json_)+"\n"
-
+        body =  "\n".join(helper(p) for p in self.parameters)+"\n"+helper(self.json_)+"\n"
+        if body.strip():
+            body = "'To use this tool, derive the following values:\\n'\n"+body
+        return body
+    
     def where(self)->str: 
         def helper(value)->str:
             if isinstance(value, Param):
@@ -431,6 +529,7 @@ class Tool:
 
     def __post_init__(self):
         self.schema = self.schema.compile()
+        
     @property
     def description(self):
         return self.description_ or self.schema.description
@@ -440,8 +539,18 @@ class Tool:
         return self.name_ or self.schema.name
 
     async def __call__(self, action: "Action") -> "Observation":
-        # import pdb; pdb.set_trace()
+        modified = False
+        result = action_input = action.utterance_
+        if self.schema.code is not None and self.schema.code.process_action is not None:
+            modified = True
+            result = (await self.schema.code.process_action(action_input)) if inspect.iscoroutinefunction(self.schema.code.process_action) else self.schema.code.process_action(action_input)
         if self.schema.url is not None:
+            modified = True
+            result = await self.schema.fetch(result)
+        if self.schema.code is not None and self.schema.code.process_observation is not None:
+            modified = True
+            result = (await self.schema.code.process_observation(action_input)) if inspect.iscoroutinefunction(self.schema.code.process_observation) else self.schema.code.process_observation(action_input)
+        if modified:
             from headjack.models.utterance import Observation
-            return Observation(utterance_=await self.schema.fetch(action.utterance_), tool=self)
+            return Observation(utterance_=result, tool=self)
         raise NotImplementedError()

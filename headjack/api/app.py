@@ -64,34 +64,64 @@ def get_agent_session(access_token: str):
     if session := Session.sessions.get(session_uuid):
         return session
     from headjack.agents.standard import StandardAgent
-    from headjack.models.tool import ToolSchema, Tool, Verb, Param
+    from headjack.models.tool import ToolSchema, Tool, HTTPVerb, Param
 
     knowledge_search_schema = ToolSchema(
-    url="http://0.0.0.0:16410/query",
-    verb=Verb.GET,
-    name="Knowledge Search",
-    description="Tool used to search for general knowledge."
-    "Multiple queries can be provided for relevant results for each.",
+        url="http://0.0.0.0:16410/query",
+        verb=HTTPVerb.GET,
+        name="Knowledge Search",
+        description="Tool used to search for general knowledge. Asking a question will return documents containing relevant information.",
         parameters=[
-            Param(
-                name="text",
-                description="A succinct piece of text that asks a targeted question to find relevant knowledge documents.",
-                type="string",
-                max_value=50
-            ),
-            Param(name="collection", type="string", options=["knowledge"]),
+            {
+                "name": "text",
+                "description": "A succinct piece of text that asks a targeted question to find relevant knowledge documents.",
+                "type": "string",
+                "max_value": 50,
+            },
+            {"name": "collection", "type": "string", "options": ["knowledge"]},
         ],
         results_schema={
-            "ids": Param(type="string", max_length=100),
-            "documents": Param(type="string", max_length=100),
+            "ids": {"type": "string", "max_length": 100},
+            "documents": {"type": "string", "max_length": 100},
         },
     )
+
     knowledge_search = Tool(knowledge_search_schema)
-    tools = [knowledge_search]
+
+    metric_search_schema = ToolSchema(
+        url="http://0.0.0.0:16410/query",
+        verb=HTTPVerb.GET,
+        name="Metric Search",
+        description="Tool used to search for metrics. Asking a question will return documents containing relevant information.",
+        parameters=[
+            {
+                "name": "text",
+                "description": "Short sequence of words to find relevant metrics.",
+                "type": "string",
+                "max_value": 50,
+            },
+            {"name": "collection", "type": "string", "options": ["metrics"]},
+            # {
+            #     "name": "do not use this",
+            #     "type": "string",
+            #     "required": False,
+            #     "default": "hello world",
+            #     "description": "agents should not use this value",
+            #     "max_length": 4,
+            # },
+        ],
+        results_schema={
+            "ids": {"type": "string", "max_length": 100},
+            "documents": {"type": "string", "max_length": 100},
+        },
+    )
+
+    metric_search = Tool(metric_search_schema)
+    tools = [knowledge_search, metric_search]
     agent = StandardAgent(
         model_identifier="chatgpt",
         tools=tools,
-        decoder="argmax(openai_chunksize=4)",
+        decoder="argmax(openai_chunksize=4, chatty_openai=True)",
     )
     session = Session(agent, session_id=session_uuid)
     return session
