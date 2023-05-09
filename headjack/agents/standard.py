@@ -44,13 +44,14 @@ class StandardAgent(Agent):
             tool_body.append("\n")
             tool_body.append(indent(f"if TOOL=='{tool.name}':", " "*16))
             tool_body.append(indent(f'"Tool Input: \\n"{tool.schema.body()}\n', ' '*20))
-            tool_body.append(
-                indent(f"action = Action(utterance_ = {tool.schema.payload_code()}, agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)  # noqa: E501
-            )
-            tool_body.append(
-                indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(action); await agent.asend(observation)", ' '*20)# noqa: E501
-            )
-            tool_body.append(indent(r"'{observation}\n'", ' '*20))
+            # tool_body.append(
+            #     indent(f"action = Action(utterance_ = tool_payloads['{tool.name}'], agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)  # noqa: E501
+            # )
+            # tool_body.append(
+            #     indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(action); await agent.asend(observation)", ' '*20)# noqa: E501
+            # )
+            # tool_body.append(indent(r"'{observation}\n'", ' '*20))
+            # tool_body.append(indent(r"if observation.consider_answer: break\n", ' '*20))
         self.tool_body = "\n".join(tool_body)
         self.tool_conditions = " and ".join(tool.schema.where() for tool in self.tools)
         self.tool_names = list(self.tool_refs.keys())

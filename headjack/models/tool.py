@@ -21,6 +21,20 @@ import inspect
 from dataclasses import dataclass
 from types import FunctionType
 from typing import Callable, Optional
+from uuid import UUID
+
+def ref_index_from_str(s):
+    components = s.split('.')
+    result = []
+    for i, component in enumerate(components):
+        match = re.match(r'(?P<key>.*?)\[(?P<idx>\d+)\]$', component)
+        if match:
+            result.append(f"['{match.group('key')}']")
+            result.append(f"[{match.group('idx')}]")
+        else:
+            result.append(f"['{component}']")
+
+    return ''.join(result)
 
 @dataclass
 class ToolCode:
@@ -81,14 +95,12 @@ class ParamType(str, Enum):
     boolean = "boolean"
 
 class Param(BaseModel):
-    type: Literal["string"] | Literal["integer"] | Literal["boolean"] | List[
+    type: Optional[ParamType | List[
         "Param"
-    ]
+    ]] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    options: Optional[
-        List[str] | List[int] | List[bool]
-    ] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
+    options: Union[List[str|int|bool], "Param", None] = None  # options is only valid if none of the lengths are set and if the type is one of the literals
     length: Optional[
         int
     ] = None  # if length is set we ignore the min_length, max_length
@@ -104,6 +116,7 @@ class Param(BaseModel):
     max_value: Optional[int] = None
     required: bool = True
     default: Optional[str] = None
+    ref: Optional[str] = None
 
     _compilation: Optional[Compilation] = None
 
@@ -113,7 +126,13 @@ class Param(BaseModel):
         variable = compilation.variable
         code_var = variable.lower()
         compilation.code_var = code_var
-        compilation.body+=f"\n{code_var}={repr(self.default)}\n"
+        
+        if self.ref:
+            compilation.body+=f"\n{code_var}=tool_payload"+ref_index_from_str(self.ref)
+            # object.__setattr__(self, "_compilation", compilation)
+            # return self
+        else:
+            compilation.body+=f"\n{code_var}={repr(self.default)}\n"
         variable_prompt = (
                 (self.name + " " if self.name else "")
                 + (f"({self.description})" if self.description else "")
@@ -177,17 +196,21 @@ for _ in range({self.length}):
                 param.compile(code_var)
 
         if self.options:
-            if len(self.options)==1:
-                compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
-                compilation.where = []
-                default_prompt=repr(self.options[0])
+            if isinstance(self.options, Param):
+                self.options.compile()
+                compilation.where.append(f"{variable} in tool_payload"+ref_index_from_str(self.options.ref))
             else:
-                compilation.where.append(f"{variable} in {self.options}")
+                if len(self.options)==1:
+                    compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
+                    compilation.where = []
+                    default_prompt=repr(self.options[0])
+                else:
+                    compilation.where.append(f"{variable} in {self.options}")
         
         if append_var:
             compilation.body+=f"\n{append_var}.append({code_var})"
         
-        
+            
         if not self.required:
             req_var = variable + "_REQ"
             compilation.where.append(f"{req_var} in ['True', 'False']")
@@ -203,6 +226,23 @@ if {req_var}=='True':
         object.__setattr__(self, "_compilation", compilation)
         return self
 
+    @root_validator
+    def type_if_not_ref(cls, values):
+        ref = values.get("ref")
+        type = values.get('type')
+        if ref is None and type is None:
+            raise ValueError("type is required for non-refs.")
+        return values
+    
+    @root_validator
+    def ref_or_type(cls, values):
+        ref = values.get("ref")
+        if ref is None:
+            return values
+        if any((v is not None for k, v in values.items() if k not in ('ref', 'name', 'description', 'type', 'required', 'default'))):
+            raise ValueError("ref cannot be used with values other than 'name', 'description', 'type', 'required', 'default'.")
+        return values
+    
     @root_validator
     def default_when_not_required(cls, values):
         required = values.get("required")
@@ -325,13 +365,23 @@ if {req_var}=='True':
     @root_validator
     def options_cannot_be_set_with_not_string_integer(cls, values):
         v = values.get("type")
-        if v not in ("string", "integer") and values.get("options") is not None:
-            raise ValueError("cannot set options with a param list")
+        if v not in ("string", "integer", None) and values.get("options") is not None:
+            raise ValueError("cannot set options if using a type and one that is not string nor integer")
         return values
-
+    
+    @root_validator
+    def options_param_must_be_ref(cls, values):
+        options = values.get('options')
+        if isinstance(options, Param) and options.ref is None:
+            raise ValueError("options param must be ref")
+        return values
+         
     @root_validator
     def options_must_match_type(cls, values):
-        if v := values.get("options"):
+        v = values.get("options")
+        if v is not None:
+            if isinstance(v, Param):
+                return values
             ret = []
             for option in v:
                 if type := {"string": str, "integer": int}.get(values.get("type")):
@@ -366,6 +416,7 @@ if {req_var}=='True':
         return self._compilation is not None
     
     def format_payload(self):
+        self.compile()
         if not isinstance(self.type, list):
             return self._compilation.code_var
         return "["+", ".join(p.format_payload() for p in self.type)+"]"
@@ -375,6 +426,34 @@ class HTTPVerb(str, Enum):
     PUT = "PUT"
     POST = "POST"
 
+@dataclass
+class ToolRefs:
+    refs: List[Param] = field(default_factory=list)
+    tool_lookup: Dict[str, "Tool"] = field(default_factory=dict)
+    
+    def __post_init__(self):
+        new_refs = []
+        ref_names = set()
+        for param in self.refs:
+            if param.ref not in ref_names:
+                ref_names.add(param.ref)
+                new_refs.append(param)
+        self.refs = new_refs
+        
+    def compile(self, tool_refs: Optional["ToolRefs"] = None):
+        ref = self if tool_refs is None else tool_refs
+        for param in self.refs:
+            if param.ref not in ref.tool_lookup:
+                if ref is not self: ref.refs.append(param)
+                ref.tool_lookup[param.ref.split('.')[0]] = Tool.tools[param.ref.split('.')[0]]
+        return ref
+    
+    def body(self)->str:
+        return "\n".join(f"To use this tool, first you must use {tool.name}. "+ tool.schema.body() for tool in reversed(self.tool_lookup.values()))
+    
+    def where(self)->List[str]:
+        return sum((tool.schema.where() for tool in self.tool_lookup.values()), [])
+
 class ToolSchema(BaseModel):
     name: str
     description: str
@@ -382,9 +461,17 @@ class ToolSchema(BaseModel):
     json_: Union[Any, Dict[str, Any], None] = Field(default=None, alias="json")
     url: Optional[str] = None
     verb: Optional[HTTPVerb] = None
-    results_schema: Union[Any, Dict[str, Any], None] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
+    results: Union[Any, Dict[str, Any], None] = None # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
     code: Union[None, str, ToolCode] = None
+    result_answer: bool = False
 
+    _tool_refs: Optional[ToolRefs] = None
+    @validator('name')
+    def name_no_dots(cls, v):
+        if '.' in v:
+            raise ValueError('names may not contain dots')
+        return v
+    
     @root_validator
     def validate_tool_code(cls, values):
         if code := values.get("code"):
@@ -398,7 +485,7 @@ class ToolSchema(BaseModel):
             raise ValueError("given a url, must also give a verb")
         return values
         
-    @validator("json_", "results_schema", check_fields=False)
+    @validator("json_", "results", check_fields=False)
     def json_dict_or_param(cls, v):
         def param_cast_check(value, key: Optional[str] = None):
             if type(value) not in (str, list, int, dict, bool):
@@ -413,7 +500,7 @@ class ToolSchema(BaseModel):
                 return ret
             if isinstance(value, dict):
                 try:
-                    return Param(**{**value, "name": key})
+                    return Param(**{"name": key, **value})
                 except ValidationError:
                     return {k: param_cast_check(v) for k, v in value.items()}
             return value
@@ -435,8 +522,6 @@ class ToolSchema(BaseModel):
                     query_params.append(f"{p.name}={value}")
         return os.path.join(self.url, "/".join(params), "?"+"&".join(query_params))
     
-
-
     def payload_code(self)->str: 
         def helper(value)->str:
             if isinstance(value, Param):
@@ -449,6 +534,7 @@ class ToolSchema(BaseModel):
             
         json = None
         parameters = None
+        results = None
         if self.json_ is not None:
             json = helper(self.json_)
         if self.parameters is not None:
@@ -458,6 +544,7 @@ class ToolSchema(BaseModel):
     def body(self)->str: 
         def helper(value)->str:
             if isinstance(value, Param):
+                value.compile()
                 base = f"\n{value._compilation.body}\n"
                 if isinstance(value.type, list):
                     for p in value.type:
@@ -468,14 +555,30 @@ class ToolSchema(BaseModel):
             if isinstance(value, list):
                 return "\n".join(helper(v) for v in value)
             return ""
-        body =  "\n".join(helper(p) for p in self.parameters)+"\n"+helper(self.json_)+"\n"
+        body =  "\n".join(helper(p) for p in self.parameters or [])+"\n"+helper(self.json_)+"\n"
         if body.strip():
-            body = "'To use this tool, derive the following values:\\n'\n"+body
+            body = f"'To use this {self.name} tool, derive the following values:\\n'\n"+body
+        
+        if self._tool_refs is not None:
+            body = self._tool_refs.body()+"\n"+body
+            body = "\ntool_payloads={}\n"+body
+            
+        body+=f"tool_payloads['{self.name}']="+self.payload_code()
+        body+=f"\naction = Action(utterance_ = tool_payloads['{self.name}'], agent = agent, parent_ = tool_choice)\nprint(action)\nawait agent.asend(action)"
+        body+=f"\nobservation = await Tool.tools['{self.name}'](action); observation.parent = action\nprint(observation)\nawait agent.asend(observation)"
+        body+=f"\ntool_payloads['{self.name}']['results']=observation.utterance_"
+        body+="\n'{observation}\\n'\n"
+        body+="""
+if observation.consider_answer:
+    answer = Answer(utterance = objective.utterance_, agent = agent, parent = observation)
+    await agent.asend(answer)
+    break
+"""
         return body
     
     def where(self)->str: 
-        def helper(value)->str:
-            if isinstance(value, Param):
+        def helper(value)->List[str]:
+            if isinstance(value, Param) and value.ref is None:
                 base = value._compilation.where[:]
                 if isinstance(value.type, list):
                     for p in value.type:
@@ -486,12 +589,18 @@ class ToolSchema(BaseModel):
             if isinstance(value, list):
                 return sum([helper(v) for v in value], [])
             return []
-
-        return " and ".join(helper(self.json_)+sum([helper(p) for p in self.parameters], []))
+        ref_filters = []
+        if self._tool_refs:
+            ref_filters=self._tool_refs.where()
+        return " and ".join(ref_filters+helper(self.json_)+sum([helper(p) for p in self.parameters or []], []))
     
-    def compile(self):
+    def compile(self, tool_refs: Optional[ToolRefs] = None):
+        refs = [] 
         def helper(value, key = None):
             if isinstance(value, Param):
+                if value.ref is not None:
+                    refs.append(value)
+                    return
                 if value.name is None and key is not None:
                     object.__setattr__(value, 'name', key)
                 value.compile()
@@ -505,13 +614,26 @@ class ToolSchema(BaseModel):
                 for v in value:
                     helper(v)
             return value
-                    
+                
         if self.json_ is not None:
             for k, v in self.json_.items():
                 helper(v, k)
         if self.parameters is not None:
             for p in self.parameters:
                 helper(p)
+                
+        if refs:
+            temp_ref = ToolRefs(refs)
+            _tool_refs = temp_ref.compile(tool_refs)
+            
+            for tool in list(_tool_refs.tool_lookup.values()):
+                if tool is self:
+                    raise ValueError("recursive tool usage detected and not allowed")
+                tool.schema.compile(_tool_refs)
+                
+            if tool_refs is None:
+                object.__setattr__(self, '_tool_refs', _tool_refs)
+                
         return self
     
     async def fetch(self, payload: Dict[str, Any]):
@@ -526,8 +648,12 @@ class Tool:
     description_: Optional[str] = None
     name_: Optional[str] = None
     max_uses_per_query: int = cast(int, float("inf"))
+    tools: ClassVar[Dict[UUID, "Tool"]] = {}
 
     def __post_init__(self):
+        if self.name in Tool.tools:
+            raise Exception(f"duplicate tool names `{self.name}`")
+        Tool.tools[self.name]=self
         self.schema = self.schema.compile()
         
     @property
@@ -552,5 +678,5 @@ class Tool:
             result = (await self.schema.code.process_observation(action_input, result)) if inspect.iscoroutinefunction(self.schema.code.process_observation) else self.schema.code.process_observation(action_input, result)
         if modified:
             from headjack.models.utterance import Observation
-            return Observation(utterance_=result, tool=self)
+            return Observation(utterance_=result, tool=self, consider_answer=self.schema.result_answer)
         raise NotImplementedError()

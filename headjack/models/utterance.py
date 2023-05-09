@@ -99,7 +99,7 @@ class Observation(Utterance):
 
     marker = "Observation: "
     tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
-
+    consider_answer: bool = False
 
 @dataclass
 class Action(Utterance):

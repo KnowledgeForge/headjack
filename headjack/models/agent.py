@@ -29,6 +29,7 @@ class Agent:
 
     async def asend(self, utterance: "Utterance"):
         await self.queue.put(utterance)
+        
         # print(utterance)
 
     async def run(self, *args):
