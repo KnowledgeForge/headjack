@@ -1,9 +1,11 @@
 import asyncio
 import inspect
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
 from textwrap import dedent
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
+
 import lmql
+
 from headjack.utils import add_source
 
 if TYPE_CHECKING:
@@ -47,9 +49,10 @@ class Agent:
 
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + doc.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance, Feedback  # noqa: F401
-        from headjack.models.tool import Tool, dyn_filter
-        dynamic_filter = {}
+        # from headjack.models.tool import Tool, dyn_filter
+        # from headjack.models.utterance import Action, Answer, Feedback, Observation, Thought, User, Utterance  # noqa: F401
+
+        # dynamic_filter = {}
         exec(source, globals(), locals())
         print(source)
         assert locals().get("_f") is not None, "failed to compile query"

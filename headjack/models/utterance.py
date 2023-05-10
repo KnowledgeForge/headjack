@@ -101,6 +101,7 @@ class Observation(Utterance):
     tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
     consider_answer: bool = False
 
+
 @dataclass
 class Action(Utterance):
     """
@@ -111,6 +112,7 @@ class Action(Utterance):
     marker = "Action: "
     agent: "Agent" = field(default_factory=required_value("`agent` is required for an Action.", agent_model.Agent))
 
+
 @dataclass
 class Feedback(Utterance):
     """
@@ -120,6 +122,7 @@ class Feedback(Utterance):
     marker = "Feedback: "
     tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
     retries: int = 0
+
 
 @dataclass
 class Thought(Utterance):
