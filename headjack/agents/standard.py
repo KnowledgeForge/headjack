@@ -11,7 +11,7 @@ from typing import Set, Type, cast
 from textwrap import indent
 from headjack.agents.query_templates.standard import standard_query
 from headjack.models.agent import Agent
-from headjack.models.utterance import Answer, User, Utterance
+from headjack.models.utterance import Answer, Observation, User, Utterance, Action
 
 
 class StandardAgent(Agent):
@@ -24,8 +24,8 @@ class StandardAgent(Agent):
         ref_name: str = "standard",
         query=standard_query,
         loop_limit: int = 5,
-        history_length: int = 3,
-        history_utterances: Set[Type[Utterance]] = {User, Answer},
+        history_length: int = 5,
+        history_utterances: Set[Type[Utterance]] = {User, Answer, Action, Observation},
         **kwargs,
     ):
         super().__init__(

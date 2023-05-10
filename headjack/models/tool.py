@@ -194,6 +194,9 @@ for _ in range({self.length}):
                 compilation.body += f'\'"[{variable}]\\n\'\n'
                 compilation.body += f"{code_var}={variable}\n"
                 compilation.where.append(f'STOPS_AT({variable}, \'"\')')
+                for mark in ("User:", "Obser", "Thought:", "Answer:"):
+                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
+                    compilation.body += f"{code_var}={code_var}.strip(\'{mark}\')\n"
             if self.max_value is not None:
                 compilation.where.append(f"len({variable})<{self.max_value+1}")
             if self.min_value is not None:
@@ -415,11 +418,11 @@ if {req_var}=='True':
             )
         return values
     
-    @validator("description", check_fields=False)
-    def description_length(cls, v):
-        if len(v) > 100:
-            raise ValueError("description length can be at most 100 chars")
-        return v
+    # @validator("description", check_fields=False)
+    # def description_length(cls, v):
+    #     if len(v) > 100:
+    #         raise ValueError("description length can be at most 100 chars")
+    #     return v
     def __str__(self):
         return str(self._compilation.code_var)
 
@@ -715,8 +718,8 @@ class Tool:
     tools: ClassVar[Dict[UUID, "Tool"]] = {}
 
     def __post_init__(self):
-        if self.name in Tool.tools:
-            raise Exception(f"duplicate tool names `{self.name}`")
+        # if self.name in Tool.tools:
+        #     raise Exception(f"duplicate tool names `{self.name}`")
         Tool.tools[self.name]=self
         self.schema = self.schema.compile()
         
@@ -729,7 +732,7 @@ class Tool:
         return self.name_ or self.schema.name
 
     async def __call__(self, action: "Action") -> Union["Observation", "Feedback"]:
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         from headjack.models.utterance import Observation, Feedback
         modified = False
         result = action_input = action.utterance_

@@ -72,9 +72,9 @@ def get_agent_session(access_token: str):
         parameters=[
             {
                 "name": "text",
-                "description": "A succinct piece of text that asks a targeted question to find relevant knowledge documents.",
+                "description": "A succinct piece of text that asks a targeted question to find relevant knowledge documents. Example: Who is the president of the DJ Roads Company?",
                 "type": "string",
-                "max_value": 50,
+                "max_value": 100,
             },
             {"name": "collection", "type": "string", "options": ["knowledge"]},
         ],
@@ -188,7 +188,7 @@ def get_agent_session(access_token: str):
 
     metric_calculate = Tool(metric_calculate_schema)
         
-    tools = [knowledge_search, metric_search, metric_calculate]
+    tools = [knowledge_search, metric_search, metric_calculate, metric_dimension_search]
     agent = StandardAgent(
         model_identifier="chatgpt",
         tools=tools,
