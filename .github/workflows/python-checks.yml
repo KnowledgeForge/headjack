@@ -33,6 +33,6 @@ jobs:
     - name: Run Linters
       working-directory: ./
       run: make lint
-    # - name: Run Tests and Coverage
-    #   working-directory: ./
-    #   run: make coverage
+    - name: Run Tests and Coverage
+      working-directory: ./
+      run: make coverage
