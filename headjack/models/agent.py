@@ -28,8 +28,9 @@ class Agent:
         assert self.tools, "This agent requires some tools"
 
     async def asend(self, utterance: "Utterance"):
+        print(utterance)
         await self.queue.put(utterance)
-        
+
         # print(utterance)
 
     async def run(self, *args):
@@ -46,8 +47,9 @@ class Agent:
 
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + doc.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance  # noqa: F401
-
+        from headjack.models.utterance import Action, Answer, Observation, Thought, User, Utterance, Feedback  # noqa: F401
+        from headjack.models.tool import Tool, dyn_filter
+        dynamic_filter = {}
         exec(source, globals(), locals())
         print(source)
         assert locals().get("_f") is not None, "failed to compile query"

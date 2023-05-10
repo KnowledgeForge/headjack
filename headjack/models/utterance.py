@@ -111,6 +111,15 @@ class Action(Utterance):
     marker = "Action: "
     agent: "Agent" = field(default_factory=required_value("`agent` is required for an Action.", agent_model.Agent))
 
+@dataclass
+class Feedback(Utterance):
+    """
+    An utterance from a tool suggesting the agent make changes to its action
+    """
+
+    marker = "Feedback: "
+    tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
+    retries: int = 0
 
 @dataclass
 class Thought(Utterance):

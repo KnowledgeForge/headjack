@@ -47,7 +47,9 @@ async def standard_query(
             thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = utterance)
             print(thought)
             await agent.asend(thought)
-            if THOUGHT == 'I should use a tool.':
+            retry_tool = False
+            if retry_tool or THOUGHT == 'I should use a tool.':
+                tool_payloads=dict()
                 "Tool: [TOOL]\\n"
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=thought)
                 print(tool_choice)

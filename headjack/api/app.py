@@ -78,14 +78,11 @@ def get_agent_session(access_token: str):
             },
             {"name": "collection", "type": "string", "options": ["knowledge"]},
         ],
-        results_schema={
-            "ids": {"type": "string", "max_length": 100},
-            "documents": {"type": "string", "max_length": 100},
-        },
+        results={"type": "string", "max_length": 100},
         code="""
-def process_observation(action_input, observation_input):
-    return "\\n".join(str(doc) for doc in [i for j in observation_input['documents'] for i in j])
-        """
+    def process_observation(action_input, observation_input):
+        return [i for j in observation_input['documents'] for i in j]
+    """,
     )
     knowledge_search = Tool(knowledge_search_schema)
 
@@ -102,24 +99,94 @@ def process_observation(action_input, observation_input):
                 "max_value": 50,
             },
             {"name": "collection", "type": "string", "options": ["metrics"]},
-            # {
-            #     "name": "do not use this",
-            #     "type": "string",
-            #     "required": False,
-            #     "default": "hello world",
-            #     "description": "agents should not use this value",
-            #     "max_length": 4,
-            # },
         ],
-        results_schema={"type": "string"},
+        results={'name': {"type": "string", "max_length": 100}, 'ref_name': {"type": "string", "max_length": 100}, 'query': {"type": "string", "max_length": 100}},
         code="""
-def process_observation(action_input, observation_input):
-    return "\\n".join(str(doc) for doc in [i for j in observation_input['documents'] for i in j])
-        """
+    def process_observation(action_input, observation_input):
+        return {'name': observation_input['documents'][0], 'ref_name': [m['name'] for m in observation_input['metadatas'][0]], 'query': [m['query'] for m in observation_input['metadatas'][0]]}
+    """,
     )
 
     metric_search = Tool(metric_search_schema)
-    tools = [knowledge_search, metric_search]
+
+    metric_dimension_search_schema = ToolSchema(
+        url="http://localhost:8000/metrics/common/dimensions",
+        verb=HTTPVerb.GET,
+        name="Metric Dimension Search",
+        description="Tool used to search for dimensions that can be used with a selected metric.",
+        parameters=[
+            {
+                "name": "metric",
+                "description": "Metric to search for compatible dimension columns for.",
+                "type": "string",
+                "options": {"ref": "Metric Search.results.ref_name"},
+            },
+        ],
+        results={"type": "string", "max_length": 100},
+    )
+
+    metric_dimension_search = Tool(metric_dimension_search_schema)
+
+    metric_calculate_schema = ToolSchema(
+        url="http://localhost:8000/data",
+        verb=HTTPVerb.GET,
+        name="Metric Calculate",
+        description="Tool used to calculate the value of a metric. Choose a metric and at least some dimension or filter.",
+        parameters=[
+            {
+                "name": "metrics",
+                "description": "Metric to search for compatible dimension columns for.",
+                "type": "string",
+                "options": {"ref": "Metric Dimension Search.parameters[0]"},
+            },
+            {
+                "name": "dimensions",
+                "description": "Columns to select to group by.",
+                "type": [
+                    {
+                        "name": "groupby column 1",
+                        "type": "string",
+                        "required": False,
+                        "options": {"ref": "Metric Dimension Search.results"},
+                    },
+                    {
+                        "name": "groupby column 2",
+                        "type": "string",
+                        "required": False,
+                        "options": {"ref": "Metric Dimension Search.results"},
+                    },
+                    {
+                        "name": "groupby column 3",
+                        "type": "string",
+                        "required": False,
+                        "options": {"ref": "Metric Dimension Search.results"},
+                    },
+                ],
+            },
+            {
+                "name": "filters",
+                "description": "SQL filter expressions using dimension columns from Metric Dimension Search results",
+                "type": "string",
+                "max_length": 3,
+                "required": False,
+            },
+        ],
+        results={"type": "string"},
+        code="""
+    def process_action(action_input):
+        params=action_input['parameters']
+        if not params[1] and not params[2]:
+            raise ValueError("at least one of 'dimension' or 'filters' is required")
+        return action_input
+        
+    def process_observation(action_input, observation_input):
+        return str(observation_input['results'])
+    """,
+    )
+
+    metric_calculate = Tool(metric_calculate_schema)
+        
+    tools = [knowledge_search, metric_search, metric_calculate]
     agent = StandardAgent(
         model_identifier="chatgpt",
         tools=tools,
