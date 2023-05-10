@@ -42,17 +42,24 @@ async def standard_query(
 
         Conversation:
         {{utterance.convo(history_length, history_utterances)}}"""
+
+        # "Come up with a short problem description and plan for what the user has said.\\n"
+        # "Problem: [PROBLEM]\\n"
+        # problem = Thought(utterance_ = PROBLEM, agent = agent, parent_ = utterance)
+        # await agent.asend(problem)
+        # "Plan: [PLAN]\\n"
+        # plan = Thought(utterance_ = PLAN, agent = agent, parent_ = problem)
+        # await agent.asend(plan)
+        
         for _ in range(loop_limit):
             "Thought: [THOUGHT]\\n"
-            thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = utterance)
-            print(thought)
+            thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = plan)
             await agent.asend(thought)
             retry_tool = False
             if retry_tool or THOUGHT == 'I should use a tool.':
                 tool_payloads=dict()
                 "Tool: [TOOL]\\n"
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=thought)
-                print(tool_choice)
                 await agent.asend(tool_choice)
                 # import pdb; pdb.set_trace()
                 {tool_body}
@@ -61,12 +68,10 @@ async def standard_query(
                 "Answers are concise and at most 200 words unless content is verbatim from observations.\\n"
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = tool_choice)
-                print(answer)
                 await agent.asend(answer)
                 break
             else:
                 answer = Answer(utterance_ = "I apologize, but I did not find an answer.", agent = agent, parent_ = thought)
-                print(answer)
                 await agent.asend(answer)
                 break
         await agent.asend(None)
@@ -93,5 +98,7 @@ async def standard_query(
         len(ANSWER)<500 and
         STOPS_AT(THOUGHT, "\\n") and
         STOPS_AT(TOOL, "\\n") and
+        # STOPS_AT(PROBLEM, "\\n") and
+        # STOPS_AT(PLAN, "\\n") and
         {tool_conditions}
     '''

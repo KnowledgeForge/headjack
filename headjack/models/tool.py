@@ -134,7 +134,7 @@ class Param(BaseModel):
         variable = compilation.variable
         code_var = variable.lower()
         compilation.code_var = code_var
-        
+        default = self.default
         if self.ref:
             compilation.body+=f"\n{code_var}=tool_payloads"+ref_index_from_str(self.ref)
             # object.__setattr__(self, "_compilation", compilation)
@@ -150,6 +150,7 @@ class Param(BaseModel):
         default_prompt = ""
 
         if self.max_length is not None:
+            default = []
             compilation.code_var = code_var
             min_length = self.min_length or 1
             count_var = variable + "_COUNT"
@@ -164,6 +165,7 @@ for _ in range(int({count_var})):
             """
 
         if self.length is not None:
+            default = []
             compilation.code_var = code_var
             compilation.body += f"""
 {code_var} = []
@@ -225,6 +227,7 @@ for _ in range({self.length}):
             req_prompt=f" (This value, which is optional to use this tool, is needed?: [{req_var}])"
 
             compilation.body=f"""
+{code_var}={repr(default)}
 if {req_var}=='True':
 {indent(count_prompt, " "*4)}
 {indent(compilation.body, " "*4)}
@@ -425,9 +428,9 @@ if {req_var}=='True':
     
     def format_payload(self):
         self.compile()
-        if not isinstance(self.type, list):
-            return self._compilation.code_var
-        return "["+", ".join(p.format_payload() for p in self.type)+"]"
+        # if not isinstance(self.type, list):
+        return self._compilation.code_var
+        # return "["+", ".join(p.format_payload() for p in self.type)+"]"
 
 class HTTPVerb(str, Enum):
     GET = "GET"
@@ -466,8 +469,8 @@ try:
     print(tool_payloads)
     print(type(tool_payloads))
     print("PRINTING DONE")
-    import pdb; pdb.set_trace()
-    for v in tool_payloads{ref_index_from_str(r.ref)}:
+    # import pdb; pdb.set_trace()
+    for v in ([tool_payloads{ref_index_from_str(r.ref)}] if not isinstance(tool_payloads{ref_index_from_str(r.ref)}, list) else tool_payloads{ref_index_from_str(r.ref)}):
         dynamic_filter["{ref_index_from_str(r.ref)}"].append(v)
 except:
     answer = Answer("There was an error while using this tool. This is a result of an incorrect schema ref `{r.ref}`.", agent = agent, parent_ = tool_result)
@@ -554,9 +557,11 @@ class ToolSchema(BaseModel):
                 if p.name is None:
                     params.append(str(value))
                 else:
+                    # import pdb; pdb.set_trace()
                     if isinstance(value, list):
-                        value = ",".join(str(v) for v in value)
-                    query_params.append(f"{p.name}={value}")
+                        query_params+=[f"{p.name}={v}" for v in value]
+                    else:
+                        query_params.append(f"{p.name}={value}")
         return os.path.join(self.url, "/".join(params), "?"+"&".join(query_params))
     
     def payload_code(self)->str: 
@@ -607,6 +612,7 @@ class ToolSchema(BaseModel):
 # for v in tool_payloads{ref_index_from_str(r.ref)}:
 #     dynamic_filters["{ref_index_from_str(r.ref)}"].append(v)
 # """
+        # body+="\nimport pdb; pdb.set_trace()\n"
         body+=f"\naction = Action(utterance_ = tool_payloads['{self.name}'], agent = agent, parent_ = tool_choice)\nawait agent.asend(action)"
         body+=f"\ntool_result = await Tool.tools['{self.name}'](action)\nawait agent.asend(tool_result)"
         body+="\n'\\n{tool_result}\\n'\n"
@@ -723,6 +729,7 @@ class Tool:
         return self.name_ or self.schema.name
 
     async def __call__(self, action: "Action") -> Union["Observation", "Feedback"]:
+        import pdb; pdb.set_trace()
         from headjack.models.utterance import Observation, Feedback
         modified = False
         result = action_input = action.utterance_

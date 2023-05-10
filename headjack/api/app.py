@@ -163,14 +163,16 @@ def get_agent_session(access_token: str):
                     },
                 ],
             },
-            {
-                "name": "filters",
-                "description": "SQL filter expressions using dimension columns from Metric Dimension Search results",
-                "type": "string",
-                "max_length": 3,
-                "required": False,
-            },
+            # {
+            #     "name": "filters",
+            #     "description": "SQL filter expressions using dimension columns from Metric Dimension Search results",
+            #     "type": "string",
+            #     "max_length": 3,
+            #     "required": False,
+            # },
         ],
+        feedback_retries = 1,
+        result_answer=True,
         results={"type": "string"},
         code="""
     def process_action(action_input):
