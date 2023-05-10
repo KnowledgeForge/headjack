@@ -1,9 +1,11 @@
 import asyncio
 import inspect
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
 from textwrap import dedent
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Coroutine, List, Optional, Type, cast
+
 import lmql
+
 from headjack.utils import add_source
 
 if TYPE_CHECKING:

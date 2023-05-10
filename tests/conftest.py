@@ -5,14 +5,13 @@ from typing import Iterator
 
 import pytest
 from cachelib.simple import SimpleCache
+from dj.api.main import app
+from dj.config import Settings
+from dj.utils import get_session, get_settings
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
-
-from dj.api.main import app
-from dj.config import Settings
-from dj.utils import get_session, get_settings
 
 
 @pytest.fixture
@@ -36,6 +35,7 @@ def settings(mocker: MockerFixture) -> Iterator[Settings]:
 
     yield settings
 
+
 @pytest.fixture
 def session() -> Iterator[Session]:
     """
@@ -50,6 +50,7 @@ def session() -> Iterator[Session]:
 
     with Session(engine, autoflush=False) as session:
         yield session
+
 
 @pytest.fixture
 def client(

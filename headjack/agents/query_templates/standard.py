@@ -1,7 +1,6 @@
 """
 Standard react query
 """
-
 from headjack.models.agent import Agent
 from headjack.models.utterance import Utterance
 
@@ -21,9 +20,9 @@ async def standard_query(
         You are a chatbot Agent that helps users answer questions.
         Agent answers are clear, concise and complete. Information the agent uses after an obervation should be about the observation without hallucination.
         Agent NEVER uses marker phrases like User:, Thought:, Observation:, Action:, Answer: as these are used by the system.
-        
+
         The Agent uses thoughful reasoning like so:
-        
+
             Thought: I should use a tool.
             Tool: Agent selects appropriate tool
             Tool Input: thoroughly descriptive input for the tool to work.
@@ -35,8 +34,8 @@ async def standard_query(
             Thought: I have tried all my tools and still could not find an answer.
             Answer: Agent says it could not find an answer
 
-        
-        
+
+
         Here are the tools you may choose from:
         {tools_prompt}
 

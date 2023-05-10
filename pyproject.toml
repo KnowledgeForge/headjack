@@ -30,6 +30,7 @@ line-length = 130
 [tool.flake8]
 max-line-length = 130
 exclude = "demo.py"
+ignore = "E501"
 
 [tool.isort]
 profile = "black"
