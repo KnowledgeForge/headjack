@@ -43,15 +43,6 @@ async def standard_query(
             Thought: This is a question about my capabilities.
             Response: I have access to the following tools that can be used to...
             ...
-            User: Do you have the ability to do...
-            Thought: This is a question about my capabilities.
-            Response: I have the ability to...
-            ...
-            User: What tools do you have
-            Thought: This is a question about my capabilities.
-            Response: I have access to the following tools...
-
-
 
         Here are the tools you may choose from:
         {tools_prompt}
@@ -95,6 +86,12 @@ async def standard_query(
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = parent_utterance)
                 await agent.asend(answer)
                 break
+            elif ('help' in THOUGHT):
+                "I need help determining what to do. I will explaing this to the user and tell them the tools I have access to so they can help me.\\n"
+                "Answer: [ANSWER]\\n"
+                answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = parent_utterance)
+                await agent.asend(answer)
+                break
             else:
                 answer = Answer(utterance_ = "I apologize, but I did not find an answer.", agent = agent, parent_ = parent_utterance)
                 await agent.asend(answer)
@@ -107,12 +104,13 @@ async def standard_query(
             thought
             for thought in [
                     "There is a tool for this exact purpose.",
+                    "Can you help me decide if I should use one of my tools?",
                     'I can answer the user now by summarizing information from the conversation.',
                     'I can answer the user now by extracting information from the conversation history.',
                     'I can answer the user now by extracting information from the memory.',
                     'I can answer the user now based on this latest information.',
                     'This is trivial or irrelevant.',
-                    'This is a question about my capabilities.',
+                    'This is about capabilities.',
                     "Some tools have tried and an answer could not be found yet."
                 ]
             if thought not in thought_filter

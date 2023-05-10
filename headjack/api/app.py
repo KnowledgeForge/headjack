@@ -113,29 +113,29 @@ def get_agent_session(access_token: str):
 
     metric_search = Tool(metric_search_schema)
 
-    # metric_dimension_search_schema = ToolSchema(
-    #     url="http://localhost:8000/metrics/common/dimensions",
-    #     verb=HTTPVerb.GET,
-    #     name="Metric Dimension Search",
-    #     description="Tool used to search for dimensions that can be used with a selected metric.",
-    #     parameters=[
-    #         {
-    #             "name": "metric",
-    #             "description": "Metric to search for compatible dimension columns for.",
-    #             "type": "string",
-    #             "options": {"ref": "Metric Search.results.ref_name"},
-    #         },
-    #     ],
-    #     results={"type": "string", "max_length": 100},
-    # )
+    metric_dimension_search_schema = ToolSchema(
+        url="http://localhost:8000/metrics/common/dimensions",
+        verb=HTTPVerb.GET,
+        name="Metric Dimension Search",
+        description="Tool used to search for dimensions that can be used with a selected metric.",
+        parameters=[
+            {
+                "name": "metric",
+                "description": "Metric to search for compatible dimension columns for.",
+                "type": "string",
+                "options": {"ref": "Metric Search.results.ref_name"},
+            },
+        ],
+        results={"type": "string", "max_length": 100},
+    )
 
-    # metric_dimension_search = Tool(metric_dimension_search_schema)
+    metric_dimension_search = Tool(metric_dimension_search_schema)
 
     metric_calculate_schema = ToolSchema(
         url="http://localhost:8000/data",
         verb=HTTPVerb.GET,
         name="Metric Calculate",
-        description="Tool used to calculate the value of a metric. Choose a metric and at least some dimension or filter.",
+        description="Tool used to calculate the value of a metric. Choose a metric and at least some dimension or filter. Examples: calculate the value of, tell me the average, tell me the total, count the number of, ...",
         parameters=[
             {
                 "name": "metrics",
@@ -167,13 +167,13 @@ def get_agent_session(access_token: str):
                     },
                 ],
             },
-            # {
-            #     "name": "filters",
-            #     "description": "SQL filter expressions using dimension columns from Metric Dimension Search results",
-            #     "type": "string",
-            #     "max_length": 3,
-            #     "required": False,
-            # },
+            {
+                "name": "filters",
+                "description": "SQL filter expressions using dimension columns from Metric Dimension Search results. Used only when asked a query that requires filtering. Must be valid SQL.",
+                "type": "string",
+                "max_length": 3,
+                "required": False,
+            },
         ],
         feedback_retries=1,
         result_answer=True,
