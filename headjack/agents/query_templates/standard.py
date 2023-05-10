@@ -49,7 +49,7 @@ async def standard_query(
         # "Plan: [PLAN]\\n"
         # plan = Thought(utterance_ = PLAN, agent = agent, parent_ = problem)
         # await agent.asend(plan)
-        
+
         for _ in range(loop_limit):
             "Thought: [THOUGHT]\\n"
             thought = Thought(utterance_ = THOUGHT, agent = agent, parent_ = plan)

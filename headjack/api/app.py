@@ -2,15 +2,16 @@
 Headjack web server
 """
 import logging
+import os
+from os import path
 from typing import Any, Dict
 from uuid import UUID, uuid4
-import uvicorn
+
 import jwt
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+import uvicorn
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
-import os
 
 from headjack.models.session import Session
 
@@ -25,23 +26,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SECRET_KEY = os.environ.get('HEADJACK_SECRET', "headjack_secret")
-PORT = os.environ.get('HEADJACK_PORT', "8679")
-
-from os import path
+SECRET_KEY = os.environ.get("HEADJACK_SECRET", "headjack_secret")
+PORT = os.environ.get("HEADJACK_PORT", "8679")
 
 basepath = path.dirname(__file__)
 template_path = path.abspath(path.join(basepath, "..", "..", "web/chat-demo.html"))
 # locate templates
 with open(template_path) as f:
-    template=f.read()
-
+    template = f.read()
 
 
 @app.get("/")
 def get_home():
     # import pdb; pdb.set_trace()
     return HTMLResponse(template.replace("PORT", PORT))
+
+
 # templates.TemplateResponse("chat-demo.html", context={"request":request, "PORT": PORT})
 
 
@@ -62,7 +62,7 @@ def get_agent_session(access_token: str):
     if session := Session.sessions.get(session_uuid):
         return session
     from headjack.agents.standard import StandardAgent
-    from headjack.models.tool import ToolSchema, Tool, HTTPVerb, Param
+    from headjack.models.tool import HTTPVerb, Tool, ToolSchema
 
     knowledge_search_schema = ToolSchema(
         url="http://0.0.0.0:16410/query",
@@ -100,7 +100,11 @@ def get_agent_session(access_token: str):
             },
             {"name": "collection", "type": "string", "options": ["metrics"]},
         ],
-        results={'name': {"type": "string", "max_length": 100}, 'ref_name': {"type": "string", "max_length": 100}, 'query': {"type": "string", "max_length": 100}},
+        results={
+            "name": {"type": "string", "max_length": 100},
+            "ref_name": {"type": "string", "max_length": 100},
+            "query": {"type": "string", "max_length": 100},
+        },
         code="""
     def process_observation(action_input, observation_input):
         return {'name': observation_input['documents'][0], 'ref_name': [m['name'] for m in observation_input['metadatas'][0]], 'query': [m['query'] for m in observation_input['metadatas'][0]]}
@@ -109,23 +113,23 @@ def get_agent_session(access_token: str):
 
     metric_search = Tool(metric_search_schema)
 
-    metric_dimension_search_schema = ToolSchema(
-        url="http://localhost:8000/metrics/common/dimensions",
-        verb=HTTPVerb.GET,
-        name="Metric Dimension Search",
-        description="Tool used to search for dimensions that can be used with a selected metric.",
-        parameters=[
-            {
-                "name": "metric",
-                "description": "Metric to search for compatible dimension columns for.",
-                "type": "string",
-                "options": {"ref": "Metric Search.results.ref_name"},
-            },
-        ],
-        results={"type": "string", "max_length": 100},
-    )
+    # metric_dimension_search_schema = ToolSchema(
+    #     url="http://localhost:8000/metrics/common/dimensions",
+    #     verb=HTTPVerb.GET,
+    #     name="Metric Dimension Search",
+    #     description="Tool used to search for dimensions that can be used with a selected metric.",
+    #     parameters=[
+    #         {
+    #             "name": "metric",
+    #             "description": "Metric to search for compatible dimension columns for.",
+    #             "type": "string",
+    #             "options": {"ref": "Metric Search.results.ref_name"},
+    #         },
+    #     ],
+    #     results={"type": "string", "max_length": 100},
+    # )
 
-    metric_dimension_search = Tool(metric_dimension_search_schema)
+    # metric_dimension_search = Tool(metric_dimension_search_schema)
 
     metric_calculate_schema = ToolSchema(
         url="http://localhost:8000/data",
@@ -171,7 +175,7 @@ def get_agent_session(access_token: str):
             #     "required": False,
             # },
         ],
-        feedback_retries = 1,
+        feedback_retries=1,
         result_answer=True,
         results={"type": "string"},
         code="""
@@ -180,14 +184,14 @@ def get_agent_session(access_token: str):
         if not params[1] and not params[2]:
             raise ValueError("at least one of 'dimension' or 'filters' is required")
         return action_input
-        
+
     def process_observation(action_input, observation_input):
         return str(observation_input['results'])
     """,
     )
 
     metric_calculate = Tool(metric_calculate_schema)
-        
+
     tools = [knowledge_search, metric_search, metric_calculate]
     agent = StandardAgent(
         model_identifier="chatgpt",
@@ -196,6 +200,7 @@ def get_agent_session(access_token: str):
     )
     session = Session(agent, session_id=session_uuid)
     return session
+
 
 class ConnectionManager:
     def __init__(self):
@@ -240,6 +245,6 @@ async def websocket_endpoint(websocket: WebSocket, access_token: str):
         except WebSocketDisconnect:
             manager.disconnect(access_token)
 
-            
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(PORT))
