@@ -1,7 +1,6 @@
 """
 Standard react query
 """
-
 from headjack.models.agent import Agent
 from headjack.models.utterance import Utterance
 
@@ -52,8 +51,8 @@ async def standard_query(
             Thought: This is a question about my capabilities.
             Response: I have access to the following tools...
 
-        
-        
+
+
         Here are the tools you may choose from:
         {tools_prompt}
 

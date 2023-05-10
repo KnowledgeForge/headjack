@@ -7,8 +7,9 @@ An agent that can handle common tasks
 "Are these metrics compatible"
 "Tell me about the dimensions that are available for metric x..."
 """
-from typing import Set, Type, cast
 from textwrap import indent
+from typing import Set, Type, cast
+
 from headjack.agents.query_templates.standard import standard_query
 from headjack.models.agent import Agent
 from headjack.models.utterance import Answer, Observation, User, Utterance, Action
@@ -37,18 +38,20 @@ class StandardAgent(Agent):
         self.loop_limit = loop_limit
         self.history_length = history_length
         self.history_utterances = history_utterances
-        self.tools_prompt = "\n".join(indent(tool.name+": " +tool.description.replace('\n', ' '), ' '*8) for tool in self.tools)
+        self.tools_prompt = "\n".join(
+            indent(tool.name + ": " + tool.description.replace("\n", " "), " " * 8) for tool in self.tools
+        )
         self.tool_refs = {tool.name: tool for tool in self.tools}
         tool_body = []
         for tool in self.tools:
             tool_body.append("\n")
-            tool_body.append(indent(f"if TOOL=='{tool.name}':", " "*16))
-            tool_body.append(indent(f'"Tool Input: \\n"{tool.schema.body()}\n', ' '*20))
+            tool_body.append(indent(f"if TOOL=='{tool.name}':", " " * 16))
+            tool_body.append(indent(f'"Tool Input: \\n"{tool.schema.body()}\n', " " * 20))
             # tool_body.append(
-            #     indent(f"action = Action(utterance_ = tool_payloads['{tool.name}'], agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)  # noqa: E501
+            #     indent(f"action = Action(utterance_ = tool_payloads['{tool.name}'], agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)
             # )
             # tool_body.append(
-            #     indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(action); await agent.asend(observation)", ' '*20)# noqa: E501
+            #     indent("observation = await agent.tool_refs.get(TOOL)(action); observation.parent = action; print(action); await agent.asend(observation)", ' '*20)
             # )
             # tool_body.append(indent(r"'{observation}\n'", ' '*20))
             # tool_body.append(indent(r"if observation.consider_answer: break\n", ' '*20))

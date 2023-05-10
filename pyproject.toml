@@ -1,57 +1,13 @@
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-
-[tool.poetry]
-name = "headjack"
-version = "0.0.1a1"
-description = ""
-authors = ["Nick Ouellet <nick@ouellet.dev>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-lmql = { git = "https://github.com/eth-sri/lmql.git", branch = "tiktoken" }
-chromadb = "0.3.21"
-fastapi = ">= 0.71.0"
-sqlmodel = ">= 0.0.8"
-PyJWT = ">= 2.6.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "7.2.2"
-pytest-checkdocs = "2.9.0"
-pre-commit = "3.2.1"
-coverage = "^7.2.3"
-httpx = ">= 0.24.0"
-
-[tool.black]
-line-length = 130
-
-[tool.flake8]
-max-line-length = 130
-exclude = "demo.py"
-
-[tool.isort]
-profile = "black"
-line_length = 130
-skip_gitignore = true
-
-[tool.pdm]
-[tool.pdm.dev-dependencies]
-dev = [
-    "pytest==7.2.2",
-    "pytest-checkdocs==2.9.0",
-    "pre-commit==3.2.1",
-    "coverage<8.0.0,>=7.2.3",
-    "httpx>=0.24.0",
-]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pdm.build]
-includes = []
+includes = ["headjack"]
 
 [project]
 name = "headjack-server"
-version = "0.0.1a1"
+dynamic = ["version"]
 description = ""
 authors = [
     {name = "circargs", email = "nick@ouellet.dev"},
@@ -62,4 +18,34 @@ requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = {text = "Aache 2.0"}
 
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest==7.2.2",
+    "pre-commit==3.2.1",
+    "coverage<8.0.0,>=7.2.3",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+uvicorn = [
+    "uvicorn[standard]>=0.21.1",
+]
+
 [project.urls]
+repository = "https://github.com/KnowledgeForge/headjack"
+
+[tool.hatch.version]
+path = "dj/__about__.py"
+
+[tool.black]
+line-length = 130
+
+[tool.flake8]
+max-line-length = 130
+exclude = "demo.py"
+ignore = "E501"
+
+[tool.isort]
+profile = "black"
+line_length = 130
+skip_gitignore = true

@@ -27,7 +27,7 @@ def get_chroma_client():  # pragma: no cover
 class Settings(BaseSettings):
     """
     Headjack config
-    
+
     Config values can be overriden by environment variables.
     Environment variables are expected to be prefixed by HEADJACK_, i.e. HEADJACK_METADATA_DB
     """
@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 def get_settings():
     return Settings()
 
+
 def get_engine() -> Engine:
     """
     Create the metadata engine.
@@ -50,6 +51,7 @@ def get_engine() -> Engine:
     engine = create_engine(settings.metadata_db)
 
     return engine
+
 
 def get_session() -> Iterator[Session]:
     engine = get_engine()
