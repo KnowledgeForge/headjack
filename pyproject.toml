@@ -35,7 +35,7 @@ uvicorn = [
 repository = "https://github.com/KnowledgeForge/headjack"
 
 [tool.hatch.version]
-path = "dj/__about__.py"
+path = "headjack/__about__.py"
 
 [tool.black]
 line-length = 130

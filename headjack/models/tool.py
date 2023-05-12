@@ -15,6 +15,7 @@ from typing import (
 
 from sqlmodel import Field
 
+
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation, Feedback
 
@@ -157,7 +158,7 @@ class Param(BaseModel):
         if self.max_length is not None:
             default = []
             compilation.code_var = code_var
-            min_length = self.min_length or 1
+            min_length = self.min_length if self.min_length is not None else 1
             count_var = variable + "_COUNT"
             count_prompt = f"'From at least {min_length} to at most {self.max_length}, there needs to be [" + count_var + "].'"
             count_range = [str(i) for i in range(min_length, self.max_length + 1)]
@@ -193,19 +194,27 @@ for _ in range({self.length}):
                 compilation.where.append(f"{variable} in {value_range}")
             else:
                 compilation.where.append(f"INT({variable})")
-
+                
+        from headjack.models.utterance import Utterance
+        marks = [u.marker.strip() for u in Utterance.__subclasses__() if u.marker.strip()]
         if self.type == "string":
+            compilation.body="\n'Remember to not include any marked phrases in this response (e.g. User:, Observation:, Thought:, Answer:...)'\n"+compilation.body
             if self.length is None and self.max_length is None:
                 compilation.body += f"'\"[{variable}]\\n'\n"
                 compilation.body += f"{code_var}={variable}\n"
                 compilation.where.append(f'STOPS_AT({variable}, \'"\')')
-                for mark in ("User:", "Obser", "Thought:", "Answer:"):
+                for mark in marks:
                     compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
-                    compilation.body += f"{code_var}={code_var}.strip(\'{mark}\')\n"
+                    compilation.body += f"\n{code_var}={code_var}.replace('{mark}', '').strip()\n"
+            else:
+                for mark in marks:
+                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
+                    compilation.body += f"\nimport pdb; pdb.set_trace()"
+                    compilation.body += f"\n{code_var}=[v.replace('{mark}', '').strip() for v in {code_var}]\n"
             if self.max_value is not None:
-                compilation.where.append(f"len({variable})<{self.max_value+1}")
+                compilation.where.append(f"len(TOKENS({variable}))<{self.max_value+1}")
             if self.min_value is not None:
-                compilation.where.append(f"len({variable})>{self.min_value-1}")
+                compilation.where.append(f"len(TOKENS({variable}))>{self.min_value-1}")
 
         # list[param]
         if isinstance(self.type, list):
@@ -219,6 +228,7 @@ for _ in range({self.length}):
                 compilation.where.append(
                     f'{variable} in dyn_filter(dynamic_filter, "' + ref_index_from_str(self.options.ref) + '")',
                 )
+                variable_prompt+=f" This value must be selected from {self.options.ref.split('.')[0]} tool's {'.'.join(self.options.ref.replace('[', '.').replace(']', '').split('.')[1:])}. "
             else:
                 if len(self.options) == 1:
                     compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
@@ -228,7 +238,10 @@ for _ in range({self.length}):
                     compilation.where.append(f"{variable} in {self.options}")
 
         if append_var:
-            compilation.body += f"\n{append_var}.append({code_var})"
+            compilation.body += f"""
+if (code_var.strip() if isinstance(code_var, str) else code_var):
+    {append_var}.append({code_var})
+"""
 
         if not self.required:
             req_var = variable + "_REQ"
@@ -241,8 +254,14 @@ if {req_var}=='True':
 {indent(count_prompt, " "*4)}
 {indent(compilation.body, " "*4)}
 """
-        compilation.body = f'"{variable_prompt}{req_prompt}: {default_prompt}"' + compilation.body
-        compilation.body = "#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35 + "\n" + compilation.body
+        compilation.body = f'''
+"""{variable_prompt}:
+{req_prompt}
+{default_prompt}
+{count_prompt.strip("'")}
+"""
+''' + compilation.body
+        compilation.body = indent("#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35, "#") + "\n" + compilation.body
         object.__setattr__(self, "_compilation", compilation)
         return self
 
@@ -325,8 +344,8 @@ if {req_var}=='True':
     @root_validator
     def min_length_must_be_positive(cls, values):
         v = values.get("min_length")
-        if v is not None and v <= 0:
-            raise ValueError("min_length must be positive")
+        if v is not None and v < 0:
+            raise ValueError("min_length must be greater than 0.")
         return values
 
     @root_validator
@@ -372,9 +391,9 @@ if {req_var}=='True':
     def lengths_values_cannot_be_set_with_options(cls, values):
         if values.get("options") is not None and any(
             (
-                values.get("length") is not None,
-                values.get("max_length") is not None,
-                values.get("min_length") is not None,
+                # values.get("length") is not None,
+                # values.get("max_length") is not None,
+                # values.get("min_length") is not None,
                 values.get("max_value") is not None,
                 values.get("min_value") is not None,
             ),
@@ -474,10 +493,10 @@ class ToolRefs:
         for r in self.refs:
             body += f"""
 try:
-    print("PRINTING")
-    print(tool_payloads)
-    print(type(tool_payloads))
-    print("PRINTING DONE")
+    # print("PRINTING")
+    # print(tool_payloads)
+    # print(type(tool_payloads))
+    # print("PRINTING DONE")
     # import pdb; pdb.set_trace()
     for v in ([tool_payloads{ref_index_from_str(r.ref)}] if not isinstance(tool_payloads{ref_index_from_str(r.ref)}, list) else tool_payloads{ref_index_from_str(r.ref)}):
         dynamic_filter["{ref_index_from_str(r.ref)}"].append(v)
@@ -495,6 +514,7 @@ except:
 class ToolSchema(BaseModel):
     name: str
     description: str
+    example_queries: List[Dict[str, Dict[str, Any]]]
     parameters: Optional[List[Param]] = None
     json_: Union[Any, Dict[str, Any], None] = Field(default=None, alias="json")
     url: Optional[str] = None
@@ -629,17 +649,19 @@ class ToolSchema(BaseModel):
         # """
         # body+="\nimport pdb; pdb.set_trace()\n"
         body += f"\naction = Action(utterance_ = tool_payloads['{self.name}'], agent = agent, parent_ = tool_choice)\nawait agent.asend(action)"
-        body += f"\ntool_result = await Tool.tools['{self.name}'](action)\nawait agent.asend(tool_result)"
+        body += f"\ntool_result = await Tool.tools['{self.name}'](action)\nparent_utterance = tool_result\nawait agent.asend(tool_result)"
         body += "\n'\\n{tool_result}\\n'\n"
         body += f"""
-# import pdb; pdb.set_trace()
 if isinstance(tool_result, Feedback):
-
     if tool_result.retries>0:
         retry_tool = True
+        continue
     else:
         retry_tool = False
-        "\\nAttempted using {self.name} failed. Do not retry this tool for the same task.\\n"
+        thought = Thought(utterance_='My attempt to use {self.name} for this task failed and I will not try to use it again for the same task.', agent = agent, parent_=parent_utterance)
+        parent_utterance = thought
+        await agent.asend(thought)
+        "{{thought}}"
 else:
     tool_payloads['{self.name}']['results']=tool_result.utterance_
     if tool_result.consider_answer:
@@ -647,6 +669,14 @@ else:
         await agent.asend(answer)
         break
 """
+
+        body = indent(body, " "*4)
+        
+        body="""
+used_tool=False
+while not used_tool or retry_tool:
+    used_tool=True
+"""+body
         return body
 
     def where(self) -> str:

@@ -38,15 +38,15 @@ class StandardAgent(Agent):
         self.loop_limit = loop_limit
         self.history_length = history_length
         self.history_utterances = history_utterances
-        self.tools_prompt = "\n".join(
-            indent(tool.name + ": " + tool.description.replace("\n", " "), " " * 8) for tool in self.tools
-        )
+        self.tools_prompt = indent("\n".join(
+            tool.name + ": " + tool.description.replace("\n", " ") for tool in self.tools
+        ), " "*16)
         self.tool_refs = {tool.name: tool for tool in self.tools}
         tool_body = []
         for tool in self.tools:
             tool_body.append("\n")
             tool_body.append(indent(f"if TOOL=='{tool.name}':", " " * 16))
-            tool_body.append(indent(f'"Tool Input: \\n"{tool.schema.body()}\n', " " * 20))
+            tool_body.append(indent(f'"Action: \\n"{tool.schema.body()}\n', " " * 20))
             # tool_body.append(
             #     indent(f"action = Action(utterance_ = tool_payloads['{tool.name}'], agent = agent, parent_ = tool_choice); print(action); await agent.asend(action)", ' '*20)
             # )

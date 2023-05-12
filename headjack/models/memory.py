@@ -1,28 +1,28 @@
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+# from dataclasses import dataclass
+# from typing import TYPE_CHECKING, Optional
 
-from chromadb.utils import embedding_functions
-from headjack_server.config import get_chroma_client
+# from chromadb.utils import embedding_functions
+# from headjack_server.config import get_chroma_client
 
-if TYPE_CHECKING:
-    from headjack_server.models.utterance import Utterance
-
-
-@dataclass
-class VectorStore:
-    collection_name: str
-
-    def __post_init__(self):
-        ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-        self.client = get_chroma_client()
-        self.collection = self.client.get_or_create_collection(self.collection_name, embedding_function=ef)
+# if TYPE_CHECKING:
+#     from headjack_server.models.utterance import Utterance
 
 
-@dataclass
-class VectorStoreMemory:
-    utterance: Optional[Utterance] = None
-    vector_store: Optional[VectorStore] = None
-    default_k: int = 3
+# @dataclass
+# class VectorStore:
+#     collection_name: str
+
+#     def __post_init__(self):
+#         ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+#         self.client = get_chroma_client()
+#         self.collection = self.client.get_or_create_collection(self.collection_name, embedding_function=ef)
+
+
+# @dataclass
+# class VectorStoreMemory:
+#     utterance: Optional[Utterance] = None
+#     vector_store: Optional[VectorStore] = None
+#     default_k: int = 3
 
 
 #     @property

@@ -21,20 +21,20 @@ async def standard_query(
         Your answers are clear, concise and complete. Information you use after being provided an Observation should be about the Observation.
         You NEVER use marker phrases like User:, Thought:, Observation:, Action:, Answer: as these are used by the system.
         If the user asks for historical information about the conversation, you do not need to use tools and you must use the past Conversation provided and any Memory if provided. In other words, you may answer the user now by summarizing information from the conversation or history.
-        If the uses makes trivial or conversation that is outside the scope of your tools, inform the user of this.
-        
-        The Agent uses thoughful reasoning like so:
+        If the user makes trivial or conversation that is outside the scope of your tools, inform the user of this.
+        If the user is inquiring about your capabilities tell them what tools you have and their descriptions in your own terse summary.
+        Anything the you the Agent says is based entirely on provable contextual information. The agent would be able to cite any information it provides. As such, the agent defers to tools if there is not information below to answer the user.
+
+        Here are some snippets of example conversations where the agent uses thoughful reasoning. No information from these snippets should be used in replies to the User:
             User: the user asks a particular question
-            Thought: There is a tool for this.
-            Tool: Agent selects appropriate tool
-            Tool Input: thoroughly descriptive input for the tool to work.
-            Observation: some information that may help respond to the user.
-            ...
-            Thought: I can answer the user now.
-            Answer: Agent describes the answer
-            OR
-            Thought: I have tried all my tools and still could not find an answer.
-            Answer: Agent says it could not find an answer
+            Thought: I should use a tool.
+            Tool: agent selects appropriate tool
+            Action: 
+                ___Here there will be multiple pieces of information that require you the Agent to fill in__
+                name of field (description of field):
+                __Possible need to select a number of items or determine whether this information is needed__
+                Your chosen value or values for the field
+            Observation: the tool will run with your inputs and some information that may contain all or part of an answer or response to the user will be an observation.
             ...
             User: my name is Joe
             Thought: This is trivial or irrelevant.
@@ -44,11 +44,26 @@ async def standard_query(
             Response: I have access to the following tools that can be used to...
             ...
 
-        Here are the tools you may choose from:
-        {tools_prompt}
 
-        Conversation:
-        {{utterance.convo(history_length, history_utterances)}}"""
+        Here are the tools you may choose from:
+{tools_prompt}
+
+        """
+        if utterance.parent:
+            """
+            
+        Conversation History:
+        {{utterance.parent.convo(history_length-1, history_utterances)}}
+        
+            """
+
+        """
+        
+        Latest Conversation:
+        {{utterance}}
+        
+        
+        """
 
         # "Come up with a short problem description and plan for what the user has said.\\n"
         # "Problem: [PROBLEM]\\n"
@@ -65,7 +80,7 @@ async def standard_query(
             await agent.asend(thought)
             retry_tool = False
             tool_choice = None
-            if retry_tool or THOUGHT == 'There is a tool for this exact purpose.':
+            if retry_tool or 'use a tool' in THOUGHT:
                 tool_payloads=dict()
                 "Tool: [TOOL]\\n"
                 tool_choice = Thought(utterance_ = "I will use my "+TOOL, agent = agent, parent_=parent_utterance)
@@ -73,20 +88,20 @@ async def standard_query(
                 await agent.asend(tool_choice)
                 # import pdb; pdb.set_trace()
                 {tool_body}
-            elif THOUGHT.startswith('I can answer the user'):
+            elif 'answer the user' in THOUGHT:
                 "Agent NEVER uses marker phrases like User:, Thought:, Observation:, Action:, Answer: as these are used by the system. "
                 "Answers are concise and at most 200 words unless content is verbatim from observations.\\n"
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = parent_utterance)
                 await agent.asend(answer)
                 break
-            elif ('capabilities' in THOUGHT) or ('trivial' in THOUGHT):
+            elif ('can do' in THOUGHT) or ('trivial' in THOUGHT):
                 "This is something I can respond to the user directly or explain the irrelevance to the user without using tools.\\n"
                 "Response: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = parent_utterance)
                 await agent.asend(answer)
                 break
-            elif ('help' in THOUGHT):
+            elif 'help' in THOUGHT:
                 "I need help determining what to do. I will explaing this to the user and tell them the tools I have access to so they can help me.\\n"
                 "Answer: [ANSWER]\\n"
                 answer = Answer(utterance_ = ANSWER, agent = agent, parent_ = parent_utterance)
@@ -103,14 +118,13 @@ async def standard_query(
         THOUGHT in [
             thought
             for thought in [
-                    "There is a tool for this exact purpose.",
-                    "Can you help me decide if I should use one of my tools?",
-                    'I can answer the user now by summarizing information from the conversation.',
-                    'I can answer the user now by extracting information from the conversation history.',
+                    "I should use a tool.",
+                    "I need help deciding if I should use one of my tools?",
+                    'I can answer the user now with information from the conversation.',
                     'I can answer the user now by extracting information from the memory.',
                     'I can answer the user now based on this latest information.',
-                    'This is trivial or irrelevant.',
-                    'This is about capabilities.',
+                    # 'This is trivial or irrelevant.',
+                    # "The user would like to know what I can do.",
                     "Some tools have tried and an answer could not be found yet."
                 ]
             if thought not in thought_filter

@@ -8,20 +8,15 @@ from chromadb.config import Settings as ChromaSettings
 from pydantic import BaseSettings
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
+from functools import lru_cache
 
 
+@lru_cache(1)
 def get_chroma_client():  # pragma: no cover
     """
     Get a chromadb client
     """
-    with chromadb.Client(
-        ChromaSettings(
-            chroma_api_impl="rest",
-            chroma_server_host="chromadb",
-            chroma_server_http_port="16402",
-        ),
-    ) as chroma_client:
-        yield chroma_client
+    return chromadb.Client()
 
 
 class Settings(BaseSettings):

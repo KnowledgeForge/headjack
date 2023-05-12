@@ -145,34 +145,24 @@ def get_agent_session(access_token: str):
             },
             {
                 "name": "dimensions",
-                "description": "Columns to select to group by.",
-                "type": [
-                    {
-                        "name": "groupby column 1",
-                        "type": "string",
-                        "required": False,
-                        "options": {"ref": "Metric Dimension Search.results"},
-                    },
-                    {
-                        "name": "groupby column 2",
-                        "type": "string",
-                        "required": False,
-                        "options": {"ref": "Metric Dimension Search.results"},
-                    },
-                    {
-                        "name": "groupby column 3",
-                        "type": "string",
-                        "required": False,
-                        "options": {"ref": "Metric Dimension Search.results"},
-                    },
-                ],
+                "description": "Columns to select to group by. A table.column selection from the metric dimension search results. may only be used if groupby1 is used.",
+                "type": "string",
+                "options": {"ref": "Metric Dimension Search.results"},
+                "min_length": 0,
+                "max_length": 3
             },
             {
                 "name": "filters",
-                "description": "SQL filter expressions using dimension columns from Metric Dimension Search results. Used only when asked a query that requires filtering. Must be valid SQL.",
+                "description": """
+SQL filter expressions using dimension columns from Metric Dimension Search results. 
+Used only when asked a query that requires filtering/subselection such as `where something is...`, `for the...`, `filter by...` or synonymous statements.
+These values must be valid SQL filter expressions.
+""",
                 "type": "string",
                 "max_length": 3,
-                "required": False,
+                "min_length": 0,
+                "max_value": 50,
+                # "required": False,
             },
         ],
         feedback_retries=1,
@@ -183,6 +173,12 @@ def get_agent_session(access_token: str):
         params=action_input['parameters']
         if not params[1] and not params[2]:
             raise ValueError("at least one of 'dimension' or 'filters' is required")
+        try:
+            from sqlglot import parse
+            for p in params[2]:
+                parse(p)
+        except:
+            raise ValueError(f"The sql filters you provided `{params[2]}` are not valid sql filter expressions. re-evaluate them.")
         return action_input
 
     def process_observation(action_input, observation_input):
@@ -192,9 +188,10 @@ def get_agent_session(access_token: str):
 
     metric_calculate = Tool(metric_calculate_schema)
         
-    tools = [knowledge_search, metric_search, metric_calculate, metric_dimension_search]
+    tools = [knowledge_search, metric_search, metric_calculate]
     agent = StandardAgent(
         model_identifier="chatgpt",
+        # model_identifier="openai/text-davinci-003",
         tools=tools,
         decoder="argmax(openai_chunksize=4, chatty_openai=True)",
     )
