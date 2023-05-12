@@ -18,12 +18,12 @@ metric_calculate_schema = ToolSchema(
             "type": "string",
             "options": {"ref": "Metric Dimension Search.results"},
             "min_length": 0,
-            "max_length": 3
+            "max_length": 3,
         },
         {
             "name": "filters",
             "description": """
-SQL filter expressions using dimension columns from Metric Dimension Search results. 
+SQL filter expressions using dimension columns from Metric Dimension Search results.
 Used only when asked a query that requires filtering/subselection such as `where something is...`, `for the...`, `filter by...` or synonymous statements.
 These values must be valid SQL filter expressions.
 """,
