@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 includes = ["headjack"]
 
 [project]
-name = "headjack-server"
+name = "headjack"
 dynamic = ["version"]
 description = ""
 authors = [
@@ -37,13 +37,19 @@ repository = "https://github.com/KnowledgeForge/headjack"
 [tool.hatch.version]
 path = "headjack/__about__.py"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.black]
 line-length = 130
 
 [tool.flake8]
 max-line-length = 130
 exclude = "demo.py"
-ignore = "E501"
+ignore = [
+    "E501",
+    "W503"
+]
 
 [tool.isort]
 profile = "black"

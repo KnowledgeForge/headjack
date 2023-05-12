@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict
 
 from chromadb.utils import embedding_functions
+
 from headjack.config import get_chroma_client
 from uuid import uuid4
 

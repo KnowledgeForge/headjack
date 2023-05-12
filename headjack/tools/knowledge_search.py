@@ -1,22 +1,23 @@
-from dataclasses import dataclass
+from headjack.models.tool import HTTPVerb, Tool, ToolSchema
 
-from headjack.models.tool import Tool, ToolSchema
-from headjack.models.utterance import Action, Observation
-
-
-@dataclass
-class KnowledgeSearchTool(Tool):
-    default_description = "Search for knowledge documents."
-    default_ref_name = "knowledge_search"
-    input_schema = ToolSchema("KnowledgeQueryActionSchema", {"query": str})
-    n_docs: int = 3
-    threshold: float = 0.0
-
-    async def __call__(self, action: Action) -> Observation:
-        # query = action.utterance_["query"]
-        # results = knowledge_vectorstore.collection.query(query_texts=query, n_results=self.n_docs)
-        # #         res = ""
-        # #         for meta, doc in zip(results["metadatas"], results["documents"]):
-        # #             res += f"{meta}: {doc}\n"
-        # return Observation(tool=self, utterance_=results["documents"])
-        return Observation(tool=self, utterance_="There were lots of profits")
+knowledge_search_schema = ToolSchema(
+    url="http://0.0.0.0:16410/query",
+    verb=HTTPVerb.GET,
+    name="Knowledge Search",
+    description="Tool used to search for general knowledge. Asking a question will return documents containing relevant information.",
+    parameters=[
+        {
+            "name": "text",
+            "description": "A succinct piece of text that asks a targeted question to find relevant knowledge documents. Example: Who is the president of the DJ Roads Company?",
+            "type": "string",
+            "max_value": 100,
+        },
+        {"name": "collection", "type": "string", "options": ["knowledge"]},
+    ],
+    results={"type": "string", "max_length": 100},
+    code="""
+def process_observation(action_input, observation_input):
+    return [i for j in observation_input['documents'] for i in j]
+""",
+)
+knowledge_search = Tool(knowledge_search_schema)
