@@ -1,14 +1,14 @@
 """
 Module containing all config related things
 """
+import os
+from functools import lru_cache
 from typing import Iterator, Optional
 
 import chromadb
-from chromadb.config import Settings as ChromaSettings
 from pydantic import BaseSettings
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, create_engine
-from functools import lru_cache
 
 
 @lru_cache(1)
@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     metadata_db: str = "sqlite:///headjack.db?check_same_thread=False"
     search_service: Optional[str] = None
+    port: Optional[int] = 8679
 
     class Config:
         env_prefix = "headjack_"  # all environment variables wil use this prefix
@@ -53,3 +54,9 @@ def get_session() -> Iterator[Session]:
 
     with Session(engine, autoflush=False) as session:  # pragma: no cover
         yield session
+
+
+def get_headjack_secret():
+    secret = os.environ.get("HEADJACK_SECRET", "headjack_secret")
+    if not secret:
+        raise EnvironmentError("HEADJACK_SECRET environment variable not found")

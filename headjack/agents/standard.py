@@ -12,7 +12,7 @@ from typing import Set, Type, cast
 
 from headjack.agents.query_templates.standard import standard_query
 from headjack.models.agent import Agent
-from headjack.models.utterance import Answer, Observation, User, Utterance, Action
+from headjack.models.utterance import Action, Answer, Observation, User, Utterance
 
 
 class StandardAgent(Agent):
@@ -38,9 +38,10 @@ class StandardAgent(Agent):
         self.loop_limit = loop_limit
         self.history_length = history_length
         self.history_utterances = history_utterances
-        self.tools_prompt = indent("\n".join(
-            tool.name + ": " + tool.description.replace("\n", " ") for tool in self.tools
-        ), " "*16)
+        self.tools_prompt = indent(
+            "\n".join(tool.name + ": " + tool.description.replace("\n", " ") for tool in self.tools),
+            " " * 16,
+        )
         self.tool_refs = {tool.name: tool for tool in self.tools}
         tool_body = []
         for tool in self.tools:

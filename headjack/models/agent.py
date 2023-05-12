@@ -59,10 +59,18 @@ class Agent:
 
         source = "async def _f(" + ", ".join(arg_names) + "):\n" + ("    '''" + doc.format(**self.__dict__) + "\n    '''")
         #         print(source)
-        from headjack.models.tool import Tool, dyn_filter
-        from headjack.models.utterance import Action, Answer, Feedback, Observation, Thought, User, Utterance
+        from headjack.models.tool import Tool, dyn_filter  # noqa: disable=F401
+        from headjack.models.utterance import (  # noqa: disable=F401
+            Action,
+            Answer,
+            Feedback,
+            Observation,
+            Thought,
+            User,
+            Utterance,
+        )
 
-        dynamic_filter = {}
+        dynamic_filter = {}  # noqa: disable=F401
         exec(source, globals(), locals())
         print(source)
         assert locals().get("_f") is not None, "failed to compile query"
