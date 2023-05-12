@@ -15,7 +15,6 @@ from typing import (
 
 from sqlmodel import Field
 
-
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation, Feedback
 
@@ -194,22 +193,26 @@ for _ in range({self.length}):
                 compilation.where.append(f"{variable} in {value_range}")
             else:
                 compilation.where.append(f"INT({variable})")
-                
+
         from headjack.models.utterance import Utterance
+
         marks = [u.marker.strip() for u in Utterance.__subclasses__() if u.marker.strip()]
         if self.type == "string":
-            compilation.body="\n'Remember to not include any marked phrases in this response (e.g. User:, Observation:, Thought:, Answer:...)'\n"+compilation.body
+            compilation.body = (
+                "\n'Remember to not include any marked phrases in this response (e.g. User:, Observation:, Thought:, Answer:...)'\n"
+                + compilation.body
+            )
             if self.length is None and self.max_length is None:
                 compilation.body += f"'\"[{variable}]\\n'\n"
                 compilation.body += f"{code_var}={variable}\n"
-                compilation.where.append(f'STOPS_AT({variable}, \'"\')')
+                compilation.where.append(f"STOPS_AT({variable}, '\"')")
                 for mark in marks:
-                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
+                    compilation.where.append(f"STOPS_AT({variable}, '{mark}')")
                     compilation.body += f"\n{code_var}={code_var}.replace('{mark}', '').strip()\n"
             else:
                 for mark in marks:
-                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
-                    compilation.body += f"\nimport pdb; pdb.set_trace()"
+                    compilation.where.append(f"STOPS_AT({variable}, '{mark}')")
+                    compilation.body += "\nimport pdb; pdb.set_trace()"
                     compilation.body += f"\n{code_var}=[v.replace('{mark}', '').strip() for v in {code_var}]\n"
             if self.max_value is not None:
                 compilation.where.append(f"len(TOKENS({variable}))<{self.max_value+1}")
@@ -228,7 +231,7 @@ for _ in range({self.length}):
                 compilation.where.append(
                     f'{variable} in dyn_filter(dynamic_filter, "' + ref_index_from_str(self.options.ref) + '")',
                 )
-                variable_prompt+=f" This value must be selected from {self.options.ref.split('.')[0]} tool's {'.'.join(self.options.ref.replace('[', '.').replace(']', '').split('.')[1:])}. "
+                variable_prompt += f" This value must be selected from {self.options.ref.split('.')[0]} tool's {'.'.join(self.options.ref.replace('[', '.').replace(']', '').split('.')[1:])}. "
             else:
                 if len(self.options) == 1:
                     compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
@@ -254,14 +257,19 @@ if {req_var}=='True':
 {indent(count_prompt, " "*4)}
 {indent(compilation.body, " "*4)}
 """
-        compilation.body = f'''
+        compilation.body = (
+            f'''
 """{variable_prompt}:
 {req_prompt}
 {default_prompt}
 {count_prompt.strip("'")}
 """
-''' + compilation.body
-        compilation.body = indent("#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35, "#") + "\n" + compilation.body
+'''
+            + compilation.body
+        )
+        compilation.body = (
+            indent("#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35, "#") + "\n" + compilation.body
+        )
         object.__setattr__(self, "_compilation", compilation)
         return self
 
@@ -436,7 +444,7 @@ if {req_var}=='True':
         if values.get("min_value") is not None and values.get("max_value") is None and values["type"] != "string":
             raise ValueError("max_value must be set if setting min_value for non-string")
         return values
-    
+
     # @validator("description", check_fields=False)
     # def description_length(cls, v):
     #     if len(v) > 100:
@@ -514,7 +522,7 @@ except:
 class ToolSchema(BaseModel):
     name: str
     description: str
-    example_queries: List[Dict[str, Dict[str, Any]]]
+    example_queries: List[Dict[str, Dict[str, Any]]] = []
     parameters: Optional[List[Param]] = None
     json_: Union[Any, Dict[str, Any], None] = Field(default=None, alias="json")
     url: Optional[str] = None
@@ -670,13 +678,16 @@ else:
         break
 """
 
-        body = indent(body, " "*4)
-        
-        body="""
+        body = indent(body, " " * 4)
+
+        body = (
+            """
 used_tool=False
 while not used_tool or retry_tool:
     used_tool=True
-"""+body
+"""
+            + body
+        )
         return body
 
     def where(self) -> str:
@@ -766,7 +777,7 @@ class Tool:
     def __post_init__(self):
         # if self.name in Tool.tools:
         #     raise Exception(f"duplicate tool names `{self.name}`")
-        Tool.tools[self.name]=self
+        Tool.tools[self.name] = self
         self.schema = self.schema.compile()
 
     @property
