@@ -19,5 +19,6 @@ knowledge_search_schema = ToolSchema(
 def process_observation(action_input, observation_input):
     return [i for j in observation_input['documents'] for i in j]
 """,
+    examples=["Who is the president of DJ Roads?"]
 )
 knowledge_search = Tool(knowledge_search_schema)

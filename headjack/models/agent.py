@@ -15,6 +15,7 @@ from typing import (
 )
 
 import lmql
+from headjack.models.vector_store import VectorStore
 
 from headjack.utils import add_source
 
@@ -35,15 +36,19 @@ class Agent:
     memory: Optional["VectorStoreMemory"] = None
     _run: Optional[Callable[["Agent", "Utterance", Any], Coroutine[Any, Any, "Utterance"]]] = field(default=None, init=False)
     queue: asyncio.Queue["Utterance"] = field(default_factory=asyncio.Queue, init=False)
-
+    # tool_example_lookup: VectorStore = field(default_factory=VectorStore)
+    
     def __post_init__(self):
         assert self.tools, "This agent requires some tools"
-
+        # for tool in self.tools:
+        #     queries, name = tool.schema.examples.keys(), tool.name
+        #     self.tool_example_lookup.add(queries, [{'idx': i} for i in range(len(queries))], [name]*len(queries))
+        
+        # import pdb; pdb.set_trace()
+        
     async def asend(self, utterance: "Utterance"):
         print(utterance)
         await self.queue.put(utterance)
-
-        # print(utterance)
 
     async def run(self, *args):
         if self._run is None:
