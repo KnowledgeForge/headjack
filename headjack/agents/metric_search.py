@@ -21,18 +21,9 @@ argmax
     User: What is the average temperature by city for the month of July?
     Terms: 'average temperature, mean temperature'
 
-    User: total sales by region for the quarter ending September 2023?
+    User: total sales by region for the quarter ending September 2023
     Terms: 'total sales, sales, revenue'
     
-    User: What is the total revenue for the company for the year 2022?
-    Terms: 'total revenue, revenue, sales'
-    
-    User: What is the average number of employees by department?
-    Terms: 'average number of employees, mean number of employees'
-    
-    User: What is the total number of flights by airline for the month of October?
-    Terms: 'total number of flights, number of flights'
-
     User: avg rating for the restaurant by cuisine type
     Terms: 'average rating, mean rating'
     
