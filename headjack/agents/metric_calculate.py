@@ -3,17 +3,38 @@ import lmql
 from headjack.utils import fetch
 from headjack.config import get_settings
 from textwrap import indent
-from headjack.tools.metric_search import metric_search
+from headjack.agents.metric_search import search_for_metrics
 
-async def calculate_metric(metric, dimensions, filters):
+
+async def search_for_dimensions(metrics):
     settings = get_settings()
-    filters = [f.strip("\n '.") for f in filters]
-    # TODO: Use metric, dimensions, and filters to calculate the desired result
-    #       and return it as a string
-    return "Result"
+    try:
+        metrics = "&".join("metric="+f.strip("\n '.") for f in metrics)
+        results = await fetch(f"{settings.metric_service}/metrics/common/dimensions/?{metrics}", 'GET', return_json=True)
+        return results
+    except:
+        return "No results"
+
+async def calculate_metric(metrics, dimensions, filters):
+    settings = get_settings()
+    metrics = "&".join("metrics="+f.strip("\n '.") for f in metrics)
+    dimensions = "&".join("dimensions="+f.strip("\n '.") for f in dimensions)
+    filters = "&".join("filters="+f.strip("\n '.") for f in filters)
+    url = f"{settings.metric_service}/data/?"
+    url+=metrics
+    if dimensions.strip():
+        url+="&"+dimensions
+    if filters.strip():
+        url+="&"+filters
+        
+    results = await fetch(url, 'GET', return_json=True)
+    return results
+
+async def metric_calculate_agent(question: str):
+    return await _metric_calculate_agent(question, [], [])
 
 @lmql.query
-async def metric_calculate_agent(question: str, _dimensions: List[str]):
+async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: List[str]):
     '''lmql
 argmax
     """You are given a User request to calculate a metric using a tool. 
@@ -43,10 +64,10 @@ argmax
             location.month
             location.state
             ...
-        Are there any dimensions that match 'city'?: Yes, location.city.
-        Are there any dimensions that could be used to filter to 'month is July'?: Yes, location.month.
-        Are there any dimensions that could be used to filter to 'population more than 10 million'?: Yes, location.population.
+        Is there a dimension that matches 'city'?: Yes, location.city.
+        Is there a dimension that could be used to filter to 'month is July'?: Yes, location.month.
         Write a valid sql filter expression for 'month is July' using location.month: "location.month='July'"
+        Is there a dimension that could be used to filter to 'population more than 10 million'?: Yes, location.population.
         Write a valid sql filter expression for 'population more than 10 million' using location.population: "location.population>10000000"
         # Request is run successfully and results sent to the user    
     
@@ -56,7 +77,8 @@ argmax
             Average Rating: avg_rating
             Number of Reviews: num_reviews
             ...
-        Is there a metric that appears to match the User's request? Yes, there are two metrics: avg_rating and num_reviews.
+        Is there a metric that appears to match 'average rating, mean rating'? Yes, avg_rating.
+        Is there a metric that appears to match 'total reviews, number of reviews'? Yes, num_reviews.
         Group By:
         Filter By: 'top 10 highest selling products';
         Dimensions for avg_rating, num_reviews:
@@ -67,7 +89,7 @@ argmax
             store.name
             store.id
             store.location
-        Are there any dimensions that could be used to filter to 'top 10 highest selling products'?: No.
+        Is there a dimension that could be used to filter to 'top 10 highest selling products'?: No.
         Response: The requested metric data could not be calculated because there is no dimension that can be used to filter to the top 10 highest selling products.
         # Response sent to user
     
@@ -83,15 +105,30 @@ argmax
         
     metric_results = []
     for term in terms:
-        res = await metric_search(term)
-        metrics = [f"{desc}: {md['name']}" for desc, md in zip(res['documents'][0], res['metadatas'][0])]
-        metric_results.append(metrics)
+        res = await search_for_metrics(term)
+        metrics = [md['name'] for md in res['metadatas'][0]]
+        _metrics += metrics
+        metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
+        metric_results.append(metric_texts)
     metric_results=indent("\n".join(metric_results), " "*4)
     "Metric Search Results:\n"
     "{metric_results}"
         
+    selected_metrics=[]
     for term in terms:
-        "Is there a metric that appears to match '{term}'? Yes, avg_temp."
+        "Is there a metric that appears to match '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [METRIC].\n"
+            selected_metrics.append(METRIC)
+        else:
+            "Explain in a few words to the user why you are unable to continue with their request.\n"
+            "Response: [RESULT]"
+            
+    common_dimensions = indent("\n".join(await search_for_dimensions(selected_metrics)), " "*4)
+    if not common_dimensions:
+        "There are no shared dimensions for these metrics. Explain to the user why you are unable to continue with their request.\n"
+        "Response: [RESULT]"
+            
     "Group By: "
     groupbys=[]
     for i in range(5):
@@ -108,16 +145,39 @@ argmax
         "'[FILTER];"
         filters.append(FILTER)
         
+    """Dimensions for {', '.join(selected_metrics)}:
+    {common_dimensions}"""
     
+    selected_groupbys=[]
+    for term in groupbys:
+        "Is there a dimension that matches '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [DIMENSION].\n"
+            selected_groupbys.append(DIMENSION)
+        else:
+            "Explain in a few words to the user why you are unable to continue with their request.\n"
+            "Response: [RESULT]"
+            
+    selected_filters=[]
+    for term in filters:
+        "Is there a dimension that could be used to filter to '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [DIMENSION].\n"
+            "Write a valid sql filter expression for {term}: [FILTER]"
+            selected_filters.append(FILTER)
+        else:
+            "Explain in a few words to the user why you are unable to continue with their request.\n"
+            "Response: [RESULT]"
+
+    return await calculate_metric(metric, dimensions, filters)
     
-
-
-    # TODO: Use the dimensions and filters to calculate the desired result
-    result = await calculate_metric(metric, dimensions, filters)
-    
-
 from
     "chatgpt"
 where
-    STOPS_AT(TERM, "'") and YESNO in ['Yes', 'No']
+    STOPS_AT(TERM, "'") and
+    STOPS_AT(RESULT, "\n") and
+    STOPS_AT(FILTER, "\n") and
+    YESNO in ['Yes', 'No'] and
+    METRIC in _metrics and
+    DIMENSION in _dimensions
     '''
