@@ -1,13 +1,15 @@
 import lmql
 from headjack.utils import fetch
+from headjack.config import get_settings
 
 async def search_for_knowledge(q):
-   try:
-      q = q.strip("\n '.")
-      results = await fetch(f"http://0.0.0.0:16410/query?collection=knowledge&text={q}", 'GET', return_json=True)
-      return [i for j in results['documents'] for i in j]
-   except:
-      return "No results"
+    settings = get_settings()
+    try:
+        q = q.strip("\n '.")
+        results = await fetch(f"{settings.search_service}/query?collection=knowledge&text={q}", 'GET', return_json=True)
+        return [i for j in results['documents'] for i in j]
+    except:
+        return "No results"
 
 @lmql.query
 async def knowledge_search_agent(question: str):
