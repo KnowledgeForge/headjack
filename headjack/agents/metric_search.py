@@ -39,4 +39,4 @@ FROM
     "chatgpt"
 WHERE
     STOPS_AT(TERM, "'")
-    ''
+    '''
