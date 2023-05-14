@@ -13,7 +13,7 @@ authors = [
     {name = "circargs", email = "nick@ouellet.dev"},
     {name = "Nick Ouellet", email = "nick@ouellet.dev"},
 ]
-dependencies = ["lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken", "chromadb==0.3.21", "fastapi>=0.71.0", "PyJWT>=2.6.0"]
+dependencies = ["lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken", "chromadb==0.3.21", "fastapi>=0.71.0", "PyJWT>=2.6.0", "sqlmodel>=0.0.8"]
 requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = {text = "Aache 2.0"}
