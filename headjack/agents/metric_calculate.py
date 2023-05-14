@@ -1,18 +1,26 @@
 from typing import List
 import lmql
+import logging
 from headjack.utils import fetch
 from headjack.config import get_settings
 from textwrap import indent
 from headjack.agents.metric_search import search_for_metrics
 
+_logger = logging.getLogger("uvicorn")
 
 async def search_for_dimensions(metrics):
     settings = get_settings()
     try:
         metrics = "&".join("metric="+f.strip("\n '.") for f in metrics)
+        _logger.info(
+            "Searching for dimensions using the metrics service"
+        )
         results = await fetch(f"{settings.metric_service}/metrics/common/dimensions/?{metrics}", 'GET', return_json=True)
         return results
-    except:
+    except Exception as e:
+        _logger.info(
+            f"Error while attempting to reach the metric service {str(e)}"
+        )
         return "No results"
 
 async def calculate_metric(metrics, dimensions, filters):
@@ -26,8 +34,17 @@ async def calculate_metric(metrics, dimensions, filters):
         url+="&"+dimensions
     if filters.strip():
         url+="&"+filters
-        
-    results = await fetch(url, 'GET', return_json=True)
+    
+    try:
+        _logger.info(
+            f"Calculating metric using the metrics service"
+        )
+        results = await fetch(url, 'GET', return_json=True)
+    except Exception as e:
+        _logger.info(
+            f"Error while attempting to reach metrics service {str(e)}"
+        )
+        return "Cannot calculate metric"
     return results
 
 async def metric_calculate_agent(question: str):
