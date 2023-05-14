@@ -16,6 +16,7 @@ async def metric_search_agent(question: str):
     '''
 argmax
     """You are given some statement, terms or question below from the User.
+    You will generate a list of diverse potential search terms that will be searched.
     
     Here are some examples:
     User: What is the average temperature by city for the month of July?
@@ -38,4 +39,4 @@ FROM
     "chatgpt"
 WHERE
     STOPS_AT(TERM, "'")
-    '''
+    ''
