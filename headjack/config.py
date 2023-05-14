@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     search_service: Optional[str] = None
     port: Optional[int] = 8679
     search_service: Optional[str] = "http://localhost:16410"
+    metric_service: Optional[str] = "http://localhost:8000"
 
     class Config:
         env_prefix = "headjack_"  # all environment variables wil use this prefix
