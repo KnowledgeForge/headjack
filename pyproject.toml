@@ -18,6 +18,9 @@ requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = {text = "Aache 2.0"}
 
+[project.scripts]
+headjack = "headjack.api.app:cli"
+
 [tool.pdm.dev-dependencies]
 dev = [
     "pytest==7.2.2",
