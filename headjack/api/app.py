@@ -28,8 +28,8 @@ app.include_router(metric_calculate.router)
 
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", help="Host")
-    parser.add_argument("--port", help="Port", type=int)
+    parser.add_argument("--host", help="Host", default="0.0.0.0")
+    parser.add_argument("--port", help="Port", default=8679, type=int)
     args = parser.parse_args()
     uvicorn.run(app, host=args.host, port=args.port)
 

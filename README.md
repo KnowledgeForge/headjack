@@ -2,6 +2,18 @@
 
 Headjack is a chat-based semantic layer for metrics platforms.
 
+## Install Using Pip
+
+```sh
+pip install headjack
+```
+
+## Start the Headjack Server
+
+```
+headjack
+```
+
 # Docker Compose
 
 The included docker compose setup launches a headjack, [chroma](https://github.com/chroma-core/chroma), and jupyter lab container.
