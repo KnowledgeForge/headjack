@@ -1,6 +1,7 @@
 """
 Headjack web server
 """
+import argparse
 import logging
 
 import uvicorn
@@ -24,6 +25,13 @@ app.include_router(chat.router)
 app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
+
+def cli():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", help="Host")
+    parser.add_argument("--port", help="Port", type=int)
+    args = parser.parse_args()
+    uvicorn.run(app, host=args.host, port=args.port)
 
 if __name__ == "__main__":
     settings = get_settings()
