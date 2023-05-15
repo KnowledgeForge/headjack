@@ -48,7 +48,7 @@ def start_a_new_session():
 @router.get("/")
 def home():
     settings = get_settings()
-    return HTMLResponse(template.replace("PORT", settings.port))
+    return HTMLResponse(template.replace("PORT", str(settings.port)))
 
 
 @router.websocket("/{access_token}")
