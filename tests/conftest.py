@@ -5,13 +5,13 @@ from typing import Iterator
 
 import pytest
 from cachelib.simple import SimpleCache
-from dj.api.main import app
-from dj.config import Settings
-from dj.utils import get_session, get_settings
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
+
+from headjack.api.app import app
+from headjack.config import Settings, get_session, get_settings
 
 
 @pytest.fixture

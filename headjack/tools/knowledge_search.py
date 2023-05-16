@@ -1,4 +1,4 @@
-from headjack.models.tool import HTTPVerb, Tool, ToolSchema
+from headjack.models.tool import HTTPVerb, Tool, ToolCode, ToolSchema
 
 knowledge_search_schema = ToolSchema(
     url="http://0.0.0.0:16410/query",
@@ -15,10 +15,12 @@ knowledge_search_schema = ToolSchema(
         {"name": "collection", "type": "string", "options": ["knowledge"]},
     ],
     results={"type": "string", "max_length": 100},
-    code="""
+    code=ToolCode.from_str(
+        code="""
 def process_observation(action_input, observation_input):
     return [i for j in observation_input['documents'] for i in j]
 """,
-    examples=["Who is the president of DJ Roads?"]
+    ),
+    examples=["Who is the president of DJ Roads?"],
 )
 knowledge_search = Tool(knowledge_search_schema)

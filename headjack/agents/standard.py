@@ -39,7 +39,7 @@ class StandardAgent(Agent):
         self.history_length = history_length
         self.history_utterances = history_utterances
         self.tools_prompt = indent(
-            "\n".join(tool.name + ": " + tool.description.replace("\n", " ") for tool in self.tools),
+            "\n".join(tool.name + ": " + tool.description.replace("\n", " ") for tool in self.tools),  # type: ignore
             " " * 16,
         )
         self.tool_refs = {tool.name: tool for tool in self.tools}
