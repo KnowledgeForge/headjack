@@ -8,7 +8,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from headjack.api import chat, metric_search, summary, metric_calculate
+from headjack.api import chat, metric_calculate, metric_search, summary
 from headjack.config import get_settings
 
 _logger = logging.getLogger(__name__)
@@ -26,12 +26,14 @@ app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
 
+
 def cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="Host", default="0.0.0.0")
     parser.add_argument("--port", help="Port", default=8679, type=int)
     args = parser.parse_args()
     uvicorn.run(app, host=args.host, port=args.port)
+
 
 if __name__ == "__main__":
     settings = get_settings()

@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Dict, List
+from uuid import uuid4
 
 from chromadb.utils import embedding_functions
 
 from headjack.config import get_chroma_client
-from uuid import uuid4
+
 
 @dataclass
 class VectorStore:
@@ -17,7 +18,6 @@ class VectorStore:
 
     def add(self, documents: List[str], metadatas: List[Dict[str, str]], ids: List[str]):
         self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
-    
-    def query(self, query: str, n: int=1):
-        return self.collection.query(query_texts=query, n_results=n)
 
+    def query(self, query: str, n: int = 1):
+        return self.collection.query(query_texts=query, n_results=n)

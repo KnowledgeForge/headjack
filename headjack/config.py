@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     """
 
     metadata_db: str = "sqlite:///headjack.db?check_same_thread=False"
-    search_service: Optional[str] = None
     port: Optional[int] = 8679
     search_service: Optional[str] = "http://localhost:16410"
     metric_service: Optional[str] = "http://localhost:8000"

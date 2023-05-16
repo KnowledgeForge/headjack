@@ -8,6 +8,7 @@ from typing import (
     AsyncGenerator,
     Callable,
     Coroutine,
+    Dict,
     List,
     Optional,
     Type,
@@ -15,12 +16,11 @@ from typing import (
 )
 
 import lmql
-from headjack.models.vector_store import VectorStore
 
 from headjack.utils import add_source
 
 if TYPE_CHECKING:
-    from headjack.models.memory import VectorStoreMemory
+    # from headjack.models.memory import VectorStoreMemory
     from headjack.models.tool import Tool
     from headjack.models.utterance import User, Utterance
 
@@ -33,19 +33,19 @@ class Agent:
     tools: List[Type["Tool"]]
     model_identifier: str
     decoder: str = "argmax"
-    memory: Optional["VectorStoreMemory"] = None
+    # memory: Optional["VectorStoreMemory"] = None
     _run: Optional[Callable[["Agent", "Utterance", Any], Coroutine[Any, Any, "Utterance"]]] = field(default=None, init=False)
     queue: asyncio.Queue["Utterance"] = field(default_factory=asyncio.Queue, init=False)
-    # tool_example_lookup: VectorStore = field(default_factory=VectorStore)
-    
+
     def __post_init__(self):
-        assert self.tools, "This agent requires some tools"
+        if not self.tools:
+            raise Exception("This agent requires some tools")
         # for tool in self.tools:
         #     queries, name = tool.schema.examples.keys(), tool.name
         #     self.tool_example_lookup.add(queries, [{'idx': i} for i in range(len(queries))], [name]*len(queries))
-        
+
         # import pdb; pdb.set_trace()
-        
+
     async def asend(self, utterance: "Utterance"):
         print(utterance)
         await self.queue.put(utterance)
@@ -75,7 +75,7 @@ class Agent:
             Utterance,
         )
 
-        dynamic_filter = {}  # noqa: disable=F401
+        dynamic_filter: Dict[Any, Any] = {}  # noqa: disable=F401
         exec(source, globals(), locals())
         print(source)
         assert locals().get("_f") is not None, "failed to compile query"

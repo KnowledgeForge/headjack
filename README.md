@@ -1,6 +1,12 @@
-# Headjack
+<p align="center">
+    <b>Headjack</b>
+</p>
 
-Headjack is a chat-based semantic layer for metrics platforms.
+<p align="center">
+  <a href="https://github.com/KnowledgeForge/headjack/actions/workflows/python-checks.yml" target="_blank">
+    <img src="https://github.com/KnowledgeForge/headjack/actions/workflows/python-checks.yml/badge.svg?branch=main" alt="Tests">
+  </a>
+</p>
 
 ## Install Using Pip
 

@@ -1,4 +1,4 @@
-from headjack.models.tool import HTTPVerb, Tool, ToolSchema
+from headjack.models.tool import HTTPVerb, Tool, ToolCode, ToolSchema
 
 metric_search_schema = ToolSchema(
     url="http://0.0.0.0:16410/query",
@@ -19,10 +19,12 @@ metric_search_schema = ToolSchema(
         "ref_name": {"type": "string", "max_length": 100},
         "query": {"type": "string", "max_length": 100},
     },
-    code="""
+    code=ToolCode.from_str(
+        """
 def process_observation(action_input, observation_input):
     return {'name': observation_input['documents'][0], 'ref_name': [m['name'] for m in observation_input['metadatas'][0]], 'query': [m['query'] for m in observation_input['metadatas'][0]]}
 """,
+    ),
 )
 
 metric_search = Tool(metric_search_schema)

@@ -1,4 +1,4 @@
-from headjack.models.tool import HTTPVerb, Tool, ToolSchema
+from headjack.models.tool import HTTPVerb, Tool, ToolCode, ToolSchema
 
 metric_calculate_schema = ToolSchema(
     url="http://localhost:8000/data",
@@ -37,7 +37,8 @@ These values must be valid SQL filter expressions.
     feedback_retries=1,
     result_answer=True,
     results={"type": "string"},
-    code="""
+    code=ToolCode.from_str(
+        code="""
 def process_action(action_input):
     params=action_input['parameters']
     if not params[1] and not params[2]:
@@ -53,6 +54,7 @@ def process_action(action_input):
 def process_observation(action_input, observation_input):
     return str(observation_input['results'])
 """,
+    ),
 )
 
 metric_calculate = Tool(metric_calculate_schema)

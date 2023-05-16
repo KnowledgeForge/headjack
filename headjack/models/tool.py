@@ -15,9 +15,6 @@ from typing import (
 
 from sqlmodel import Field
 
-from headjack.models.vector_store import VectorStore
-
-
 if TYPE_CHECKING:
     from headjack.models.utterance import Action, Observation, Feedback
 
@@ -27,7 +24,6 @@ import re
 import uuid
 from textwrap import dedent, indent
 from types import FunctionType
-from uuid import UUID
 
 from pydantic import BaseModel, ValidationError, root_validator, validator
 
@@ -61,7 +57,7 @@ class ToolCode:
             raise ValueError("Code must contain at least one of 'process_action' or 'process_observation' functions.")
 
         # Execute the code in a sandbox
-        sandbox = {}
+        sandbox: Dict[Any, Any] = {}
         exec(code, sandbox, sandbox)
 
         # Check if 'process_action' function exists and if it takes one argument
@@ -196,22 +192,26 @@ for _ in range({self.length}):
                 compilation.where.append(f"{variable} in {value_range}")
             else:
                 compilation.where.append(f"INT({variable})")
-                
+
         from headjack.models.utterance import Utterance
+
         marks = [u.marker.strip() for u in Utterance.__subclasses__() if u.marker.strip()]
         if self.type == "string":
-            compilation.body="\n'Remember to not include any marked phrases in this response (e.g. User:, Observation:, Thought:, Answer:...)'\n"+compilation.body
+            compilation.body = (
+                "\n'Remember to not include any marked phrases in this response (e.g. User:, Observation:, Thought:, Answer:...)'\n"
+                + compilation.body
+            )
             if self.length is None and self.max_length is None:
                 compilation.body += f"'\"[{variable}]\\n'\n"
                 compilation.body += f"{code_var}={variable}\n"
-                compilation.where.append(f'STOPS_AT({variable}, \'"\')')
+                compilation.where.append(f"STOPS_AT({variable}, '\"')")
                 for mark in marks:
-                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
+                    compilation.where.append(f"STOPS_AT({variable}, '{mark}')")
                     compilation.body += f"\n{code_var}={code_var}.replace('{mark}', '').strip()\n"
             else:
                 for mark in marks:
-                    compilation.where.append(f'STOPS_AT({variable}, \'{mark}\')')
-                    compilation.body += f"\nimport pdb; pdb.set_trace()"
+                    compilation.where.append(f"STOPS_AT({variable}, '{mark}')")
+                    compilation.body += "\nimport pdb; pdb.set_trace()"
                     compilation.body += f"\n{code_var}=[v.replace('{mark}', '').strip() for v in {code_var}]\n"
             if self.max_value is not None:
                 compilation.where.append(f"len(TOKENS({variable}))<{self.max_value+1}")
@@ -230,7 +230,7 @@ for _ in range({self.length}):
                 compilation.where.append(
                     f'{variable} in dyn_filter(dynamic_filter, "' + ref_index_from_str(self.options.ref) + '")',
                 )
-                variable_prompt+=f" This value must be selected from {self.options.ref.split('.')[0]} tool's {'.'.join(self.options.ref.replace('[', '.').replace(']', '').split('.')[1:])}. "
+                variable_prompt += f" This value must be selected from {self.options.ref.split('.')[0]} tool's {'.'.join(self.options.ref.replace('[', '.').replace(']', '').split('.')[1:])}. "
             else:
                 if len(self.options) == 1:
                     compilation.body = f"\n{code_var}={repr(self.options[0])}\n"
@@ -256,14 +256,19 @@ if {req_var}=='True':
 {indent(count_prompt, " "*4)}
 {indent(compilation.body, " "*4)}
 """
-        compilation.body = f'''
+        compilation.body = (
+            f'''
 """{variable_prompt}:
 {req_prompt}
 {default_prompt}
 {count_prompt.strip("'")}
 """
-''' + compilation.body
-        compilation.body = indent("#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35, "#") + "\n" + compilation.body
+'''
+            + compilation.body
+        )
+        compilation.body = (
+            indent("#" * 35 + "\n" + f"#name={self.name}; desc={self.description}\n" + "#" * 35, "#") + "\n" + compilation.body
+        )
         object.__setattr__(self, "_compilation", compilation)
         return self
 
@@ -438,7 +443,7 @@ if {req_var}=='True':
         if values.get("min_value") is not None and values.get("max_value") is None and values["type"] != "string":
             raise ValueError("max_value must be set if setting min_value for non-string")
         return values
-    
+
     # @validator("description", check_fields=False)
     # def description_length(cls, v):
     #     if len(v) > 100:
@@ -480,7 +485,10 @@ class ToolRefs:
     def compile(self, tool_refs: Optional["ToolRefs"] = None):
         ref = self if tool_refs is None else tool_refs
         for param in self.refs:
-            tool_name = param.ref.split(".")[0]
+            if param.ref:
+                tool_name = param.ref.split(".")[0]
+            else:
+                raise Exception("Param missing a ref")
             if tool_name not in ref.tool_lookup:
                 if ref is not self:
                     ref.refs.append(param)
@@ -509,7 +517,7 @@ except:
 """
         return body
 
-    def where(self) -> List[str]:
+    def where(self) -> str:
         return " and ".join(tool.schema.where() for tool in self.tool_lookup.values())
 
 
@@ -525,7 +533,7 @@ class ToolSchema(BaseModel):
         Dict[str, Any],
         None,
     ] = None  # if a results schema is not present this tool will not be referencable from other tools and will return text to agents
-    code: Union[None, str, ToolCode] = None
+    code: Optional[ToolCode] = None
     result_answer: bool = False
     feedback_retries: int = 0
 
@@ -622,7 +630,10 @@ class ToolSchema(BaseModel):
         def helper(value) -> str:
             if isinstance(value, Param):
                 value.compile()
-                base = f"\n{value._compilation.body}\n"
+                if value._compilation:
+                    base = f"\n{value._compilation.body}\n"
+                else:
+                    raise Exception("No compilation set on value")
                 if isinstance(value.type, list):
                     for p in value.type:
                         base += helper(p)
@@ -671,19 +682,25 @@ else:
         break
 """
 
-        body = indent(body, " "*4)
-        
-        body="""
+        body = indent(body, " " * 4)
+
+        body = (
+            """
 used_tool=False
 while not used_tool or retry_tool:
     used_tool=True
-"""+body
+"""
+            + body
+        )
         return body
 
     def where(self) -> str:
         def helper(value) -> List[str]:
             if isinstance(value, Param) and value.ref is None:
-                base = value._compilation.where[:]
+                if value._compilation:
+                    base = value._compilation.where[:]
+                else:
+                    raise Exception("No compilation set on value")
                 if isinstance(value.type, list):
                     for p in value.type:
                         base += helper(p)
@@ -762,14 +779,14 @@ class Tool:
     description_: Optional[str] = None
     name_: Optional[str] = None
     max_uses_per_query: int = cast(int, float("inf"))
-    tools: ClassVar[Dict[UUID, "Tool"]] = {}
-    
+    tools: ClassVar[Dict[str, "Tool"]] = {}
+
     def __post_init__(self):
         # if self.name in Tool.tools:
         #     raise Exception(f"duplicate tool names `{self.name}`")
-        Tool.tools[self.name]=self
+        Tool.tools[self.name] = self
         self.schema = self.schema.compile()
-    
+
     @property
     def description(self):
         return self.description_ or self.schema.description
