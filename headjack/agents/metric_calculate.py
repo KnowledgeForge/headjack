@@ -22,17 +22,24 @@ async def search_for_dimensions(metrics):
         return "No results"
 
 
-async def calculate_metric(metrics, dimensions, filters):
+async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     settings = get_settings()
     metrics = "&".join("metrics=" + f.strip("\n '.") for f in metrics)
+    dimensions = set(dimensions)|set(orderbys)
     dimensions = "&".join("dimensions=" + f.strip("\n '.") for f in dimensions)
     filters = "&".join("filters=" + f.strip("\n '.") for f in filters)
+    orderbys = set(orderbys)
+    orderbys = "&".join("orderby=" + f.strip("\n '.") for f in orderbys)
     url = f"{settings.metric_service}/data/?"
     url += metrics
     if dimensions.strip():
         url += "&" + dimensions
     if filters.strip():
         url += "&" + filters
+    if orderbys.strip():
+        url += "&" + orderbys
+    if limit is not None:
+        url += f"&limit={limit}"
 
     try:
         _logger.info("Calculating metric using the metrics service")
@@ -46,177 +53,241 @@ async def calculate_metric(metrics, dimensions, filters):
 async def metric_calculate_agent(question: str):
     return await _metric_calculate_agent(question, [], [])
 
-
 @lmql.query
 async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: List[str]):
     '''lmql
-    argmax
-        """You are given a User request to calculate a metric using a tool.
+argmax
+    """You are given a User request to calculate a metric using a tool. 
 
-        Here are some examples:
-            User: What is the average temperature by city for the month of July where the city's population is more than 10 million?
-            Thought: There's 1 metric(s) being requested, 1 group by dimension(s) being requested, and 2 filter dimension(s) being requested.
-            <Metrics Terms>
-            average temperature mean temperature
-            </Metrics Terms>
-            <Metric Search Results>
-            Average Temperature: avg_temp
-            Minimum Temperature: min_temp
+    Here are some examples:
+        User: What is the average temperature by city for the month of July where the city's population is more than 10 million?
+        Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
+        Thought: There's 1 metric(s), 1 group by dimension(s), 2 filter(s), 0 order by(s) and no limit being requested.
+        <Metrics Terms>
+        average temperature mean temperature
+        </Metrics Terms>
+        <Metric Search Results>
+        Average Temperature: avg_temp
+        Minimum Temperature: min_temp
+        ...
+        </Metric Search Results>
+        Is there a metric that appears to match 'average temperature mean temperature'? Yes, avg_temp.
+        <Group By>
+         city, town, municipality
+        </Group By>
+        <Filter By>
+        month is July
+        population more than 10 million
+        </Filter By>
+        <Dimensions metrics=avg_temp>
+            location.population
+            location.city
+            location.month
+            location.state
             ...
-            </Metric Search Results>
-            Is there a metric that appears to match 'average temperature mean temperature'? Yes, avg_temp.
-            <Group By>
-             city, town, municipality
-            </Group By>
-            <Filter By>
-            month is July
-            population more than 10 million
-            </Filter By>
-            <Dimensions metrics=avg_temp>
-                location.population
-                location.city
-                location.month
-                location.state
-                ...
-            </Dimensions>
-            Is there a dimension that matches 'city'?: Yes, location.city.
-            Is there a dimension that could be used to filter to 'month is July'?: Yes, location.month.
-            Write a valid sql filter expression for 'month is July' using location.month:
-            <sql filter expression>location.month='July'</sql filter expression>
-            Is there a dimension that could be used to filter to 'population more than 10 million'?: Yes, location.population.
-            Write a valid sql filter expression for 'population more than 10 million' using location.population:
-            <sql filter expression>location.population>10000000</sql filter expression>
-            # Request is run successfully and results sent to the user
+        </Dimensions>
+        Is there a dimension that matches 'city'?: Yes, location.city.
+        Are there any dimensions that could be used to filter 'month is July'?: Yes, and there's 1 needed.
+        <filter dimensions>
+        location.month
+        </filter dimensions>
+        Write a valid sql filter expression for 'month is July'.
+        You must use only location.month without splitting the names: 
+        <sql filter expression>location.month='July'</sql filter expression>
+        Are there any dimensions that could be used to filter 'population more than 10 million'?: Yes, and there's 1 needed.
+        <filter dimensions>
+        location.population
+        </filter dimensions>
+        Write a valid sql filter expression for 'population more than 10 million'.
+        You must use only location.population without splitting the names: 
+        <sql filter expression>location.population>10000000</sql filter expression>
+        # Request is run successfully and results sent to the user    
 
-            User: What is the average rating and number of reviews for the top 10 highest selling products?
-            Thought: There's 2 metric(s) being requested, 0 group by dimension(s) being requested, and 1 filter dimension(s) being requested.
-            <Metrics Terms>
-            average rating mean rating
-            total reviews, number of reviews
-            </Metrics Terms>
-            <Metric Search Results>
-            Average Rating: avg_rating
-            Number of Reviews: num_reviews
-            ...
-            </Metric Search Results>
-            Is there a metric that appears to match 'average rating mean rating'? Yes, avg_rating.
-            Is there a metric that appears to match 'total reviews number of reviews'? Yes, num_reviews.
-            <Group By>
-            </Group By>
-            <Filter By>
-            top 10 highest selling products
-            </Filter By>
-            <Dimensions metrics=avg_rating, num_reviews>
-            item.name
-            item.category
-            item.id
-            ...
-            store.name
-            store.id
-            store.location
-            </Dimensions>
-            Is there a dimension that could be used to filter to 'top 10 highest selling products'?: No.
-            Response: The requested metric data could not be calculated because there is no dimension that can be used to filter to the top 10 highest selling products.
-            # Response sent to user
-
-
-        User: {question}
-        Thought: There's [METRIC_COUNT] metric(s) being requested, [GROUPBY_COUNT] group by dimension(s) being requested, and [FILTER_COUNT] filter dimension(s) being requested.
-        <Metric Terms>
-        """
-        terms=[]
-        for i in range(int(METRIC_COUNT)):
-            "[METRIC_TERM]"
-            terms.append(METRIC_TERM.strip("\n '."))
-        "</Metric Terms>\n"
-        metric_results = []
-        for term in terms:
-            res = await search_for_metrics(term)
-            metrics = [md['name'] for md in res['metadatas'][0]]
-            _metrics += metrics
-            metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
-            metric_results+=metric_texts
-        metric_results="\n".join(metric_results)
-
-        "<Metric Results>\n"
-        "{metric_results}"
-        "\n</Metric Results>\n"
-
-        selected_metrics=[]
-        for term in terms:
-            "Is there a metric that appears to match '{term}'? [YESNO]"
-            if YESNO=='Yes':
-                ", [METRIC].\n"
-                if METRIC not in selected_metrics:
-                    selected_metrics.append(METRIC)
-            else:
-                "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
-                "Response: [RESPONSE]"
-
-        common_dimensions = await search_for_dimensions(selected_metrics)
-        if not common_dimensions:
-            "There are no shared dimensions for these metrics. Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+        User: What is the average rating and number of reviews for the top 10 highest selling products sold in the same month as they were stocked?
+        Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
+        Thought: There's 2 metric(s), 0 group by dimension(s), 1 filter(s), 1 order by(s) and a limit being requested.
+        <Metrics Terms>
+        average rating mean rating
+        total reviews, number of reviews
+        </Metrics Terms>
+        <Metric Search Results>
+        Average Rating: avg_rating
+        Number of Reviews: num_reviews
+        ...
+        </Metric Search Results>
+        Is there a metric that appears to match 'average rating mean rating'? Yes, avg_rating.
+        Is there a metric that appears to match 'total reviews number of reviews'? Yes, num_reviews.
+        <Group By>
+        </Group By>
+        <Order By>
+        highest selling products, top sellers
+        </Order By>
+        <Filter By>
+        products sold in the same month as stocked
+        </Filter By>
+        <Dimensions metrics=avg_rating, num_reviews>
+        item.name
+        item.sold_month
+        item.category
+        item.id
+        item.stocked_month
+        item.sales
+        ...
+        store.name
+        store.id
+        store.location
+        </Dimensions>
+        Is there a dimension that matches 'highest selling products, top sellers'?: Yes, item.sales.
+        Are there any dimensions that could be used to filter 'products sold in the same month as stocked'?: Yes, and 2 is/are needed.
+        <filter dimensions>
+        item.sold_month
+        item.stocked_month
+        </filter dimensions>
+        Write a valid sql filter expression for 'products sold in the same month as stocked'.
+        You must use only item.sold_month, item.stocked_month without splitting the names: 
+        <sql filter expression>item.sold_month = item.stocked_month</sql filter expression>
+        There needs to be a limit. This is an integer value. The limit should be 10.
+        # Response sent to user
+    
+    
+    User: {question}
+    Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
+    Thought: There's [METRIC_COUNT] metric(s), [GROUPBY_COUNT] group by dimension(s), [FILTER_COUNT] filter(s), [ORDER_COUNT] order by(s) and [LIMIT_Q] limit.
+    <Metric Terms>
+    """
+    
+    terms=[]
+    for i in range(int(METRIC_COUNT)):
+        "[METRIC_TERM]"
+        terms.append(METRIC_TERM.strip("\n '."))
+    "</Metric Terms>\n"
+    metric_results = []
+    for term in terms:
+        res = await search_for_metrics(term)
+        if res=='No results':
+            "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
+            return RESPONSE
+            
+        metrics = [md['name'] for md in res['metadatas'][0]]
+        _metrics += metrics
+        metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
+        metric_results+=metric_texts
+    metric_results="\n".join(metric_results)
+    
+    "<Metric Results>\n"
+    "{metric_results}"
+    "\n</Metric Results>\n"
+    
+    selected_metrics=[]
+    for term in terms:
+        "Is there a metric that appears to match '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [METRIC].\n"
+            if METRIC not in selected_metrics:
+                selected_metrics.append(METRIC)
+        else:
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
 
-        for dim in common_dimensions:
-            _dimensions.append(dim)
+    common_dimensions = await search_for_dimensions(selected_metrics)
+    if not common_dimensions:
+        "There are no shared dimensions for these metrics. Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+        "Response: [RESPONSE]"
+        return RESPONSE
 
-        "<Group By>\n"
-        groupbys=[]
-        for i in range(int(GROUPBY_COUNT)):
-            "[GROUPBY_TERM]"
-            groupbys.append(GROUPBY_TERM.strip("\n '."))
-        "</Group By>\n"
+    for dim in common_dimensions:
+        _dimensions.append(dim)
+        
+    "<Group By>\n"
+    groupbys=[]
+    for i in range(int(GROUPBY_COUNT)):
+        "[GROUPBY_TERM]"
+        groupbys.append(GROUPBY_TERM.strip("\n '."))
+    "</Group By>\n"
 
+    "<Order By>\n"
+    orderbys=[]
+    for i in range(int(ORDER_COUNT)):
+        "[ORDERBY_TERM]"
+        orderbys.append(ORDERBY_TERM.strip("\n '."))
+    "</Order By>\n"
+    
+    "<Filter By>\n"
+    filters=[]
+    for i in range(int(FILTER_COUNT)):
+        "[FILTER_TERM]"
+        filters.append(FILTER_TERM.strip("\n '."))
+    "</Filter By>\n"
+    
+    common_dimensions = "\n".join(common_dimensions)
+    """<Dimensions metrics={', '.join(selected_metrics)}:
+    {common_dimensions}
+    </Dimensions>"""
 
+    selected_groupbys=[]
+    for term in groupbys:
+        "Is there a dimension that matches '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [DIMENSION].\n"
+            selected_groupbys.append(DIMENSION)
+        else:
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
+            
+    selected_orderbys=[]
+    for term in orderbys:
+        "Is there a dimension that matches '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", [DIMENSION].\n"
+            selected_orderbys.append(DIMENSION)
+        else:
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
+    
+    selected_filters=[]
+    for term in filters:
+        "Are there any dimensions that could be used to filter '{term}'? [YESNO]"
+        if YESNO=='Yes':
+            ", and [SQL_FILTER_COUNT] is/are needed.\n"
+            "<filter dimensions>\n"
+            curr_dims = []
+            for i in range(int(SQL_FILTER_COUNT)):
+                "[DIMENSION]\n"
+                curr_dims.append(DIMENSION)
+                # selected_groupbys.append(DIMENSION)
+            curr_dims=", ".join(curr_dims)
+            "Write a valid sql filter expression for {term}.\n"
+            "You must use only {curr_dims} without splitting the names (i.e. a.b must always remain a.b treated as a single name everywhere):\n"
+            "<sql filter expression>[FILTER]"
+            selected_filters.append(FILTER.split('</')[0])
+        else:
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
+            
+    if LIMIT_Q=='a':
+        "There needs to be a limit. This is an integer value. The limit should be [LIMIT]"
 
-        "<Filter By>\n"
-        filters=[]
-        for i in range(int(FILTER_COUNT)):
-            "[FILTER_TERM]"
-            filters.append(FILTER_TERM.strip("\n '."))
-        "</Filter By>\n"
-
-        common_dimensions = "\n".join(common_dimensions)
-        """<Dimensions metrics={', '.join(selected_metrics)}:
-        {common_dimensions}
-        </Dimensions>"""
-
-        selected_groupbys=[]
-        for term in groupbys:
-            "Is there a dimension that matches '{term}'? [YESNO]"
-            if YESNO=='Yes':
-                ", [DIMENSION].\n"
-                selected_groupbys.append(DIMENSION)
-            else:
-                "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
-                "Response: [RESPONSE]"
-
-        selected_filters=[]
-        for term in filters:
-            "Is there a dimension that could be used to filter to '{term}'? [YESNO]"
-            if YESNO=='Yes':
-                ", [DIMENSION].\n"
-                "Write a valid sql filter expression for {term} using {DIMENSION}:\n"
-                "<sql filter expression>[FILTER]"
-                selected_filters.append(FILTER.split('</')[0])
-            else:
-                "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
-                "Response: [RESPONSE]"
-
-        return await calculate_metric(selected_metrics, selected_groupbys, selected_filters)
-
-    from
-        "chatgpt"
-    where
-        STOPS_AT(METRIC_TERM, "\n") and
-        STOPS_AT(GROUPBY_TERM, "\n") and
-        STOPS_AT(FILTER_TERM, "\n") and
-        STOPS_AT(RESPONSE, "\n") and
-        len(RESPONSE)<200 and
-        STOPS_AT(FILTER, "</") and
-        METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and
-        YESNO in ['Yes', 'No'] and
-        METRIC in _metrics and
-        DIMENSION in _dimensions
+    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, int(LIMIT))
+    
+from
+    "chatgpt"
+where
+    STOPS_AT(METRIC_TERM, "\n") and
+    STOPS_AT(GROUPBY_TERM, "\n") and
+    STOPS_AT(FILTER_TERM, "\n") and
+    STOPS_AT(RESPONSE, "\n") and
+    len(RESPONSE)<200 and
+    STOPS_AT(FILTER, "</") and 
+    METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and 
+    YESNO in ['Yes', 'No'] and
+    LIMIT_Q in ['no', 'a'] and
+    METRIC in _metrics and
+    DIMENSION in _dimensions and
+    INT(LIMIT)
     '''
