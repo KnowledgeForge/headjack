@@ -3,7 +3,7 @@ import logging
 import lmql
 
 from headjack.config import get_settings
-from headjack.utils import fetch
+from headjack.utils.general import fetch
 
 _logger = logging.getLogger("uvicorn")
 

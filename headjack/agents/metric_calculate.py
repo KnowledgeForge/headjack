@@ -1,11 +1,12 @@
 import logging
-from typing import List
+from typing import List, Set
 
 import lmql
 
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
 from headjack.config import get_settings
-from headjack.utils import fetch
+from headjack.utils.general import fetch
+from headjack.utils.semantic_sort import semantic_sort # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
 
@@ -42,7 +43,7 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
         url += f"&limit={limit}"
 
     try:
-        _logger.info("Calculating metric using the metrics service")
+        _logger.info(f"Calculating metric using the metrics service {url}")
         results = await fetch(url, "GET", return_json=True)
     except Exception as e:
         _logger.info(f"Error while attempting to reach metrics service {str(e)}")
@@ -51,10 +52,10 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 
 
 async def metric_calculate_agent(question: str):
-    return await _metric_calculate_agent(question, [], [])
+    return await _metric_calculate_agent(question, [], set())
 
 @lmql.query
-async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: List[str]):
+async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: Set[str]):
     '''lmql
 argmax
     """You are given a User request to calculate a metric using a tool. 
@@ -155,7 +156,7 @@ argmax
     Thought: There's [METRIC_COUNT] metric(s), [GROUPBY_COUNT] group by dimension(s), [FILTER_COUNT] filter(s), [ORDER_COUNT] order by(s) and [LIMIT_Q] limit.
     <Metric Terms>
     """
-    
+    _logger.info(f"User query `{question}`.")
     terms=[]
     for i in range(int(METRIC_COUNT)):
         "[METRIC_TERM]"
@@ -175,6 +176,7 @@ argmax
         metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
         metric_results+=metric_texts
     metric_results="\n".join(metric_results)
+    _logger.info(f"Found metrics `{metric_results}`.")
     
     "<Metric Results>\n"
     "{metric_results}"
@@ -199,7 +201,7 @@ argmax
         return RESPONSE
 
     for dim in common_dimensions:
-        _dimensions.append(dim)
+        _dimensions.add(dim)
         
     "<Group By>\n"
     groupbys=[]
@@ -222,58 +224,94 @@ argmax
         filters.append(FILTER_TERM.strip("\n '."))
     "</Filter By>\n"
     
-    common_dimensions = "\n".join(common_dimensions)
-    """<Dimensions metrics={', '.join(selected_metrics)}:
-    {common_dimensions}
-    </Dimensions>"""
 
     selected_groupbys=[]
     for term in groupbys:
-        "Is there a dimension that matches '{term}'? [YESNO]"
+        temp_dims=semantic_sort(term, common_dimensions, 5)
+        dim_options="\n".join(temp_dims)
+        """<Dimensions>:
+        {dim_options}
+        </Dimensions>"""
+        "Is there a dimension that matches '{term}': [YESNO]"
+        
         if YESNO=='Yes':
+            for dim in list(_dimensions):
+                _dimensions.remove(dim)
+            for dim in temp_dims:
+                _dimensions.add(dim)
             ", [DIMENSION].\n"
             selected_groupbys.append(DIMENSION)
+            _logger.info(f"Adding groupby `{selected_groupbys[-1]}`.")
+            for dim in common_dimensions:
+                _dimensions.add(dim)
+        else:
+            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
+
+    selected_orderbys=[]
+    for term in orderbys:
+        temp_dims=semantic_sort(term, common_dimensions, 5)
+        dim_options="\n".join(temp_dims)
+        """<Dimensions>:
+        {dim_options}
+        </Dimensions>"""
+        "Is there a dimension that matches '{term}': [YESNO]"
+        if YESNO=='Yes':
+            for dim in list(_dimensions):
+                _dimensions.remove(dim)
+            for dim in temp_dims:
+                _dimensions.add(dim)
+            ", [DIMENSION].\n"
+            selected_orderbys.append(DIMENSION)
+            _logger.info(f"Adding orderby `{selected_orderbys[-1]}`.")
+            for dim in common_dimensions:
+                _dimensions.add(dim)
         else:
             "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
             
-    selected_orderbys=[]
-    for term in orderbys:
-        "Is there a dimension that matches '{term}'? [YESNO]"
-        if YESNO=='Yes':
-            ", [DIMENSION].\n"
-            selected_orderbys.append(DIMENSION)
-        else:
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            return RESPONSE
-    
     selected_filters=[]
     for term in filters:
+        temp_dims=semantic_sort(term, common_dimensions, 5)
+        dim_options="\n".join(temp_dims)
+        """<Dimensions>:
+        {dim_options}
+        </Dimensions>"""
         "Are there any dimensions that could be used to filter '{term}'? [YESNO]"
         if YESNO=='Yes':
+            for dim in list(_dimensions):
+                _dimensions.remove(dim)
+            for dim in temp_dims:
+                _dimensions.add(dim)
             ", and [SQL_FILTER_COUNT] is/are needed.\n"
             "<filter dimensions>\n"
             curr_dims = []
             for i in range(int(SQL_FILTER_COUNT)):
                 "[DIMENSION]\n"
                 curr_dims.append(DIMENSION)
-                # selected_groupbys.append(DIMENSION)
+            "</filter dimensions>"
+            for dim in common_dimensions:
+                _dimensions.add(dim)
             curr_dims=", ".join(curr_dims)
             "Write a valid sql filter expression for {term}.\n"
             "You must use only {curr_dims} without splitting the names (i.e. a.b must always remain a.b treated as a single name everywhere):\n"
             "<sql filter expression>[FILTER]"
             selected_filters.append(FILTER.split('</')[0])
+            _logger.info(f"Adding filter `{selected_filters[-1]}`.")
         else:
             "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
-            
+    
+    limit = None
     if LIMIT_Q=='a':
         "There needs to be a limit. This is an integer value. The limit should be [LIMIT]"
-
-    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, int(LIMIT))
+        _logger.info(f"Deciding to limit to {LIMIT} results.")
+        limit = int(LIMIT)
+        
+    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
     
 from
     "chatgpt"

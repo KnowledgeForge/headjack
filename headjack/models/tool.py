@@ -27,7 +27,7 @@ from types import FunctionType
 
 from pydantic import BaseModel, ValidationError, root_validator, validator
 
-from headjack.utils import fetch
+from headjack.utils.general import fetch
 
 
 def ref_index_from_str(s):
