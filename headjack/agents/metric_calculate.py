@@ -6,6 +6,7 @@ import lmql
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
 from headjack.config import get_settings
 from headjack.utils.general import fetch
+from textwrap import dedent, indent
 from headjack.utils.semantic_sort import semantic_sort # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
@@ -175,7 +176,7 @@ argmax
         _metrics += metrics
         metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
         metric_results+=metric_texts
-    metric_results="\n".join(metric_results)
+    metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
     _logger.info(f"Found metrics `{metric_results}`.")
     
     "<Metric Results>\n"
@@ -227,11 +228,12 @@ argmax
 
     selected_groupbys=[]
     for term in groupbys:
-        temp_dims=semantic_sort(term, common_dimensions, 5)
-        dim_options="\n".join(temp_dims)
-        """<Dimensions>:
+        temp_dims=semantic_sort(term, common_dimensions, 10)
+        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+        """<Dimensions terms={term}>
         {dim_options}
-        </Dimensions>"""
+        </Dimensions>
+        """
         "Is there a dimension that matches '{term}': [YESNO]"
         
         if YESNO=='Yes':
@@ -251,11 +253,12 @@ argmax
 
     selected_orderbys=[]
     for term in orderbys:
-        temp_dims=semantic_sort(term, common_dimensions, 5)
-        dim_options="\n".join(temp_dims)
-        """<Dimensions>:
+        temp_dims=semantic_sort(term, common_dimensions, 10)
+        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+        """<Dimensions terms={term}>
         {dim_options}
-        </Dimensions>"""
+        </Dimensions>
+        """
         "Is there a dimension that matches '{term}': [YESNO]"
         if YESNO=='Yes':
             for dim in list(_dimensions):
@@ -274,11 +277,12 @@ argmax
             
     selected_filters=[]
     for term in filters:
-        temp_dims=semantic_sort(term, common_dimensions, 5)
-        dim_options="\n".join(temp_dims)
-        """<Dimensions>:
+        temp_dims=semantic_sort(term, common_dimensions, 10)
+        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+        """<Dimensions terms={term}>
         {dim_options}
-        </Dimensions>"""
+        </Dimensions>
+        """
         "Are there any dimensions that could be used to filter '{term}'? [YESNO]"
         if YESNO=='Yes':
             for dim in list(_dimensions):
@@ -311,13 +315,14 @@ argmax
         _logger.info(f"Deciding to limit to {LIMIT} results.")
         limit = int(LIMIT)
         
-    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
+    # return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
     
 from
     "chatgpt"
 where
     STOPS_AT(METRIC_TERM, "\n") and
     STOPS_AT(GROUPBY_TERM, "\n") and
+    STOPS_AT(ORDERBY_TERM, "\n") and
     STOPS_AT(FILTER_TERM, "\n") and
     STOPS_AT(RESPONSE, "\n") and
     len(RESPONSE)<200 and
