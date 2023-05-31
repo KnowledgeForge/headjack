@@ -19,5 +19,5 @@ class VectorStore:
     def add(self, documents: List[str], metadatas: List[Dict[str, str]], ids: List[str]):
         self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
 
-    def query(self, query: str, n: int = 1):
+    def query(self, query: str, n: int = 1) -> dict[str, list]:
         return self.collection.query(query_texts=query, n_results=n)

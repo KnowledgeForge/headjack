@@ -1,14 +1,17 @@
 import logging
+from textwrap import dedent, indent  # noqa: F401
 from typing import List, Set
 
 import lmql
 
+from headjack.agents.examples.metric_calculate_examples import (  # noqa: F401
+    get_metric_calculate_examples,
+)
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
 from headjack.config import get_settings
 from headjack.utils.general import fetch
-from textwrap import dedent, indent # noqa: F401
-from headjack.utils.semantic_sort import semantic_sort # noqa: F401
-from headjack.agents.examples.metric_calculate_examples import get_metric_calculate_examples
+from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
+
 _logger = logging.getLogger("uvicorn")
 
 
@@ -27,7 +30,7 @@ async def search_for_dimensions(metrics):
 async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     settings = get_settings()
     metrics = "&".join("metrics=" + f.strip("\n '.") for f in metrics)
-    dimensions = set(dimensions)|set(orderbys)
+    dimensions = set(dimensions) | set(orderbys)
     dimensions = "&".join("dimensions=" + f.strip("\n '.") for f in dimensions)
     filters = "&".join("filters=" + f.strip("\n '.") for f in filters)
     orderbys = set(orderbys)
@@ -55,234 +58,235 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 async def metric_calculate_agent(question: str):
     return await _metric_calculate_agent(question, [], set())
 
+
 @lmql.query
 async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: Set[str]):
     '''lmql
-argmax(max_len=3000)
-    """You are given a User request to calculate a metric. 
+    argmax(max_len=3000)
+        """You are given a User request to calculate a metric.
 
-    ### Here are some examples:
-    {get_metric_calculate_examples(question, 2)}    
-    ### End of examples
-    
-    You must extract the necessary information from the user's query for the api request. 
-    User: {question}
-    Count the number of metrics, e.g. terms that describe some calculated number.
-    Thought: There's [METRIC_COUNT] metric(s).
-    List the terms that describe each metric.
-    <Metric Terms>
-    """
-    _logger.info(f"User query `{question}`.")
-    terms=[]
-    for i in range(int(METRIC_COUNT)):
-        "[METRIC_TERM]"
-        terms.append(METRIC_TERM.strip("\n '."))
-    "</Metric Terms>\n"
-    metric_results = []
-    for term in terms:
-        res = await search_for_metrics(term)
-        if res=='No results':
-            "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            # return RESPONSE
-            
-        metrics = [md['name'] for md in res['metadatas'][0]]
-        _metrics += metrics
-        metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
-        metric_results+=metric_texts
-    metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
-    _logger.info(f"Found metrics `{metric_results}`.")
-    "A semantic search returned the following metrics.\n"
-    "<Metric Results>\n"
-    "{metric_results}"
-    "\n</Metric Results>\n"
-    
-    selected_metrics=[]
-    for term in terms:
-        "Is there a metric that appears to match '{term}'? [YESNO]"
-        if YESNO=='Yes':
-            ", [METRIC].\n"
-            if METRIC not in selected_metrics:
-                selected_metrics.append(METRIC)
-        else:
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            return RESPONSE
-    _logger.info(f"Decided metrics `{selected_metrics}`.")
-    common_dimensions = await search_for_dimensions(selected_metrics)
-    
-    if not common_dimensions:
-        if len(selected_metrics)>1:
-            "\nThere are no shared dimensions for these metrics.\n" 
-        else:
-            "\nThere are no dimensions for this metric.\n"
-        "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
-        "Response: [RESPONSE]"
-        return RESPONSE
+        ### Here are some examples:
+        {get_metric_calculate_examples(question, 2)}
+        ### End of examples
 
-    for dim in common_dimensions:
-        _dimensions.add(dim)
-    """
-    Count the number of group bys or aggregations from the user query '{question}'.
-    Thought: There's [GROUPBY_COUNT] group by dimension(s).
-    List the terms that describe each group by.
-    <Group By>
-    """
-    groupbys=[]
-    for i in range(int(GROUPBY_COUNT)):
-        "[GROUPBY_TERM]"
-        groupbys.append(GROUPBY_TERM.strip("\n '."))
-    "</Group By>\n"
-    _logger.info(f"Determined groupings of `{groupbys}`.")
-    """
-    Count the number of order bys or sortings from the user query '{question}'.
-    Thought: There's [ORDER_COUNT] order by dimension(s).
-    List the terms that describe each order by.
-    <Order By>
-    """
-    orderbys=[]
-    for i in range(int(ORDER_COUNT)):
-        "[ORDERBY_TERM]"
-        orderbys.append(ORDERBY_TERM.strip("\n '."))
-    "</Order By>\n"
-    _logger.info(f"Determined orderings of `{orderbys}`.")
-    
-    limit = None
-    "Does the user query '{question}' suggest there needs to be a limit? [YESNO]\n"
-    if YESNO=='Yes':
-        _logger.info(f"Decided there needs to be a limit.")
-        "The limit is <limit type=integer>[LIMIT]limit>\n"
-        limit = int(LIMIT.strip('</'))
-        _logger.info(f"Deciding to limit to `{limit}` results.")
-    else:
-        _logger.info(f"Decided there does NOT need to be a limit.")
-    
-    filter_consideration=""
-    if orderbys:
-        filter_consideration+="You have decided to order by "+"; ".join(orderbys)
-        if limit:
-            filter_consideration+=f" and you chose a limit of {limit}."
-        else:
-            filter_consideration+="."
-    else:
-        if limit:
-            filter_consideration+=f"You chose a limit of {limit}."    
-    """
-    {filter_consideration}
-    With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
-    Thought: There's still [FILTER_COUNT] filter(s) needed.
-    Describe each filter.
-    <Filter By>
-    """
-    filters=[]
-    for i in range(int(FILTER_COUNT)):
-        "[FILTER_TERM]"
-        filters.append(FILTER_TERM.strip("\n '."))
-    "</Filter By>\n"
-    
-    selected_groupbys=[]
-    for term in groupbys:
-        temp_dims=semantic_sort(term, common_dimensions, 10)
-        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+        You must extract the necessary information from the user's query for the api request.
+        User: {question}
+        Count the number of metrics, e.g. terms that describe some calculated number.
+        Thought: There's [METRIC_COUNT] metric(s).
+        List the terms that describe each metric.
+        <Metric Terms>
         """
-    <Dimensions terms={term}>
-    {dim_options}
-    </Dimensions>
-        """
-        "\nIs there a dimension that that could be used for '{term}': [YESNO]"
-        
-        if YESNO=='Yes':
-            for dim in list(_dimensions):
-                _dimensions.remove(dim)
-            for dim in temp_dims:
-                _dimensions.add(dim)
-            ", [DIMENSION].\n"
-            selected_groupbys.append(DIMENSION)
-            _logger.info(f"Adding groupby `{selected_groupbys[-1]}`.")
-            for dim in common_dimensions:
-                _dimensions.add(dim)
-        else:
-            "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            return RESPONSE
+        _logger.info(f"User query `{question}`.")
+        terms=[]
+        for i in range(int(METRIC_COUNT)):
+            "[METRIC_TERM]"
+            terms.append(METRIC_TERM.strip("\n '."))
+        "</Metric Terms>\n"
+        metric_results = []
+        for term in terms:
+            res = await search_for_metrics(term)
+            if res=='No results':
+                "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
+                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Response: [RESPONSE]"
+                # return RESPONSE
 
-    selected_orderbys=[]
-    for term in orderbys:
-        temp_dims=semantic_sort(term, common_dimensions, 10)
-        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
-        """
-    <Dimensions terms={term}>
-    {dim_options}
-    </Dimensions>
-        """
-        "\nIs there a dimension that could be used for '{term}': [YESNO]"
-        if YESNO=='Yes':
-            for dim in list(_dimensions):
-                _dimensions.remove(dim)
-            for dim in temp_dims:
-                _dimensions.add(dim)
-            ", [DIMENSION].\n"
-            selected_orderbys.append(DIMENSION)
-            _logger.info(f"Adding orderby `{selected_orderbys[-1]}`.")
-            for dim in common_dimensions:
-                _dimensions.add(dim)
-        else:
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            return RESPONSE
-    selected_filters=[]
-    for term in filters:
-        temp_dims=semantic_sort(term, common_dimensions, 10)
-        dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
-        """
-    <Dimensions terms={term}>
-    {dim_options}
-    </Dimensions>
-        """
-        "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
-        if YESNO=='Yes':
-            for dim in list(_dimensions):
-                _dimensions.remove(dim)
-            for dim in temp_dims:
-                _dimensions.add(dim)
-            ", and [SQL_FILTER_COUNT] is/are needed.\n"
-            
-            "<filter dimensions term={term}>\n"
-            curr_dims = []
-            for i in range(int(SQL_FILTER_COUNT)):
-                "[DIMENSION]\n"
-                curr_dims.append(DIMENSION)
-            "</filter dimensions>"
-            for dim in common_dimensions:
-                _dimensions.add(dim)
-            curr_dims=", ".join(curr_dims)
-            "Write a valid sql filter expression for {term}.\n"
-            "You must use only {curr_dims} without splitting the names (i.e. a.b must always remain a.b treated as a single name everywhere):\n"
-            "<sql filter expression>[FILTER]sql filter expression>"
-            
-            selected_filters.append(FILTER.split('</')[0])
-            _logger.info(f"Adding filter `{selected_filters[-1]}`.")
-        else:
+            metrics = [md['name'] for md in res['metadatas'][0]]
+            _metrics += metrics
+            metric_texts = [f"{desc}: {m}" for desc, m in zip(res['documents'][0], metrics)]
+            metric_results+=metric_texts
+        metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
+        _logger.info(f"Found metrics `{metric_results}`.")
+        "A semantic search returned the following metrics.\n"
+        "<Metric Results>\n"
+        "{metric_results}"
+        "\n</Metric Results>\n"
+
+        selected_metrics=[]
+        for term in terms:
+            "Is there a metric that appears to match '{term}'? [YESNO]"
+            if YESNO=='Yes':
+                ", [METRIC].\n"
+                if METRIC not in selected_metrics:
+                    selected_metrics.append(METRIC)
+            else:
+                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Response: [RESPONSE]"
+                return RESPONSE
+        _logger.info(f"Decided metrics `{selected_metrics}`.")
+        common_dimensions = await search_for_dimensions(selected_metrics)
+
+        if not common_dimensions:
+            if len(selected_metrics)>1:
+                "\nThere are no shared dimensions for these metrics.\n"
+            else:
+                "\nThere are no dimensions for this metric.\n"
             "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
 
-    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
-    
-from
-    "chatgpt"
-where
-    STOPS_AT(METRIC_TERM, "\n") and
-    STOPS_AT(GROUPBY_TERM, "\n") and
-    STOPS_AT(ORDERBY_TERM, "\n") and
-    STOPS_AT(FILTER_TERM, "\n") and
-    STOPS_AT(RESPONSE, "\n") and
-    len(RESPONSE)<200 and
-    STOPS_AT(FILTER, "</") and 
-    STOPS_AT(LIMIT, "</") and
-    METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and 
-    YESNO in ['Yes', 'No'] and
-    METRIC in _metrics and
-    DIMENSION in _dimensions
+        for dim in common_dimensions:
+            _dimensions.add(dim)
+        """
+        Count the number of group bys or aggregations from the user query '{question}'.
+        Thought: There's [GROUPBY_COUNT] group by dimension(s).
+        List the terms that describe each group by.
+        <Group By>
+        """
+        groupbys=[]
+        for i in range(int(GROUPBY_COUNT)):
+            "[GROUPBY_TERM]"
+            groupbys.append(GROUPBY_TERM.strip("\n '."))
+        "</Group By>\n"
+        _logger.info(f"Determined groupings of `{groupbys}`.")
+        """
+        Count the number of order bys or sortings from the user query '{question}'.
+        Thought: There's [ORDER_COUNT] order by dimension(s).
+        List the terms that describe each order by.
+        <Order By>
+        """
+        orderbys=[]
+        for i in range(int(ORDER_COUNT)):
+            "[ORDERBY_TERM]"
+            orderbys.append(ORDERBY_TERM.strip("\n '."))
+        "</Order By>\n"
+        _logger.info(f"Determined orderings of `{orderbys}`.")
+
+        limit = None
+        "Does the user query '{question}' suggest there needs to be a limit? [YESNO]\n"
+        if YESNO=='Yes':
+            _logger.info(f"Decided there needs to be a limit.")
+            "The limit is <limit type=integer>[LIMIT]limit>\n"
+            limit = int(LIMIT.strip('</'))
+            _logger.info(f"Deciding to limit to `{limit}` results.")
+        else:
+            _logger.info(f"Decided there does NOT need to be a limit.")
+
+        filter_consideration=""
+        if orderbys:
+            filter_consideration+="You have decided to order by "+"; ".join(orderbys)
+            if limit:
+                filter_consideration+=f" and you chose a limit of {limit}."
+            else:
+                filter_consideration+="."
+        else:
+            if limit:
+                filter_consideration+=f"You chose a limit of {limit}."
+        """
+        {filter_consideration}
+        With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
+        Thought: There's still [FILTER_COUNT] filter(s) needed.
+        Describe each filter.
+        <Filter By>
+        """
+        filters=[]
+        for i in range(int(FILTER_COUNT)):
+            "[FILTER_TERM]"
+            filters.append(FILTER_TERM.strip("\n '."))
+        "</Filter By>\n"
+
+        selected_groupbys=[]
+        for term in groupbys:
+            temp_dims=semantic_sort(term, common_dimensions, 10)
+            dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+            """
+        <Dimensions terms={term}>
+        {dim_options}
+        </Dimensions>
+            """
+            "\nIs there a dimension that that could be used for '{term}': [YESNO]"
+
+            if YESNO=='Yes':
+                for dim in list(_dimensions):
+                    _dimensions.remove(dim)
+                for dim in temp_dims:
+                    _dimensions.add(dim)
+                ", [DIMENSION].\n"
+                selected_groupbys.append(DIMENSION)
+                _logger.info(f"Adding groupby `{selected_groupbys[-1]}`.")
+                for dim in common_dimensions:
+                    _dimensions.add(dim)
+            else:
+                "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Response: [RESPONSE]"
+                return RESPONSE
+
+        selected_orderbys=[]
+        for term in orderbys:
+            temp_dims=semantic_sort(term, common_dimensions, 10)
+            dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+            """
+        <Dimensions terms={term}>
+        {dim_options}
+        </Dimensions>
+            """
+            "\nIs there a dimension that could be used for '{term}': [YESNO]"
+            if YESNO=='Yes':
+                for dim in list(_dimensions):
+                    _dimensions.remove(dim)
+                for dim in temp_dims:
+                    _dimensions.add(dim)
+                ", [DIMENSION].\n"
+                selected_orderbys.append(DIMENSION)
+                _logger.info(f"Adding orderby `{selected_orderbys[-1]}`.")
+                for dim in common_dimensions:
+                    _dimensions.add(dim)
+            else:
+                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Response: [RESPONSE]"
+                return RESPONSE
+        selected_filters=[]
+        for term in filters:
+            temp_dims=semantic_sort(term, common_dimensions, 10)
+            dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
+            """
+        <Dimensions terms={term}>
+        {dim_options}
+        </Dimensions>
+            """
+            "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
+            if YESNO=='Yes':
+                for dim in list(_dimensions):
+                    _dimensions.remove(dim)
+                for dim in temp_dims:
+                    _dimensions.add(dim)
+                ", and [SQL_FILTER_COUNT] is/are needed.\n"
+
+                "<filter dimensions term={term}>\n"
+                curr_dims = []
+                for i in range(int(SQL_FILTER_COUNT)):
+                    "[DIMENSION]\n"
+                    curr_dims.append(DIMENSION)
+                "</filter dimensions>"
+                for dim in common_dimensions:
+                    _dimensions.add(dim)
+                curr_dims=", ".join(curr_dims)
+                "Write a valid sql filter expression for {term}.\n"
+                "You must use only {curr_dims} without splitting the names (i.e. a.b must always remain a.b treated as a single name everywhere):\n"
+                "<sql filter expression>[FILTER]sql filter expression>"
+
+                selected_filters.append(FILTER.split('</')[0])
+                _logger.info(f"Adding filter `{selected_filters[-1]}`.")
+            else:
+                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Response: [RESPONSE]"
+                return RESPONSE
+
+        return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
+
+    from
+        "chatgpt"
+    where
+        STOPS_AT(METRIC_TERM, "\n") and
+        STOPS_AT(GROUPBY_TERM, "\n") and
+        STOPS_AT(ORDERBY_TERM, "\n") and
+        STOPS_AT(FILTER_TERM, "\n") and
+        STOPS_AT(RESPONSE, "\n") and
+        len(RESPONSE)<200 and
+        STOPS_AT(FILTER, "</") and
+        STOPS_AT(LIMIT, "</") and
+        METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and
+        YESNO in ['Yes', 'No'] and
+        METRIC in _metrics and
+        DIMENSION in _dimensions
     '''
