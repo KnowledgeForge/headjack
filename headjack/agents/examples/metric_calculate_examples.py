@@ -19,5 +19,4 @@ def get_metric_calculate_examples(query: str, n: int = 1)->str:
         full_example="User: "+ex_query+"\n"+metric_calculate_examples['examples'][index]
         ret.append(full_example)
     ret = "\n\n".join(ret)
-    import pdb; pdb.set_trace()
     return ret

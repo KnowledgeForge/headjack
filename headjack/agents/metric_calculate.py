@@ -153,7 +153,7 @@ argmax(max_len=3000)
     {dim_options}
     </Dimensions>
         """
-        "\nIs there a dimension that matches '{term}': [YESNO]"
+        "\nIs there a dimension that that could be used for '{term}': [YESNO]"
         
         if YESNO=='Yes':
             for dim in list(_dimensions):
@@ -179,7 +179,7 @@ argmax(max_len=3000)
     {dim_options}
     </Dimensions>
         """
-        "\nIs there a dimension that matches '{term}': [YESNO]"
+        "\nIs there a dimension that could be used for '{term}': [YESNO]"
         if YESNO=='Yes':
             for dim in list(_dimensions):
                 _dimensions.remove(dim)
@@ -237,7 +237,7 @@ argmax(max_len=3000)
         _logger.info(f"Deciding to limit to {LIMIT} results.")
         limit = int(LIMIT)
 
-    # return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
+    return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
     
 from
     "chatgpt"

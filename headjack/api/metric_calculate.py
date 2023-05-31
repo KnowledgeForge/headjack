@@ -12,6 +12,4 @@ router = APIRouter(prefix="/metric_calculate", tags=["metric_calculate"])
 
 @router.post("/{query}")
 async def calculate_metric(query: str) -> JSONResponse:
-    ret= await metric_calculate_agent(query)
-    import pdb;
-    pdb.set_trace()
+    return await metric_calculate_agent(query)
