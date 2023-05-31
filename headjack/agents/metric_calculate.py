@@ -6,9 +6,9 @@ import lmql
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
 from headjack.config import get_settings
 from headjack.utils.general import fetch
-from textwrap import dedent, indent
+from textwrap import dedent, indent # noqa: F401
 from headjack.utils.semantic_sort import semantic_sort # noqa: F401
-
+from headjack.agents.examples.metric_calculate_examples import get_metric_calculate_examples
 _logger = logging.getLogger("uvicorn")
 
 
@@ -16,7 +16,7 @@ async def search_for_dimensions(metrics):
     settings = get_settings()
     try:
         metrics = "&".join("metric=" + f.strip("\n '.") for f in metrics)
-        _logger.info("Searching for dimensions using the metrics service")
+        _logger.info(f"Searching for dimensions using the metrics service: `{metrics}`")
         results = await fetch(f"{settings.metric_service}/metrics/common/dimensions/?{metrics}", "GET", return_json=True)
         return results
     except Exception as e:
@@ -58,100 +58,14 @@ async def metric_calculate_agent(question: str):
 @lmql.query
 async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: Set[str]):
     '''lmql
-argmax
-    """You are given a User request to calculate a metric using a tool. 
+argmax(max_len=3000)
+    """You are given a User request to calculate a metric. 
 
-    Here are some examples:
-        User: What is the average temperature by city for the month of July where the city's population is more than 10 million?
-        Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
-        Thought: There's 1 metric(s), 1 group by dimension(s), 2 filter(s), 0 order by(s) and no limit being requested.
-        <Metrics Terms>
-        average temperature mean temperature
-        </Metrics Terms>
-        <Metric Search Results>
-        Average Temperature: avg_temp
-        Minimum Temperature: min_temp
-        ...
-        </Metric Search Results>
-        Is there a metric that appears to match 'average temperature mean temperature'? Yes, avg_temp.
-        <Group By>
-         city, town, municipality
-        </Group By>
-        <Filter By>
-        month is July
-        population more than 10 million
-        </Filter By>
-        <Dimensions metrics=avg_temp>
-            location.population
-            location.city
-            location.month
-            location.state
-            ...
-        </Dimensions>
-        Is there a dimension that matches 'city'?: Yes, location.city.
-        Are there any dimensions that could be used to filter 'month is July'?: Yes, and there's 1 needed.
-        <filter dimensions>
-        location.month
-        </filter dimensions>
-        Write a valid sql filter expression for 'month is July'.
-        You must use only location.month without splitting the names: 
-        <sql filter expression>location.month='July'</sql filter expression>
-        Are there any dimensions that could be used to filter 'population more than 10 million'?: Yes, and there's 1 needed.
-        <filter dimensions>
-        location.population
-        </filter dimensions>
-        Write a valid sql filter expression for 'population more than 10 million'.
-        You must use only location.population without splitting the names: 
-        <sql filter expression>location.population>10000000</sql filter expression>
-        # Request is run successfully and results sent to the user    
-
-        User: What is the average rating and number of reviews for the top 10 highest selling products sold in the same month as they were stocked?
-        Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
-        Thought: There's 2 metric(s), 0 group by dimension(s), 1 filter(s), 1 order by(s) and a limit being requested.
-        <Metrics Terms>
-        average rating mean rating
-        total reviews, number of reviews
-        </Metrics Terms>
-        <Metric Search Results>
-        Average Rating: avg_rating
-        Number of Reviews: num_reviews
-        ...
-        </Metric Search Results>
-        Is there a metric that appears to match 'average rating mean rating'? Yes, avg_rating.
-        Is there a metric that appears to match 'total reviews number of reviews'? Yes, num_reviews.
-        <Group By>
-        </Group By>
-        <Order By>
-        highest selling products, top sellers
-        </Order By>
-        <Filter By>
-        products sold in the same month as stocked
-        </Filter By>
-        <Dimensions metrics=avg_rating, num_reviews>
-        item.name
-        item.sold_month
-        item.category
-        item.id
-        item.stocked_month
-        item.sales
-        ...
-        store.name
-        store.id
-        store.location
-        </Dimensions>
-        Is there a dimension that matches 'highest selling products, top sellers'?: Yes, item.sales.
-        Are there any dimensions that could be used to filter 'products sold in the same month as stocked'?: Yes, and 2 is/are needed.
-        <filter dimensions>
-        item.sold_month
-        item.stocked_month
-        </filter dimensions>
-        Write a valid sql filter expression for 'products sold in the same month as stocked'.
-        You must use only item.sold_month, item.stocked_month without splitting the names: 
-        <sql filter expression>item.sold_month = item.stocked_month</sql filter expression>
-        There needs to be a limit. This is an integer value. The limit should be 10.
-        # Response sent to user
+    ### Here are some examples:
+    {get_metric_calculate_examples(question, 2)}    
+    ### End of examples
     
-    
+    You must extract the necessary information from the user's query for the api request. 
     User: {question}
     Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
     Thought: There's [METRIC_COUNT] metric(s), [GROUPBY_COUNT] group by dimension(s), [FILTER_COUNT] filter(s), [ORDER_COUNT] order by(s) and [LIMIT_Q] limit.
@@ -168,9 +82,9 @@ argmax
         res = await search_for_metrics(term)
         if res=='No results':
             "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
-            return RESPONSE
+            # return RESPONSE
             
         metrics = [md['name'] for md in res['metadatas'][0]]
         _metrics += metrics
@@ -191,13 +105,18 @@ argmax
             if METRIC not in selected_metrics:
                 selected_metrics.append(METRIC)
         else:
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
 
     common_dimensions = await search_for_dimensions(selected_metrics)
+    
     if not common_dimensions:
-        "There are no shared dimensions for these metrics. Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+        if len(selected_metrics)>1:
+            "\nThere are no shared dimensions for these metrics.\n" 
+        else:
+            "\nThere are no dimensions for this metric.\n"
+        "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
         "Response: [RESPONSE]"
         return RESPONSE
 
@@ -225,16 +144,16 @@ argmax
         filters.append(FILTER_TERM.strip("\n '."))
     "</Filter By>\n"
     
-
     selected_groupbys=[]
     for term in groupbys:
         temp_dims=semantic_sort(term, common_dimensions, 10)
         dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
-        """<Dimensions terms={term}>
-        {dim_options}
-        </Dimensions>
         """
-        "Is there a dimension that matches '{term}': [YESNO]"
+    <Dimensions terms={term}>
+    {dim_options}
+    </Dimensions>
+        """
+        "\nIs there a dimension that matches '{term}': [YESNO]"
         
         if YESNO=='Yes':
             for dim in list(_dimensions):
@@ -247,7 +166,7 @@ argmax
             for dim in common_dimensions:
                 _dimensions.add(dim)
         else:
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
 
@@ -255,11 +174,12 @@ argmax
     for term in orderbys:
         temp_dims=semantic_sort(term, common_dimensions, 10)
         dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
-        """<Dimensions terms={term}>
-        {dim_options}
-        </Dimensions>
         """
-        "Is there a dimension that matches '{term}': [YESNO]"
+    <Dimensions terms={term}>
+    {dim_options}
+    </Dimensions>
+        """
+        "\nIs there a dimension that matches '{term}': [YESNO]"
         if YESNO=='Yes':
             for dim in list(_dimensions):
                 _dimensions.remove(dim)
@@ -271,26 +191,28 @@ argmax
             for dim in common_dimensions:
                 _dimensions.add(dim)
         else:
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
-            
+
     selected_filters=[]
     for term in filters:
         temp_dims=semantic_sort(term, common_dimensions, 10)
         dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
-        """<Dimensions terms={term}>
-        {dim_options}
-        </Dimensions>
         """
-        "Are there any dimensions that could be used to filter '{term}'? [YESNO]"
+    <Dimensions terms={term}>
+    {dim_options}
+    </Dimensions>
+        """
+        "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
         if YESNO=='Yes':
             for dim in list(_dimensions):
                 _dimensions.remove(dim)
             for dim in temp_dims:
                 _dimensions.add(dim)
             ", and [SQL_FILTER_COUNT] is/are needed.\n"
-            "<filter dimensions>\n"
+            
+            "<filter dimensions term={term}>\n"
             curr_dims = []
             for i in range(int(SQL_FILTER_COUNT)):
                 "[DIMENSION]\n"
@@ -304,17 +226,17 @@ argmax
             "<sql filter expression>[FILTER]"
             selected_filters.append(FILTER.split('</')[0])
             _logger.info(f"Adding filter `{selected_filters[-1]}`.")
-        else:
-            "Explain in less than 100 words to the user why you are unable to continue with their request.\n"
-            "Response: [RESPONSE]"
-            return RESPONSE
-    
+        # else:
+        #     "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+        #     "Response: [RESPONSE]"
+        #     return RESPONSE
+
     limit = None
     if LIMIT_Q=='a':
         "There needs to be a limit. This is an integer value. The limit should be [LIMIT]"
         _logger.info(f"Deciding to limit to {LIMIT} results.")
         limit = int(LIMIT)
-        
+
     # return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
     
 from
