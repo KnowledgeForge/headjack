@@ -67,8 +67,9 @@ argmax(max_len=3000)
     
     You must extract the necessary information from the user's query for the api request. 
     User: {question}
-    Count the number of metrics, group by dimensions, filters, order bys and whether there is a limit.
-    Thought: There's [METRIC_COUNT] metric(s), [GROUPBY_COUNT] group by dimension(s), [FILTER_COUNT] filter(s), [ORDER_COUNT] order by(s) and [LIMIT_Q] limit.
+    Count the number of metrics, e.g. terms that describe some calculated number.
+    Thought: There's [METRIC_COUNT] metric(s).
+    List the terms that describe each metric.
     <Metric Terms>
     """
     _logger.info(f"User query `{question}`.")
@@ -92,7 +93,7 @@ argmax(max_len=3000)
         metric_results+=metric_texts
     metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
     _logger.info(f"Found metrics `{metric_results}`.")
-    
+    "A semantic search returned the following metrics.\n"
     "<Metric Results>\n"
     "{metric_results}"
     "\n</Metric Results>\n"
@@ -108,7 +109,7 @@ argmax(max_len=3000)
             "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
-
+    _logger.info(f"Decided metrics `{selected_metrics}`.")
     common_dimensions = await search_for_dimensions(selected_metrics)
     
     if not common_dimensions:
@@ -122,22 +123,58 @@ argmax(max_len=3000)
 
     for dim in common_dimensions:
         _dimensions.add(dim)
-        
-    "<Group By>\n"
+    """
+    Count the number of group bys or aggregations from the user query '{question}'.
+    Thought: There's [GROUPBY_COUNT] group by dimension(s).
+    List the terms that describe each group by.
+    <Group By>
+    """
     groupbys=[]
     for i in range(int(GROUPBY_COUNT)):
         "[GROUPBY_TERM]"
         groupbys.append(GROUPBY_TERM.strip("\n '."))
     "</Group By>\n"
-
-    "<Order By>\n"
+    _logger.info(f"Determined groupings of `{groupbys}`.")
+    """
+    Count the number of order bys or sortings from the user query '{question}'.
+    Thought: There's [ORDER_COUNT] order by dimension(s).
+    List the terms that describe each order by.
+    <Order By>
+    """
     orderbys=[]
     for i in range(int(ORDER_COUNT)):
         "[ORDERBY_TERM]"
         orderbys.append(ORDERBY_TERM.strip("\n '."))
     "</Order By>\n"
+    _logger.info(f"Determined orderings of `{orderbys}`.")
     
-    "<Filter By>\n"
+    limit = None
+    "Does the user query '{question}' suggest there needs to be a limit? [YESNO]\n"
+    if YESNO=='Yes':
+        _logger.info(f"Decided there needs to be a limit.")
+        "The limit is <limit type=integer>[LIMIT]limit>\n"
+        limit = int(LIMIT.strip('</'))
+        _logger.info(f"Deciding to limit to `{limit}` results.")
+    else:
+        _logger.info(f"Decided there does NOT need to be a limit.")
+    
+    filter_consideration=""
+    if orderbys:
+        filter_consideration+="You have decided to order by "+"; ".join(orderbys)
+        if limit:
+            filter_consideration+=f" and you chose a limit of {limit}."
+        else:
+            filter_consideration+="."
+    else:
+        if limit:
+            filter_consideration+=f"You chose a limit of {limit}."    
+    """
+    {filter_consideration}
+    With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
+    Thought: There's still [FILTER_COUNT] filter(s) needed.
+    Describe each filter.
+    <Filter By>
+    """
     filters=[]
     for i in range(int(FILTER_COUNT)):
         "[FILTER_TERM]"
@@ -194,7 +231,6 @@ argmax(max_len=3000)
             "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
             return RESPONSE
-
     selected_filters=[]
     for term in filters:
         temp_dims=semantic_sort(term, common_dimensions, 10)
@@ -223,19 +259,14 @@ argmax(max_len=3000)
             curr_dims=", ".join(curr_dims)
             "Write a valid sql filter expression for {term}.\n"
             "You must use only {curr_dims} without splitting the names (i.e. a.b must always remain a.b treated as a single name everywhere):\n"
-            "<sql filter expression>[FILTER]"
+            "<sql filter expression>[FILTER]sql filter expression>"
+            
             selected_filters.append(FILTER.split('</')[0])
             _logger.info(f"Adding filter `{selected_filters[-1]}`.")
-        # else:
-        #     "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
-        #     "Response: [RESPONSE]"
-        #     return RESPONSE
-
-    limit = None
-    if LIMIT_Q=='a':
-        "There needs to be a limit. This is an integer value. The limit should be [LIMIT]"
-        _logger.info(f"Deciding to limit to {LIMIT} results.")
-        limit = int(LIMIT)
+        else:
+            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+            "Response: [RESPONSE]"
+            return RESPONSE
 
     return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
     
@@ -249,10 +280,9 @@ where
     STOPS_AT(RESPONSE, "\n") and
     len(RESPONSE)<200 and
     STOPS_AT(FILTER, "</") and 
+    STOPS_AT(LIMIT, "</") and
     METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and 
     YESNO in ['Yes', 'No'] and
-    LIMIT_Q in ['no', 'a'] and
     METRIC in _metrics and
-    DIMENSION in _dimensions and
-    INT(LIMIT)
+    DIMENSION in _dimensions
     '''
