@@ -142,7 +142,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
         """
         Count the number of order bys or sortings from the user query '{question}'.
         Thought: There's [ORDER_COUNT] order by dimension(s).
-        List the terms that describe each order by.
+        List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending.
         <Order By>
         """
         orderbys=[]
@@ -194,7 +194,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
         {dim_options}
         </Dimensions>
             """
-            "\nIs there a dimension that that could be used for '{term}': [YESNO]"
+            "\nIs there a dimension that that could be used for aggregating '{term}': [YESNO]"
 
             if YESNO=='Yes':
                 for dim in list(_dimensions):
@@ -213,21 +213,22 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
 
         selected_orderbys=[]
         for term in orderbys:
-            temp_dims=semantic_sort(term, common_dimensions, 10)
+            temp_dims=semantic_sort(term, common_dimensions+selected_metrics, 10)
             dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
             """
-        <Dimensions terms={term}>
+        <OrderbyOptions terms={term}>
         {dim_options}
-        </Dimensions>
+        </OrderbyOptions>
             """
-            "\nIs there a dimension that could be used for '{term}': [YESNO]"
+            "\nIs there a dimension or selected metric from this list that could be used for ordering '{term}': [YESNO]"
             if YESNO=='Yes':
                 for dim in list(_dimensions):
                     _dimensions.remove(dim)
                 for dim in temp_dims:
                     _dimensions.add(dim)
                 ", [DIMENSION].\n"
-                selected_orderbys.append(DIMENSION)
+                "This needs to be ASC ascending or DESC descending: [ASC_DESC]\n"
+                selected_orderbys.append(DIMENSION+" "+ASC_DESC)
                 _logger.info(f"Adding orderby `{selected_orderbys[-1]}`.")
                 for dim in common_dimensions:
                     _dimensions.add(dim)
@@ -240,9 +241,9 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
             temp_dims=semantic_sort(term, common_dimensions, 10)
             dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
             """
-        <Dimensions terms={term}>
+        <FilterOptions terms={term}>
         {dim_options}
-        </Dimensions>
+        </FilterOptions >
             """
             "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
             if YESNO=='Yes':
@@ -282,11 +283,12 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
         STOPS_AT(ORDERBY_TERM, "\n") and
         STOPS_AT(FILTER_TERM, "\n") and
         STOPS_AT(RESPONSE, "\n") and
-        len(RESPONSE)<200 and
+        len(RESPONSE)<300 and
         STOPS_AT(FILTER, "</") and
         STOPS_AT(LIMIT, "</") and
         METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and
         YESNO in ['Yes', 'No'] and
+        ASC_DESC in ['ASC', 'DESC'] and
         METRIC in _metrics and
         DIMENSION in _dimensions
     '''
