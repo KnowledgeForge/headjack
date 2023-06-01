@@ -1,7 +1,16 @@
-export default function App() {
+import './App.css';
+import Sidebar from './components/sidebar';
+import AppRouter from './AppRouter'
+
+function App() {
   return (
-    <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
-  )
+
+    <div className="flex">
+      <Sidebar />
+      <AppRouter />
+    </div>
+  );
 }
+
+export default App;
+
