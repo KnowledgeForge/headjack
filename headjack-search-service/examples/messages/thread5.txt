@@ -1,0 +1,5 @@
+@engineering_team: Just a heads up, we're going to need to order some additional materials for the project. Can someone from procurement help us out with this?
+
+@procurement_team: Sure thing, we'll get on that right away. Do you have a list of the materials you need?
+
+@engineering_team: Yes, I'll send it to you in a separate message. Thanks!
