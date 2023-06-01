@@ -863,7 +863,7 @@ dependencies = [
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "dev"]
-content_hash = "sha256:f45bf4520c90879951acb1b9876ce7aed4a55c84d38029bc7b3b06ba807917bf"
+content_hash = "sha256:cf5b652b60a8dc1f81dc52c98131a1abf021558ccce49293e02b1cf88fc969d0"
 
 [metadata.files]
 "accelerate 0.19.0" = [

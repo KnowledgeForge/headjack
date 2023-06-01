@@ -2,14 +2,17 @@
 Headjack web server
 """
 import argparse
+from enum import Enum
 import logging
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from headjack.api import chat, metric_calculate, metric_search, summary
 from headjack.config import get_settings
+from headjack.utils import fetch
 
 _logger = logging.getLogger(__name__)
 
@@ -26,6 +29,16 @@ app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
 
+class COLLECTION_TYPE(str, Enum):
+    knowledge = "knowledge"
+    metrics = "metrics"
+    messages = "messages"
+    people = "people"
+
+@app.get("/count")
+async def get_number_of_documents(collection: COLLECTION_TYPE) -> JSONResponse:
+    settings = get_settings()
+    return await fetch(f"{settings.search_service}/count?collection={collection}", "GET", return_json=True)
 
 def cli():
     parser = argparse.ArgumentParser()
