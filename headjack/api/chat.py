@@ -1,24 +1,15 @@
 import logging
-from os import path
 from typing import Dict
 
 import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
 
 from headjack.api.helpers import decode_token, get_access_token, get_agent_session
-from headjack.config import get_headjack_secret, get_settings
+from headjack.config import get_headjack_secret
 
 _logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
-
-
-basepath = path.dirname(__file__)
-template_path = path.abspath(path.join(basepath, "..", "..", "web/chat-demo.html"))
-# locate templates
-with open(template_path) as f:
-    template = f.read()
 
 
 class ConnectionManager:
@@ -43,12 +34,6 @@ manager = ConnectionManager()
 @router.get("/session")
 def start_a_new_session():
     return {"access_token": get_access_token()}
-
-
-@router.get("/")
-def home():
-    settings = get_settings()
-    return HTMLResponse(template.replace("PORT", str(settings.port)))
 
 
 @router.websocket("/{access_token}")
