@@ -3,17 +3,17 @@ import logging
 import lmql
 
 from headjack.config import get_settings
-from headjack.utils import fetch
+from headjack.utils.general import fetch
 
 _logger = logging.getLogger("uvicorn")
 
 
-async def search_for_metrics(q):
+async def search_for_metrics(q, n: int = 5):
     settings = get_settings()
     try:
         q = q.strip("\n '.")
-        _logger.info("Searching metrics collection using the headjack search service")
-        results = await fetch(f"{settings.search_service}/query?collection=metrics&text={q}", "GET", return_json=True)
+        _logger.info(f"Searching metrics collection using the headjack search service: `{q}`")
+        results = await fetch(f"{settings.search_service}/query?collection=metrics&text={q}&n={n}", "GET", return_json=True)
         return results
     except Exception as e:
         _logger.info("Error while attempting to reach the headjack " f"search service metrics collection: {str(e)}")

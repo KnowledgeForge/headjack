@@ -4,6 +4,7 @@ import AppRouter from './AppRouter'
 
 function App() {
   return (
+
     <div className="flex">
       <Sidebar />
       <AppRouter />

@@ -17,7 +17,7 @@ from typing import (
 
 import lmql
 
-from headjack.utils import add_source
+from headjack.utils.general import add_source
 
 if TYPE_CHECKING:
     # from headjack.models.memory import VectorStoreMemory
