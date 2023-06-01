@@ -3,4 +3,4 @@
   url = git@github.com:chroma-core/chroma.git
 [submodule "docs/themes/DoIt"]
 	path = docs/themes/DoIt
-	url = https://github.com/HEIGE-PCloud/DoIt.git
+	url = git@github.com:HEIGE-PCloud/DoIt.git
