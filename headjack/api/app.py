@@ -40,7 +40,8 @@ class COLLECTION_TYPE(str, Enum):
 @app.get("/count")
 async def get_number_of_documents(collection: COLLECTION_TYPE) -> JSONResponse:
     settings = get_settings()
-    return await fetch(f"{settings.search_service}/count?collection={collection}", "GET", return_json=True)
+    count = await fetch(f"{settings.search_service}/count?collection={collection}", "GET", return_json=True)
+    return count
 
 
 def cli():
