@@ -1,4 +1,4 @@
-exclude: '^client/|^examples/|^docs/'
+exclude: '^client/|^examples/|^docs/|^headjack-search-service/'
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
