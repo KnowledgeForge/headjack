@@ -1,0 +1,5 @@
+@financial_team: We've received an invoice from one of our vendors for services rendered last month. Can someone from operations confirm that the work was completed?
+
+@operations_team: Yes, the work was completed as requested. We'll follow up with the vendor to ensure that they're paid promptly.
+
+@financial_team: Great, thanks for confirming!

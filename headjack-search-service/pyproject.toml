@@ -1,0 +1,45 @@
+[tool.pdm]
+
+[project]
+name = "headjack-search-service"
+version = "0.0.1"
+description = "An open-source Headjack Search Service."
+authors = [
+    {name = "Nick Ouellet", email = "nick@ouellet.dev"},
+]
+dependencies = [
+    "chromadb>=0.3.21",
+    "fastapi>=0.71.0",
+    "pymilvus==2.2.8",
+    "protobuf==3.20.0",
+    "sentence_transformers>=2.2.0",
+    "grpcio-tools"
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+
+[project.scripts]
+headjack-search-service = "headjack_search_service.api.app:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.poetry.dev-dependencies]
+pytest = "7.2.2"
+pytest-checkdocs = "2.9.0"
+pre-commit = "3.2.1"
+coverage = "^7.2.3"
+httpx = ">= 0.24.0"
+
+[tool.black]
+line-length = 130
+
+[tool.flake8]
+max-line-length = 130
+
+[tool.isort]
+profile = "black"
+line_length = 130
+skip_gitignore = true

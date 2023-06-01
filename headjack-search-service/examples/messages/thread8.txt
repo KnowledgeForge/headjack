@@ -1,0 +1,7 @@
+@project_management_team: Just a quick update, the paving work on Route 123 is running ahead of schedule. Great job, everyone!
+
+@engineering_team: Thanks for the update. We're happy to hear that the project is going well.
+
+@safety_team: Keep up the good work, and let us know if there are any safety concerns we need to address.
+
+@financial_team: That's great news. Let's keep working to stay on schedule and within budget.
