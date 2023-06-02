@@ -2,7 +2,7 @@ import logging
 from typing import Dict
 
 import jwt
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket
 
 from headjack.api.helpers import decode_token, get_access_token
 from headjack.config import get_headjack_secret

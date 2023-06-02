@@ -2,8 +2,6 @@ from typing import Optional
 
 import aiohttp
 
-SOURCE_PATCH = {}
-
 
 async def fetch(url: str, verb: str, json_data: Optional[dict] = None, return_json: bool = False):
     if verb not in ["GET", "POST", "PUT", "PATCH", "DELETE"]:

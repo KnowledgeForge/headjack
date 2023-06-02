@@ -11,7 +11,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
 from headjack.api.app import app
-from headjack.config import Settings, get_session, get_settings
+from headjack.config import Settings, get_settings
 
 
 @pytest.fixture
@@ -54,20 +54,15 @@ def session() -> Iterator[Session]:
 
 @pytest.fixture
 def client(
-    session: Session,
     settings: Settings,
 ) -> Iterator[TestClient]:
     """
     API Client for testing
     """
 
-    def get_session_override() -> Session:
-        return session
-
     def get_settings_override() -> Settings:
         return settings
 
-    app.dependency_overrides[get_session] = get_session_override
     app.dependency_overrides[get_settings] = get_settings_override
 
     with TestClient(app) as client:
