@@ -34,5 +34,5 @@ async def agent_dispatch(question: Utterance) -> Any:
     from
         "chatgpt"
     where
-        AGENT in list(AGENT_REGISTRY.keys())
+        AGENT in [agent for agent in AGENT_REGISTRY.keys()]
     '''
