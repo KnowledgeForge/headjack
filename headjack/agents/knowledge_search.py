@@ -35,6 +35,7 @@ async def knowledge_search_agent(question: str):
         result = await search_for_knowledge(TERM)
         "Result: {result}\n"
         "Final Answer:[ANSWER]"
+        return ANSWER
     FROM
         "chatgpt"
     WHERE

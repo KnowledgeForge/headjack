@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from headjack.api import chat, metric_calculate, metric_search, summary
+from headjack.api import chat, dispatch, metric_calculate, metric_search, summary
 from headjack.config import get_settings
 from headjack.utils import fetch
 
@@ -28,6 +28,7 @@ app.include_router(chat.router)
 app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
+app.include_router(dispatch.router)
 
 
 class COLLECTION_TYPE(str, Enum):
