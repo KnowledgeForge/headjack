@@ -1,22 +1,22 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, ClassVar, Generator, Optional, Set, Type
-from uuid import UUID, uuid4
+from typing import ClassVar, Generator, Optional, Set, Type
+from uuid import uuid4
 
-if TYPE_CHECKING:
-    from headjack.models.utils import Stringable
+from pydantic.types import Json
 
 
 @dataclass
 class Utterance:
-    utterance_: "Stringable"
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    utterance_: str
+    timestamp: str = field(default_factory=lambda: str(datetime.utcnow()))
     parent_: Optional["Utterance"] = None
-    id: UUID = field(default_factory=uuid4)
-    marker: ClassVar[str] = ""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    marker: Optional[str] = None
+    marker_: ClassVar[str] = ""
 
     def __post_init__(self):
-        self.session = self.parent_ and self.parent_.session
+        self.marker = self.marker or self.marker_
 
     @property
     def parent(self):
@@ -25,7 +25,6 @@ class Utterance:
     @parent.setter
     def parent(self, parent: "Utterance"):
         if parent is not None:
-            self.session = parent.session
             self.parent_ = parent
 
     def __str__(self):
@@ -67,7 +66,8 @@ class User(Utterance):
     Utterance from a user
     """
 
-    marker = "User: "
+    utterance_: str
+    marker_ = "User: "
 
 
 @dataclass
@@ -76,8 +76,8 @@ class Observation(Utterance):
     Value produced from a tool
     """
 
-    marker = "Observation: "
-    consider_answer: bool = False
+    utterance_: Json
+    marker_ = "Observation: "
 
 
 @dataclass
@@ -86,7 +86,8 @@ class Action(Utterance):
     Value from an agent for using a tool
     """
 
-    marker = "Action: "
+    utterance_: Json
+    marker_ = "Action: "
 
 
 @dataclass
@@ -95,13 +96,25 @@ class Thought(Utterance):
     Value produced from an agent
     """
 
-    marker = "Thought: "
+    utterance_: str
+    marker_ = "Thought: "
 
 
 @dataclass
 class Answer(Utterance):
     """
-    Final answer value produced from an agent
+    Answer generated from agent
     """
 
-    marker = "Answer: "
+    utterance_: str
+    marker_ = "Answer: "
+
+
+@dataclass
+class Response(Utterance):
+    """
+    Responses generated from an agent when there were issues encountered
+    """
+
+    utterance_: str
+    marker_ = "Response: "

@@ -1,25 +1,27 @@
 import logging
 from textwrap import dedent, indent  # noqa: F401
-from typing import Any, List, Set
+from typing import Any
 
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.config import get_settings
-from headjack.utils import fetch
-from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
+from headjack.models.utterance import Utterance
 
 _logger = logging.getLogger("uvicorn")
 
 
-dispatchable_agents = indent(dedent("\n".join([f"{agent_name}: {agent_description}" for agent_name, (agent_description, _) in AGENT_REGISTRY.items()])), " "*4)
+dispatchable_agents = indent(
+    dedent("\n".join([f"{agent_name}: {agent_description}" for agent_name, (agent_description, _) in AGENT_REGISTRY.items()])),
+    " " * 4,
+)
+
 
 @lmql.query
-async def agent_dispatch(question: str)-> Any:
+async def agent_dispatch(question: Utterance) -> Any:
     '''lmql
     argmax
         """You are an agent that interprets a user request and determines what specialist is best suited to handle the request.
-        
+
         The specialists at your disposal to dispatch to are:
             {dispatchable_agents}
 

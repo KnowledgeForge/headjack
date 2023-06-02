@@ -1,9 +1,11 @@
 import logging
+from typing import Union
 
 import lmql
 
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
+from headjack.models.utterance import Answer, Response, Utterance
 from headjack.utils import fetch
 
 _logger = logging.getLogger("uvicorn")
@@ -26,8 +28,8 @@ async def search_for_metrics(q, n: int = 5):
     "metric_search_agent",
 )
 @lmql.query
-async def metric_search_agent(question: str):
-    '''
+async def metric_search_agent(question: Utterance) -> Union[Answer, Response]:  # type: ignore
+    '''lmql
     argmax
         """You are given some statement, terms or question below from the User.
         You will generate a list of diverse potential search terms that will be searched.
@@ -48,7 +50,10 @@ async def metric_search_agent(question: str):
         """
         "User: {question}\n"
         "Terms: '[TERM]\n"
-        return await search_for_metrics(TERM)
+        result = await search_for_metrics(TERM)
+        if result=='No results':
+            return Response(result, parent_=question)
+        return Answer(result, parent_=question)
     FROM
         "chatgpt"
     WHERE

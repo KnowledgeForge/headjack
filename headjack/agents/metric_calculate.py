@@ -1,6 +1,6 @@
 import logging
 from textwrap import dedent, indent  # noqa: F401
-from typing import List, Set
+from typing import List, Set, Union
 
 import lmql
 
@@ -10,6 +10,7 @@ from headjack.agents.examples.metric_calculate_examples import (  # noqa: F401
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
+from headjack.models.utterance import Observation, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
@@ -60,12 +61,12 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     """This agent takes a question that requests a numeric value
 that may include aggregations, filters, orderbys and limiting.""",
 )
-async def metric_calculate_agent(question: str):
+async def metric_calculate_agent(question: Utterance) -> Union[Observation, Response]:
     return await _metric_calculate_agent(question, [], set())
 
 
 @lmql.query
-async def _metric_calculate_agent(question: str, _metrics: List[str], _dimensions: Set[str]):
+async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str]) -> Union[Observation, Response]:  # type: ignore
     '''lmql
     argmax(max_len=3000)
         """You are given a User request to calculate a metric.
@@ -94,7 +95,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
                 "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                # return RESPONSE
+                return Response(RESPONSE, parent_ = question)
 
             metrics = [md['name'] for md in res['metadatas'][0]]
             _metrics += metrics
@@ -117,7 +118,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return RESPONSE
+                return Response(RESPONSE, parent_ = question)
         _logger.info(f"Decided metrics `{selected_metrics}`.")
         common_dimensions = await search_for_dimensions(selected_metrics)
 
@@ -128,7 +129,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
                 "\nThere are no dimensions for this metric.\n"
             "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
-            return RESPONSE
+            return Response(RESPONSE, parent_ = question)
 
         for dim in common_dimensions:
             _dimensions.add(dim)
@@ -214,7 +215,7 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
             else:
                 "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return RESPONSE
+                return Response(RESPONSE, parent_ = question)
 
         selected_orderbys=[]
         for term in orderbys:
@@ -240,7 +241,8 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return RESPONSE
+                return Response(RESPONSE, parent_ = question)
+
         selected_filters=[]
         for term in filters:
             temp_dims=semantic_sort(term, common_dimensions, 10)
@@ -276,9 +278,12 @@ async def _metric_calculate_agent(question: str, _metrics: List[str], _dimension
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return RESPONSE
+                return Response(RESPONSE, parent_ = question)
 
-        return await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
+        results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
+        if results == "Cannot calculate metric":
+            return Response(results, parent_ = question)
+        return Observation(results, parent_ = question)
 
     from
         "chatgpt"
