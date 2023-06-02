@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from headjack.api import chat, metric_calculate, metric_search, summary
 from headjack.config import get_settings
-from headjack.utils import fetch
+from headjack.utils.general import fetch
 
 _logger = logging.getLogger(__name__)
 
