@@ -1,4 +1,7 @@
 <p align="center">
+  <img src="https://raw.githubusercontent.com/KnowledgeForge/headjack/main/docs/assets/images/headjack-logo.png" alt="Headjack logo"></a>
+</p>
+<p align="center">
     <b>Headjack</b>
 </p>
 
