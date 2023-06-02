@@ -3,14 +3,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar, Generator, Optional, Set, Type
 from uuid import UUID, uuid4
 
-import headjack.models.agent as agent_model
-import headjack.models.tool as tool_model
 from headjack.models.utils import required_value
 
 if TYPE_CHECKING:
-    from headjack.models.agent import Agent
-    from headjack.models.session import Session
-    from headjack.models.tool import Tool
     from headjack.models.utils import Stringable
 
 

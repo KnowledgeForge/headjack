@@ -4,7 +4,7 @@ from typing import Dict
 import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from headjack.api.helpers import decode_token, get_access_token, get_agent_session
+from headjack.api.helpers import decode_token, get_access_token
 from headjack.config import get_headjack_secret
 
 _logger = logging.getLogger(__name__)
@@ -36,26 +36,26 @@ def start_a_new_session():
     return {"access_token": get_access_token()}
 
 
-@router.websocket("/{access_token}")
-async def websocket_endpoint(websocket: WebSocket, access_token: str):
-    await manager.connect(access_token, websocket)
-    session = get_agent_session(access_token)
+# @router.websocket("/{access_token}")
+# async def websocket_endpoint(websocket: WebSocket, access_token: str):
+#     await manager.connect(access_token, websocket)
+#     session = get_agent_session(access_token)
 
-    while True:
-        try:
-            data = await websocket.receive_json()
-            message = data["message"]
-            print(message)
-            _logger.info(f"User message: {message}")
-            async for response in session(message):
-                await websocket.send_json(
-                    {
-                        "message": str(response.utterance_),
-                        "marker": response.marker,
-                        "kind": response.__class__.__name__,
-                        "time": response.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                    },
-                )
-            await websocket.send_json({"message": "", "marker": "", "kind": "", "time": ""})
-        except WebSocketDisconnect:
-            manager.disconnect(access_token)
+#     while True:
+#         try:
+#             data = await websocket.receive_json()
+#             message = data["message"]
+#             print(message)
+#             _logger.info(f"User message: {message}")
+#             async for response in session(message):
+#                 await websocket.send_json(
+#                     {
+#                         "message": str(response.utterance_),
+#                         "marker": response.marker,
+#                         "kind": response.__class__.__name__,
+#                         "time": response.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+#                     },
+#                 )
+#             await websocket.send_json({"message": "", "marker": "", "kind": "", "time": ""})
+#         except WebSocketDisconnect:
+#             manager.disconnect(access_token)
