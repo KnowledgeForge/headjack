@@ -8,8 +8,9 @@ from headjack.agents.examples.metric_calculate_examples import (  # noqa: F401
     get_metric_calculate_examples,
 )
 from headjack.agents.metric_search import search_for_metrics  # noqa: F401
+from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
-from headjack.utils.general import fetch
+from headjack.utils import fetch
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
@@ -55,6 +56,10 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     return results
 
 
+@register_agent_function(
+    """This agent takes a question that requests a numeric value
+that may include aggregations, filters, orderbys and limiting.""",
+)
 async def metric_calculate_agent(question: str):
     return await _metric_calculate_agent(question, [], set())
 

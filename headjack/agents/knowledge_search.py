@@ -2,8 +2,9 @@ import logging
 
 import lmql
 
+from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
-from headjack.utils.general import fetch
+from headjack.utils import fetch
 
 _logger = logging.getLogger("uvicorn")
 
@@ -20,6 +21,10 @@ async def search_for_knowledge(q):
         return "No results"
 
 
+@register_agent_function(
+    "This is a general knowledge search. Provided a query, this will give a summary of information from the knowledge base.",
+    "knowledge_search_agent",
+)
 @lmql.query
 async def knowledge_search_agent(question: str):
     """

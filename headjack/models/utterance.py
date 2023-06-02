@@ -3,14 +3,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar, Generator, Optional, Set, Type
 from uuid import UUID, uuid4
 
-import headjack.models.agent as agent_model
-import headjack.models.tool as tool_model
-from headjack.models.utils import required_value
-
 if TYPE_CHECKING:
-    from headjack.models.agent import Agent
-    from headjack.models.session import Session
-    from headjack.models.tool import Tool
     from headjack.models.utils import Stringable
 
 
@@ -18,10 +11,8 @@ if TYPE_CHECKING:
 class Utterance:
     utterance_: "Stringable"
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    context: str = ""
     parent_: Optional["Utterance"] = None
     id: UUID = field(default_factory=uuid4)
-    session_: Optional["Session"] = field(default=None, init=False)
     marker: ClassVar[str] = ""
 
     def __post_init__(self):
@@ -66,18 +57,6 @@ class Utterance:
         return "\n".join(str(u) for u in history) + "\n"
 
     @property
-    def session(self):
-        if self.session_ is not None:
-            return self.session_
-        if self.parent is not None:
-            return self.parent.session
-        return None
-
-    @session.setter
-    def session(self, session: "Session"):
-        self.session_ = session
-
-    @property
     def utterance(self):
         return str(self.utterance_)
 
@@ -98,7 +77,6 @@ class Observation(Utterance):
     """
 
     marker = "Observation: "
-    tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
     consider_answer: bool = False
 
 
@@ -108,20 +86,7 @@ class Action(Utterance):
     Value from an agent for using a tool
     """
 
-    utterance_: dict
     marker = "Action: "
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for an Action.", agent_model.Agent))
-
-
-@dataclass
-class Feedback(Utterance):
-    """
-    An utterance from a tool suggesting the agent make changes to its action
-    """
-
-    marker = "Feedback: "
-    tool: "Tool" = field(default_factory=required_value("`tool` is required for an Observation.", tool_model.Tool))
-    retries: int = 0
 
 
 @dataclass
@@ -130,7 +95,6 @@ class Thought(Utterance):
     Value produced from an agent
     """
 
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Thought.", agent_model.Agent))
     marker = "Thought: "
 
 
@@ -140,5 +104,4 @@ class Answer(Utterance):
     Final answer value produced from an agent
     """
 
-    agent: "Agent" = field(default_factory=required_value("`agent` is required for a Answer.", agent_model.Agent))
     marker = "Answer: "

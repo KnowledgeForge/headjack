@@ -2,8 +2,9 @@ import logging
 
 import lmql
 
+from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
-from headjack.utils.general import fetch
+from headjack.utils import fetch
 
 _logger = logging.getLogger("uvicorn")
 
@@ -20,6 +21,10 @@ async def search_for_metrics(q, n: int = 5):
         return "No results"
 
 
+@register_agent_function(
+    """This function takes a query to search for some metric which is a value that can be calculated such as average, total, etc.""",
+    "metric_search_agent",
+)
 @lmql.query
 async def metric_search_agent(question: str):
     '''
