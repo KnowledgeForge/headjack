@@ -12,4 +12,4 @@ router = APIRouter(prefix="/metric_search", tags=["metric_search"])
 
 @router.post("/{query}")
 async def search_for_metrics(query: str) -> Utterance:
-    return await metric_search_agent(User(query))
+    return await metric_search_agent(User(utterance=query))

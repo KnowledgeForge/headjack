@@ -1,22 +1,17 @@
-from dataclasses import dataclass, field
 from datetime import datetime
-from typing import ClassVar, Generator, Optional, Set, Type
-from uuid import uuid4
+from typing import Generator, Optional, Set, Type
+from uuid import UUID, uuid4
 
+from pydantic import BaseModel, Field
 from pydantic.types import Json
 
 
-@dataclass
-class Utterance:
-    utterance_: str
-    timestamp: str = field(default_factory=lambda: str(datetime.utcnow()))
+class Utterance(BaseModel):
+    utterance: str
+    timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow, const=True)
     parent_: Optional["Utterance"] = None
-    id: str = field(default_factory=lambda: str(uuid4()))
-    marker: Optional[str] = None
-    marker_: ClassVar[str] = ""
-
-    def __post_init__(self):
-        self.marker = self.marker or self.marker_
+    id: Optional[UUID] = Field(default_factory=uuid4, const=True)
+    marker: Optional[str] = Field(default="", const=True)
 
     @property
     def parent(self):
@@ -31,7 +26,7 @@ class Utterance:
         return self.marker + self.utterance
 
     def history(self, n: Optional[int] = None) -> Generator:
-        n_ = n or float("inf")  # type: ignore
+        n_ = n or float("inf")
         curr = self
         while n_ > 0 and (curr is not None):
             yield curr
@@ -55,66 +50,32 @@ class Utterance:
         history = history[::-1]
         return "\n".join(str(u) for u in history) + "\n"
 
-    @property
-    def utterance(self):
-        return str(self.utterance_)
 
-
-@dataclass
 class User(Utterance):
-    """
-    Utterance from a user
-    """
-
-    utterance_: str
-    marker_ = "User: "
+    utterance: str
+    marker = "User: "
 
 
-@dataclass
 class Observation(Utterance):
-    """
-    Value produced from a tool
-    """
-
-    utterance_: Json
-    marker_ = "Observation: "
+    utterance: Json
+    marker = "Observation: "
 
 
-@dataclass
 class Action(Utterance):
-    """
-    Value from an agent for using a tool
-    """
-
-    utterance_: Json
-    marker_ = "Action: "
+    utterance: Json
+    marker = "Action: "
 
 
-@dataclass
 class Thought(Utterance):
-    """
-    Value produced from an agent
-    """
-
-    utterance_: str
-    marker_ = "Thought: "
+    utterance: str
+    marker = "Thought: "
 
 
-@dataclass
 class Answer(Utterance):
-    """
-    Answer generated from agent
-    """
-
-    utterance_: str
-    marker_ = "Answer: "
+    utterance: str
+    marker = "Answer: "
 
 
-@dataclass
 class Response(Utterance):
-    """
-    Responses generated from an agent when there were issues encountered
-    """
-
-    utterance_: str
-    marker_ = "Response: "
+    utterance: str
+    marker = "Response: "

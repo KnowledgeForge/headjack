@@ -12,4 +12,4 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 
 @router.post("/{query}")
 async def generate_a_summary(query: str) -> Utterance:
-    return await knowledge_search_agent(User(query))
+    return await knowledge_search_agent(User(utterance=query))

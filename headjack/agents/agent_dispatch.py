@@ -1,6 +1,5 @@
 import logging
 from textwrap import dedent, indent  # noqa: F401
-from typing import Any
 
 import lmql
 
@@ -17,7 +16,7 @@ dispatchable_agents = indent(
 
 
 @lmql.query
-async def agent_dispatch(question: Utterance) -> Any:
+async def agent_dispatch(question: Utterance) -> Utterance:  # type: ignore
     '''lmql
     argmax
         """You are an agent that interprets a user request and determines what specialist is best suited to handle the request.

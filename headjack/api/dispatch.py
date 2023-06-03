@@ -12,4 +12,4 @@ router = APIRouter(prefix="/dispatch", tags=["dispatch"])
 
 @router.post("/{query}")
 async def dispatch_request(query: str) -> Utterance:
-    return await agent_dispatch(User(query))
+    return await agent_dispatch(User(utterance=query))
