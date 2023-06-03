@@ -26,8 +26,8 @@ async def fetch(url: str, verb: str, json_data: Optional[dict] = None, return_js
                     return await response.json()
                 else:
                     return await response.text()
-        elif verb == "POST":
-            async with session.post(url, json=json_data) as response:
+        elif verb == "PATCH":
+            async with session.patch(url, json=json_data) as response:
                 if return_json:
                     return await response.json()
                 else:
