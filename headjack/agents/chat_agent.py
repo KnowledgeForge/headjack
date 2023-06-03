@@ -58,6 +58,6 @@ async def chat_agent(question: Utterance, max_steps: int = 3) -> Utterance:  # t
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         CONTINUE in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
-        STOPS_AT(TASK, '</') and 
+        STOPS_AT(TASK, '</') and
         STOPS_AT(ANSWER, '\n')
     '''

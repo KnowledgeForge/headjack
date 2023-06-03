@@ -1,13 +1,12 @@
-import json
 import logging
 from typing import Dict
 
 import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from headjack.agents.chat_agent import chat_agent
 from headjack.api.helpers import decode_token, get_access_token
 from headjack.config import get_headjack_secret
-from headjack.agents.chat_agent import chat_agent
 from headjack.models.utterance import Utterance
 
 _logger = logging.getLogger(__name__)
@@ -35,9 +34,7 @@ class ConnectionManager:
         session_id = payload["session_id"]
         websocket = self.active_connections.get(session_id)
         if websocket:
-            await websocket.send_json(
-                utterance.dict()
-            )
+            await websocket.send_json(utterance.dict())
 
 
 manager = ConnectionManager()
