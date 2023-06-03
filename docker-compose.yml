@@ -1,15 +1,13 @@
 version: '3.9'
 
 networks:
-  headjack-network:
+  headjack:
     driver: bridge
 
 services:
   headjack:
     container_name: headjack
     build: .
-    networks:
-      - headjack-network
     environment:
       - HEADJACK_SEARCH_SERVICE=http://host.docker.internal:16410
       - HEADJACK_METRIC_SERVICE=http://host.docker.internal:8000
@@ -18,7 +16,9 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8679:8679"
+      - 8679:8679
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   headjack-search-service:
     container_name: headjack-search-service
@@ -26,7 +26,7 @@ services:
       context: ./headjack-search-service
       dockerfile: Dockerfile
     networks:
-      - headjack-network
+      - headjack
     environment:
       - HSS_CHROMA_API_IMPL=rest
       - HSS_CHROMA_HOST=hss-chromadb
@@ -35,7 +35,7 @@ services:
       - ./headjack-search-service:/code
     command: uvicorn headjack_search_service.api.app:app --host 0.0.0.0 --port 16410 --reload
     ports:
-      - "16410:16410"
+      - 16410:16410
     depends_on:
       - hss-chromadb
 
@@ -45,20 +45,22 @@ services:
       context: ./headjack-ui
       dockerfile: Dockerfile
     networks:
-      - headjack-network
+      - headjack
     environment:
       - PORT=4000
-      - REACT_APP_HEADJACK_SERVER=http://host.docker.internal:8679
+      - REACT_APP_HEADJACK_SERVER=http://localhost:8679
     volumes:
       - ./headjack-ui:/code
     ports:
-      - "4000:4000"
+      - 4000:4000
 
   hss-chromadb:
     container_name: hss-chromadb
     build:
       context: ./headjack-search-service/docker/chroma
       dockerfile: Dockerfile
+    networks:
+      - headjack
     volumes:
       - ./headjack-search-service/docker/chroma:/chroma
       - index_data:/index_data
@@ -68,8 +70,6 @@ services:
       - PERSIST_DIRECTORY=/index_data
     ports:
       - 16411:16411
-    networks:
-      - headjack-network
 
   index-documents:
     container_name: index-documents
@@ -77,12 +77,14 @@ services:
       context: ./headjack-search-service
       dockerfile: Dockerfile
     networks:
-      - headjack-network
+      - headjack
     volumes:
       - ./headjack-search-service:/code
     command: python examples/embed.py --dj http://host.docker.internal:8000 --knowledge /code/examples/documents/* --messages /code/examples/messages/* --people /code/examples/people/employees.json --chroma-host hss-chromadb --chroma-port 16411
     depends_on:
       - hss-chromadb
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   index_data:

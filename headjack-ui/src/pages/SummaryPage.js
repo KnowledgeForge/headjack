@@ -6,7 +6,12 @@ export default function SummaryPage() {
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [documentCount, setDocumentCount] = useState("");
-  fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`)
+  fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`, {
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
     .then((response) => response.json())
     .then((data) => {
       setDocumentCount(data.count);
@@ -18,9 +23,18 @@ export default function SummaryPage() {
     setIsLoading(true);
     setAnswer("");
     e.preventDefault();
-    fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/summary/${encodeURIComponent(question)}`, {
-      method: "POST",
-    })
+    fetch(
+      `${process.env.REACT_APP_HEADJACK_SERVER}/summary/${encodeURIComponent(
+        question
+      )}`,
+      {
+        mode: "no-cors",
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         setAnswer(data);
@@ -38,7 +52,9 @@ export default function SummaryPage() {
           <div className="text-sm font-medium text-gray-500 truncate">
             Documents
           </div>
-          <div className="mt-1 text-3xl font-semibold text-gray-900">{documentCount ? documentCount : "..."}</div>
+          <div className="mt-1 text-3xl font-semibold text-gray-900">
+            {documentCount ? documentCount : "..."}
+          </div>
         </div>
       </div>
       <form onSubmit={handleSubmit}>
