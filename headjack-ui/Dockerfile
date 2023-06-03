@@ -1,9 +1,9 @@
-FROM node:18-alpine 
+FROM node:18-alpine
 
 WORKDIR /code
 COPY . /code
 
-RUN npm ci 
+RUN npm ci
 RUN npm run build
 
 ENV PORT=4000

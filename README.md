@@ -27,7 +27,7 @@ headjack
 
 The included docker compose setup launches headjack, a demo implementation of the headjack search service API spec, and a headjack UI
 that allows trying out the collection of headjack tools. Headjack uses the OpenAI API in the background and requires an OpenAI account and
-[API key](https://platform.openai.com/account/api-keys). 
+[API key](https://platform.openai.com/account/api-keys).
 
 Clone this repo.
 ```sh
@@ -47,9 +47,9 @@ Start the docker compose environment.
 docker compose up
 ```
 
-Headjack UI: [http://localhost:4000](http://localhost:4000)  
-Headjack Server Swagger Docs: [http://localhost:8679/docs](http://localhost:8679/docs)  
-Example Headjack Search Service Swagger Docs: [http://localhost:16410/docs](http://localhost:16410/docs)  
+Headjack UI: [http://localhost:4000](http://localhost:4000)
+Headjack Server Swagger Docs: [http://localhost:8679/docs](http://localhost:8679/docs)
+Example Headjack Search Service Swagger Docs: [http://localhost:16410/docs](http://localhost:16410/docs)
 
 # Lint, Test, and Check Coverage
 
