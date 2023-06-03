@@ -52,7 +52,7 @@ async def websocket_endpoint(websocket: WebSocket, access_token: str):
         try:
             data = await websocket.receive_json()
             user = Utterance.parse_obj(data)
-            _logger.info(f"User message: {user}")
+            _logger.info(f"User chat message: {user}")
             response = await chat_agent(user)
             await manager.send_utterance(access_token, response)
         except WebSocketDisconnect:

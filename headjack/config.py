@@ -39,6 +39,6 @@ def get_settings():
     return Settings()
 
 
-def get_headjack_secret():
-    return os.environ.get("HEADJACK_SECRET", get_settings().secret)
+def get_headjack_secret()-> str:
+    return os.environ.get("HEADJACK_SECRET", get_settings().secret)#type: ignore
 
