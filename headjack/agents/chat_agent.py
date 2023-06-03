@@ -41,6 +41,7 @@ async def chat_agent(question: Utterance) -> Utterance:  # type: ignore
         else:
             """Respond to the user in a few words (less than 200) using information directly available to you in this conversation.
             Answer: [ANSWER]"""
+            return Answer(utterance=ANSWER, parent_=question)
     from
         "chatgpt"
     where
