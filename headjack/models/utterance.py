@@ -8,10 +8,10 @@ from pydantic.types import Json
 
 class Utterance(BaseModel):
     utterance: str
-    timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow, const=True)
+    timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     parent_: Optional["Utterance"] = None
-    id: Optional[UUID] = Field(default_factory=uuid4, const=True)
-    marker: Optional[str] = Field(default="", const=True)
+    id: Optional[UUID] = Field(default_factory=uuid4)
+    marker: Optional[str] = Field(default="")
 
     @property
     def parent(self):

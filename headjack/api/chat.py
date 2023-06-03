@@ -1,11 +1,14 @@
+import json
 import logging
 from typing import Dict
 
 import jwt
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from headjack.api.helpers import decode_token, get_access_token
 from headjack.config import get_headjack_secret
+from headjack.agents.chat_agent import chat_agent
+from headjack.models.utterance import Utterance
 
 _logger = logging.getLogger(__name__)
 
@@ -27,6 +30,15 @@ class ConnectionManager:
         session_id = payload["session_id"]
         del self.active_connections[session_id]
 
+    async def send_utterance(self, access_token: str, utterance: Utterance):
+        payload = decode_token(access_token)
+        session_id = payload["session_id"]
+        websocket = self.active_connections.get(session_id)
+        if websocket:
+            await websocket.send_json(
+                utterance.dict()
+            )
+
 
 manager = ConnectionManager()
 
@@ -36,26 +48,15 @@ def start_a_new_session():
     return {"access_token": get_access_token()}
 
 
-# @router.websocket("/{access_token}")
-# async def websocket_endpoint(websocket: WebSocket, access_token: str):
-#     await manager.connect(access_token, websocket)
-#     session = get_agent_session(access_token)
-
-#     while True:
-#         try:
-#             data = await websocket.receive_json()
-#             message = data["message"]
-#             print(message)
-#             _logger.info(f"User message: {message}")
-#             async for response in session(message):
-#                 await websocket.send_json(
-#                     {
-#                         "message": str(response.utterance_),
-#                         "marker": response.marker,
-#                         "kind": response.__class__.__name__,
-#                         "time": response.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-#                     },
-#                 )
-#             await websocket.send_json({"message": "", "marker": "", "kind": "", "time": ""})
-#         except WebSocketDisconnect:
-#             manager.disconnect(access_token)
+@router.websocket("/{access_token}")
+async def websocket_endpoint(websocket: WebSocket, access_token: str):
+    await manager.connect(access_token, websocket)
+    while True:
+        try:
+            data = await websocket.receive_json()
+            user = Utterance.parse_obj(data)
+            _logger.info(f"User message: {user}")
+            response = await chat_agent(user)
+            await manager.send_utterance(access_token, response)
+        except WebSocketDisconnect:
+            manager.disconnect(access_token)
