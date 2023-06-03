@@ -23,6 +23,34 @@ pip install headjack
 headjack
 ```
 
+# Docker Compose
+
+The included docker compose setup launches headjack, a demo implementation of the headjack search service API spec, and a headjack UI
+that allows trying out the collection of headjack tools. Headjack uses the OpenAI API in the background and requires an OpenAI account and
+[API key](https://platform.openai.com/account/api-keys). 
+
+Clone this repo.
+```sh
+git clone git@github.com:KnowledgeForge/headjack.git
+cd headjack
+```
+
+Create a local secrets.env file in the root containing your API key.
+
+*secrets.env*
+```
+OPENAI_API_KEY=<Your API key here>
+```
+
+Start the docker compose environment.
+```sh
+docker compose up
+```
+
+Headjack UI: [http://localhost:4000](http://localhost:4000)  
+Headjack Server Swagger Docs: [http://localhost:8679/docs](http://localhost:8679/docs)  
+Example Headjack Search Service Swagger Docs: [http://localhost:16410/docs](http://localhost:16410/docs)  
+
 # Lint, Test, and Check Coverage
 
 This project includes a Makefile for use with [GNU Make](https://www.gnu.org/software/make/).

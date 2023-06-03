@@ -6,7 +6,7 @@ export default function SummaryPage() {
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [documentCount, setDocumentCount] = useState("");
-  fetch("http://localhost:8679/count?collection=knowledge")
+  fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`)
     .then((response) => response.json())
     .then((data) => {
       setDocumentCount(data.count);
@@ -18,7 +18,7 @@ export default function SummaryPage() {
     setIsLoading(true);
     setAnswer("");
     e.preventDefault();
-    fetch(`http://localhost:8679/summary/${encodeURIComponent(question)}`, {
+    fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/summary/${encodeURIComponent(question)}`, {
       method: "POST",
     })
       .then((response) => response.json())

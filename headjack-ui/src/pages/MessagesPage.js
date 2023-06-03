@@ -4,7 +4,7 @@ export default function MessagesPage() {
   const [question, setQuestion] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("http://localhost:8679/messages/", {method: "POST"})
+    fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/messages/`, {method: "POST"})
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
