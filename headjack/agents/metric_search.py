@@ -53,7 +53,7 @@ async def metric_search_agent(question: Utterance) -> Union[Answer, Response]:  
         result = await search_for_metrics(TERM)
         if result=='No results':
             return Response(utterance=result, parent_=question)
-        return Answer(utterance=result, parent_=question)
+        return Observation(utterance=result, parent_=question)
     FROM
         "chatgpt"
     WHERE
