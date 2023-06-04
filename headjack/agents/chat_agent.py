@@ -1,10 +1,11 @@
 import logging
+from collections import namedtuple
 from textwrap import dedent, indent  # noqa: F401
 
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.models.utterance import Utterance
+from headjack.models.utterance import Action, Answer, Utterance  # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
 
@@ -15,8 +16,15 @@ dispatchable_agents = indent(
 )
 
 
+ChatInput = namedtuple("ChatInput", ("question", "max_steps"))
+
+
+async def chat_agent(question: Utterance, max_steps: int = 3) -> Utterance:
+    return await _chat_agent(ChatInput(question, max_steps))
+
+
 @lmql.query
-async def chat_agent(question: Utterance, max_steps: int = 3) -> Utterance:  # type: ignore
+async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
     '''lmql
     argmax
         """You are an chatbot that takes a conversation between you and a User and continues the conversation appropriately.
@@ -26,12 +34,13 @@ async def chat_agent(question: Utterance, max_steps: int = 3) -> Utterance:  # t
         {dispatchable_agents}
 
         Conversation:
-        {dedent(question.convo())}
+        {dedent(input.question.convo())}
         """
-        while max_steps>0:
+        steps = 0
+        while input.max_steps>steps:
             "Do you need help from a specialist to continue or can you respond immediately? Yes for specialist otherwise No.: [CONTINUE]"
             if CONTINUE=='Yes':
-                max_steps-=1
+                steps+=1
                 """The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>. Your request should be as terse as possible, most likely less than 100 words.

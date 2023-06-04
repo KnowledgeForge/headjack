@@ -7,7 +7,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from headjack.agents.chat_agent import chat_agent
 from headjack.api.helpers import decode_token, get_access_token
 from headjack.config import get_headjack_secret
-from headjack.models.utterance import Utterance
+from headjack.models.utterance import User, Utterance
 
 _logger = logging.getLogger(__name__)
 
@@ -48,12 +48,16 @@ def start_a_new_session():
 @router.websocket("/{access_token}")
 async def websocket_endpoint(websocket: WebSocket, access_token: str):
     await manager.connect(access_token, websocket)
-    while True:
+    while websocket.client_state != WebSocketDisconnect:
         try:
             data = await websocket.receive_json()
-            user = Utterance.parse_obj(data)
+            user = User.parse_obj(data)
+            print(user)
             _logger.info(f"User chat message: {user}")
+            print("awaiting response")
             response = await chat_agent(user)
-            await manager.send_utterance(access_token, response)
+            print("response", response)
+            await manager.send_utterance(access_token, response[0])
+            print("sending response")
         except WebSocketDisconnect:
             manager.disconnect(access_token)

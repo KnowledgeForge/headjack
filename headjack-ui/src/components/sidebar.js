@@ -32,27 +32,16 @@ export default function Sidebar() {
                                 </a>
                             </li>
                             <li className="rounded-sm">
-                                <a
-                                    href="/chat"
-                                    className="flex items-center p-2 space-x-3 rounded-md"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-6 h-6"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        strokeWidth={1}
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M17.431,2.156h-3.715c-0.228,0-0.413,0.186-0.413,0.413v6.973h-2.89V6.687c0-0.229-0.186-0.413-0.413-0.413H6.285c-0.228,0-0.413,0.184-0.413,0.413v6.388H2.569c-0.227,0-0.413,0.187-0.413,0.413v3.942c0,0.228,0.186,0.413,0.413,0.413h14.862c0.228,0,0.413-0.186,0.413-0.413V2.569C17.844,2.342,17.658,2.156,17.431,2.156 M5.872,17.019h-2.89v-3.117h2.89V17.019zM9.587,17.019h-2.89V7.1h2.89V17.019z M13.303,17.019h-2.89v-6.651h2.89V17.019z M17.019,17.019h-2.891V2.982h2.891V17.019z"
-                                        />
-                                    </svg>
-                                    <span>Chat</span>
-                                </a>
-                            </li>
+  <a href="/chat" className="flex items-center p-2 space-x-3 rounded-md">
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 4H3C2.44772 4 2 4.44772 2 5V19C2 19.5523 2.44772 20 3 20H21L21.0001 5C21.0001 4.44772 20.5524 4 20.0001 4H21Z" />
+      <path d="M5 10H19" />
+      <path d="M5 14H14" />
+      <path d="M5 18H14" />
+    </svg>
+    <span>Chat</span>
+  </a>
+</li>
                             <li className="rounded-sm">
                                 <a
                                     href="/metrics"
