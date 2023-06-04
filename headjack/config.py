@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     port: Optional[int] = 8679
     search_service: Optional[str] = "http://localhost:16410"
     metric_service: Optional[str] = "http://localhost:8000"
+    secret: Optional[str] = "headjack_secret"
 
     class Config:
         env_prefix = "headjack_"  # all environment variables wil use this prefix
@@ -38,7 +39,5 @@ def get_settings():
     return Settings()
 
 
-def get_headjack_secret():
-    secret = os.environ.get("HEADJACK_SECRET", "headjack_secret")
-    if not secret:
-        raise EnvironmentError("HEADJACK_SECRET environment variable not found")
+def get_headjack_secret() -> str:
+    return os.environ.get("HEADJACK_SECRET", get_settings().secret)  # type: ignore

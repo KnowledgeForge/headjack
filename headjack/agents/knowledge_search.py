@@ -32,7 +32,7 @@ async def knowledge_search_agent(question: Utterance) -> Union[Response, Answer]
     """lmql
     argmax
         "Given the following question, use a term to search for relevant information and create a summary answer.\n"
-        "Question: {question.utterance_}\n"
+        "Question: {question.utterance}\n"
         "Action: Let's search for the term '[TERM]\n"
         result = await search_for_knowledge(TERM)
         if result == 'No results':

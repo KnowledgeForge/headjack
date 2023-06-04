@@ -32,6 +32,17 @@ export default function Sidebar() {
                                 </a>
                             </li>
                             <li className="rounded-sm">
+  <a href="/chat" className="flex items-center p-2 space-x-3 rounded-md">
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 4H3C2.44772 4 2 4.44772 2 5V19C2 19.5523 2.44772 20 3 20H21L21.0001 5C21.0001 4.44772 20.5524 4 20.0001 4H21Z" />
+      <path d="M5 10H19" />
+      <path d="M5 14H14" />
+      <path d="M5 18H14" />
+    </svg>
+    <span>Chat</span>
+  </a>
+</li>
+                            <li className="rounded-sm">
                                 <a
                                     href="/metrics"
                                     className="flex items-center p-2 space-x-3 rounded-md"

@@ -8,8 +8,8 @@ AGENT_REGISTRY: Dict[str, Tuple[str, Callable[[Utterance], Utterance]]] = {}
 
 
 def register_agent_function(description: str, name: Optional[str] = None):
-    def decorator(f: Callable[[Utterance], Any]):
-        AGENT_REGISTRY[name or f.__name__] = (description, f)
-        return f
+    def decorator(func: Callable[[Utterance], Any]):
+        AGENT_REGISTRY[name or func.__name__] = (description, func)
+        return func
 
     return decorator

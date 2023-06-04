@@ -76,7 +76,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         ### End of examples
 
         You must extract the necessary information from the user's query for the api request.
-        User: {question}
+        User: {question.utterance}
         Count the number of metrics, e.g. terms that describe some calculated number.
         Thought: There's [METRIC_COUNT] metric(s).
         List the terms that describe each metric.
