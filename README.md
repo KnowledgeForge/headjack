@@ -47,9 +47,9 @@ Start the docker compose environment.
 docker compose up
 ```
 
-Headjack UI: [http://localhost:4000](http://localhost:4000)
-Headjack Server Swagger Docs: [http://localhost:8679/docs](http://localhost:8679/docs)
-Example Headjack Search Service Swagger Docs: [http://localhost:16410/docs](http://localhost:16410/docs)
+Headjack UI: [http://localhost:4000](http://localhost:4000)  
+Headjack Server Swagger Docs: [http://localhost:8679/docs](http://localhost:8679/docs)  
+Example Headjack Search Service Swagger Docs: [http://localhost:16410/docs](http://localhost:16410/docs)  
 
 # Lint, Test, and Check Coverage
 
