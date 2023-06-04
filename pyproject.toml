@@ -13,7 +13,15 @@ authors = [
     {name = "circargs", email = "nick@ouellet.dev"},
     {name = "Nick Ouellet", email = "nick@ouellet.dev"},
 ]
-dependencies = ["lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken", "chromadb==0.3.21", "fastapi>=0.71.0", "PyJWT>=2.6.0", "sqlmodel>=0.0.8"]
+dependencies = [
+    "lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken",
+    "chromadb==0.3.21",
+    "fastapi>=0.71.0",
+    "PyJWT>=2.6.0",
+    "sqlmodel>=0.0.8",
+    "tiktoken>=0.4.0",
+    "sentence_transformers>=2.2.0",
+]
 requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = {text = "Aache 2.0"}
@@ -29,8 +37,6 @@ dev = [
     "pre-commit==3.2.1",
     "coverage<8.0.0,>=7.2.3",
     "httpx>=0.24.0",
-    "sentence_transformers>=2.2.0",
-    "tiktoken>=0.4.0",
 ]
 
 [project.optional-dependencies]

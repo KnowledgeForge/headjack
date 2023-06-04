@@ -137,3 +137,9 @@ notebooks/playground.ipynb
 *.db
 .pdm-python
 .DS_Store
+
+# secrets file
+secrets.env
+
+# HSS index data
+headjack-search-service/index_data

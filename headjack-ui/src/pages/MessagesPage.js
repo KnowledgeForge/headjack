@@ -4,7 +4,13 @@ export default function MessagesPage() {
   const [question, setQuestion] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch("http://localhost:8679/messages/", {method: "POST"})
+    fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/messages/`, {
+      mode: "cors",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
@@ -12,7 +18,7 @@ export default function MessagesPage() {
       .catch((err) => {
         console.log(err.message);
       });
-  }
+  };
   return (
     <div className="container mx-auto mt-12">
       <div className="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-3">
@@ -26,18 +32,18 @@ export default function MessagesPage() {
         </div>
       </div>
       <form onSubmit={handleSubmit}>
-      <div className="mb-3 pt-0 pl-5 pr-20">
-            <input
-              type="text"
-              required
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="What are people saying about our latest earnings report?"
-              className="px-3 py-3 placeholder-slate-300 text-slate-600 relative bg-white bg-white rounded text-sm border-0 shadow outline-none focus:outline-none focus:ring w-full"
-            />
-          </div>
-          <button>Ask</button>
-          </form>
+        <div className="mb-3 pt-0 pl-5 pr-20">
+          <input
+            type="text"
+            required
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="What are people saying about our latest earnings report?"
+            className="px-3 py-3 placeholder-slate-300 text-slate-600 relative bg-white bg-white rounded text-sm border-0 shadow outline-none focus:outline-none focus:ring w-full"
+          />
+        </div>
+        <button>Ask</button>
+      </form>
     </div>
   );
 }
