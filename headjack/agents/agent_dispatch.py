@@ -24,7 +24,7 @@ async def agent_dispatch(question: Utterance) -> Utterance:  # type: ignore
         The specialists at your disposal to dispatch to are:
             {dispatchable_agents}
 
-        User: {question}
+        User: {question.utterance}
         The agent that seems best suited to handle this request is: [AGENT]
         """
         _logger.info(f"Dispatching to {AGENT} for user request `{question}`.")

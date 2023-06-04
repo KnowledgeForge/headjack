@@ -48,7 +48,7 @@ async def metric_search_agent(question: Utterance) -> Union[Answer, Response]:  
         Terms: 'total users, number of users, registered users'
 
         """
-        "User: {question}\n"
+        "User: {question.utterance}\n"
         "Terms: '[TERM]\n"
         result = await search_for_metrics(TERM)
         if result=='No results':
