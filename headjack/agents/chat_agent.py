@@ -36,10 +36,15 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
         Conversation:
         {dedent(input.question.convo())}
         """
+        print(input.question.convo())
         steps = 0
         while input.max_steps>steps:
-            "Do you need help from a specialist to continue or can you respond immediately? Yes for specialist otherwise No.: [CONTINUE]"
-            if CONTINUE=='Yes':
+            "Is there information available in the existing conversation that can be used to respond? Yes or No.: [CONVO_INFO]\n"
+            if CONVO_INFO=='No':
+                """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation? 
+                Yes for specialist otherwise No.: [SPECIALIST]
+                """
+            if CONVO_INFO=='No' and SPECIALIST=='Yes':
                 steps+=1
                 """The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
@@ -65,7 +70,8 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
         "chatgpt"
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
-        CONTINUE in ['Yes', 'No'] and
+        SPECIALIST in ['Yes', 'No'] and
+        CONVO_INFO in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
         STOPS_AT(TASK, '</') and
         STOPS_AT(ANSWER, '\n')

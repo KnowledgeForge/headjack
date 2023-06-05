@@ -21,7 +21,7 @@ class Utterance(BaseModel):
             self.parent_ = parent
 
     def __str__(self):
-        return self.marker + self.utterance
+        return self.marker + str(self.utterance)
 
     def history(self, n: Optional[int] = None) -> Generator:
         n_ = n or float("inf")
@@ -38,7 +38,7 @@ class Utterance(BaseModel):
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
-        utterance_kinds = utterance_kinds or {User, Answer}
+        utterance_kinds = utterance_kinds or set(Utterance.__subclasses__())
         for utterance in self.history():
             if type(utterance) in utterance_kinds:
                 history.append(utterance)
