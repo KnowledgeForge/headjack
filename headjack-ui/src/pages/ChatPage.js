@@ -50,18 +50,18 @@ const ChatPage = () => {
   return (
     <div className="container mx-auto mt-12">
       <div className="bg-white rounded-lg shadow p-6">
-        <ul className="space-y-4">
+        <ul className="space-y-4 ">
           {messageHistory.map((message, idx) => (
             <li
               key={idx}
               className={`flex ${
-                message.isUser ? 'justify-end' : ''
+                message.isUser ? 'justify-end ps-16' : 'pe-16'
               } items-end`}
             >
               <div
                 className={`${
-                  message.isUser ? 'ml-4' : 'mr-4'
-                } max-w-xs bg-gray-200 rounded-lg p-2`}
+                  message.isUser ? 'bg-gray-200' : 'bg-blue-400'
+                } px-4 py-4 rounded-md hover:bg-gray-50 overflow-hidden flex items-start`}
               >
                 <p className="text-gray-800">{JSON.stringify(message.utterance)}</p>
               </div>
