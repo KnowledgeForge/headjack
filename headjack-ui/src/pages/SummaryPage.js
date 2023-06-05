@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { TypeAnimation } from "react-type-animation";
+import { Player } from "@lottiefiles/react-lottie-player";
+import animatedYellowRobot from "../lottie/yellowRobot.json";
+import animatedPurpleRobot from "../lottie/purpleRobot.json";
 
 export default function SummaryPage() {
   const [question, setQuestion] = useState("");
@@ -7,13 +10,13 @@ export default function SummaryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [documentCount, setDocumentCount] = useState("");
   fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`)
-  .then((response) => response.json())
-  .then((data) => {
-    setDocumentCount(data.count);
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      setDocumentCount(data.count);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   const handleSubmit = (e) => {
     setIsLoading(true);
     setAnswer("");
@@ -23,7 +26,7 @@ export default function SummaryPage() {
         question
       )}`,
       {
-        method: "POST"
+        method: "POST",
       }
     )
       .then((response) => response.json())
@@ -37,7 +40,7 @@ export default function SummaryPage() {
       });
   };
   return (
-    <div className="container mx-auto mt-12">
+    <div className="container content-start mx-auto mt-12">
       <div className="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-3">
         <div className="w-full px-4 py-5 bg-white rounded-lg shadow">
           <div className="text-sm font-medium text-gray-500 truncate">
@@ -60,9 +63,9 @@ export default function SummaryPage() {
           />
           <div className="pt-5">
             {isLoading ? (
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold h-10 w-20 rounded">
                 <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  className="animate-spin h-8 w-20 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -83,27 +86,45 @@ export default function SummaryPage() {
                 </svg>
               </button>
             ) : (
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white h-10 w-20 rounded">
                 Ask
               </button>
             )}
           </div>
         </div>
       </form>
-      <blockquote className="p-4 my-4 border-l-4 border-gray-300 bg-gray-50">
-        <p className="text-l italic font-medium leading-relaxed text-gray-900">
-          {answer ? (
+      {answer ? (
+        <>
+        <div className="w-0">
+        <Player
+          src={isLoading ? animatedPurpleRobot : animatedYellowRobot}
+          style={{ height: "60px", width: "80px" }}
+          autoplay
+          loop
+        />
+      </div>
+        <blockquote className="p-4 my-4 border-l-4 border-gray-300 bg-gray-50">
+          <p className="text-l italic font-medium leading-relaxed text-gray-900">
             <TypeAnimation
               sequence={[answer]}
               speed={90}
               cursor={false}
               repeat={0}
             />
-          ) : (
-            "..."
-          )}
-        </p>
-      </blockquote>
+          </p>
+        </blockquote>
+        </>
+      ) : (
+        <div className="w-0">
+          <Player
+            src={isLoading ? animatedPurpleRobot : animatedYellowRobot}
+            style={{ height: "60px", width: "80px" }}
+            speed={isLoading ? 2 : 1}
+            autoplay
+            loop
+          />
+        </div>
+      )}
     </div>
   );
 }
