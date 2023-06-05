@@ -6,19 +6,14 @@ export default function SummaryPage() {
   const [answer, setAnswer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [documentCount, setDocumentCount] = useState("");
-  fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`, {
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  fetch(`${process.env.REACT_APP_HEADJACK_SERVER}/count?collection=knowledge`)
+  .then((response) => response.json())
+  .then((data) => {
+    setDocumentCount(data.count);
   })
-    .then((response) => response.json())
-    .then((data) => {
-      setDocumentCount(data.count);
-    })
-    .catch((err) => {
-      console.log(err.message);
-    });
+  .catch((err) => {
+    console.log(err);
+  });
   const handleSubmit = (e) => {
     setIsLoading(true);
     setAnswer("");
@@ -28,16 +23,12 @@ export default function SummaryPage() {
         question
       )}`,
       {
-        mode: "no-cors",
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: "POST"
       }
     )
       .then((response) => response.json())
       .then((data) => {
-        setAnswer(data);
+        setAnswer(data.utterance);
         setIsLoading(false);
       })
       .catch((err) => {
