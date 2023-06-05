@@ -1,74 +1,43 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-export default function ChatPage() {
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [accessToken, setAccessToken] = useState('');
-  const [isChatting, setIsChatting] = useState(false);
+const ChatPage = () => {
+  const [socketUrl] = useState('ws://localhost:8679/chat/');
+  const [messageHistory, setMessageHistory] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [sendDisabled, setSendDisabled] = useState(false);
 
-  const handleMessage = useCallback(
-    (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-    },
-    [setMessages]
-  );
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
-  const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(`ws://localhost:8679/chat/${accessToken}`, {
-    onOpen: () => console.log('WebSocket connected'),
-    onClose: () => console.log(`WebSocket disconnected: ${accessToken}`),
-    onError: (event) => console.error('WebSocket error:', event),
-    shouldReconnect: (closeEvent) => true,
-  });
+  const addToMessageHistory = (message) => {
+    setMessageHistory((prev) => [...prev, message]);
+  };
 
-  if (lastMessage) {
-    handleMessage(JSON.parse(lastMessage.data));
-  }
+  useEffect(() => {
+    if (lastMessage !== null) {
+      const message = JSON.parse(lastMessage.data);
+      addToMessageHistory(message);
+      setSendDisabled(false);
+    }
+  }, [lastMessage]);
 
-  const sendMessageHandler = useCallback(
+  const handleSubmit = useCallback(
     (e) => {
       e.preventDefault();
-      if (inputMessage.trim() !== '') {
-        console.log(inputMessage)
-        sendMessage(JSON.stringify({ utterance: inputMessage }));
-        setInputMessage('');
+      const message = { utterance: inputValue.trim(), isUser: true };
+      if (message.utterance !== '') {
+        sendMessage(JSON.stringify(message));
+        addToMessageHistory(message);
+        setInputValue('');
+        setSendDisabled(true);
       }
     },
-    [inputMessage, sendMessage]
+    [inputValue, sendMessage]
   );
 
-  const startChatHandler = useCallback(
-    () => {
-      fetch('http://localhost:8679/chat/session')
-        .then((response) => response.json())
-        .then((data) => {
-          setAccessToken(data.access_token);
-          setIsChatting(true);
-        })
-        .catch((err) => {
-          console.log(err.message);
-        });
-    },
-    [setAccessToken, setIsChatting]
-  );
-
-  const restartChatHandler = useCallback(
-    () => {
-      fetch('http://localhost:8679/chat/session')
-        .then((response) => response.json())
-        .then((data) => {
-            console.log("TOKEN")
-            console.log(data)
-          setAccessToken(data.access_token);
-          setIsChatting(true);
-          getWebSocket().close();
-        })
-        .catch((err) => {
-          console.log(err.message);
-        });
-    },
-    [setAccessToken, setIsChatting, getWebSocket]
-  );
+  const handleInputChange = useCallback((e) => {
+    setInputValue(e.target.value);
+  }, []);
 
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
@@ -81,47 +50,61 @@ export default function ChatPage() {
   return (
     <div className="container mx-auto mt-12">
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6">Chat</h2>
-        {isChatting ? (
-          <>
-
-            <div className="h-64 mb-4 overflow-y-auto">
-              {messages.map((message, index) => (
-                <div key={index} className={`mb-4 ${message.from_user ? 'text-right' : 'text-left'}`}>
-                  <span className={`inline-block rounded-lg px-4 py-2 ${message.from_user ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                    {message.content}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <form onSubmit={sendMessageHandler}>
-              <div className="flex space-x-4">
-              <button onClick={restartChatHandler} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2">
-                Clear
-              </button>
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your message"
-                  className="flex-grow px-3 py-3 bg-white rounded text-sm border border-gray-300 focus:outline-none focus:ring focus:border-blue-300"
-                />
-                <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                  Send
-                </button>
+        <ul className="space-y-4 ">
+          {messageHistory.map((message, idx) => (
+            <li
+              key={idx}
+              className={`flex ${
+                message.isUser ? 'justify-end ps-16' : 'pe-16'
+              } items-end`}
+            >
+              <div
+                className={`${
+                  message.isUser ? 'bg-gray-200' : 'bg-blue-400'
+                } px-4 py-4 rounded-md hover:bg-gray-50 overflow-hidden flex items-start`}
+              >
+                <p className="text-gray-800">{JSON.stringify(message.utterance)}</p>
               </div>
-              <div className="flex mb-4">
-              <span>The WebSocket is currently {connectionStatus}</span>
-            </div>
-            </form>
-            {lastMessage ? <span>Last message: {lastMessage.data}</span> : null}
-          </>
-        ) : (
-          <button onClick={startChatHandler} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Start Chat
-          </button>
-        )}
+            </li>
+          ))}
+        </ul>
       </div>
+      <form onSubmit={handleSubmit} className="p-4 bg-gray-300">
+        <div className="flex items-center">
+          <input
+            type="text"
+            name="message"
+            value={inputValue}
+            onChange={handleInputChange}
+            className="flex-grow border rounded px-2 py-1 mr-2"
+            disabled={readyState !== ReadyState.OPEN || sendDisabled}
+          />
+          <button
+            type="submit"
+            className={`${
+              readyState === ReadyState.OPEN
+                ? 'bg-blue-500 hover:bg-blue-700 text-white'
+                : 'bg-red-500 text-white'
+            } font-bold py-2 px-4 rounded`}
+            disabled={readyState !== ReadyState.OPEN || sendDisabled}
+          >
+            Send
+          </button>
+        </div>
+        <span className="text-gray-700 mt-2">
+          {`The WebSocket is currently ${connectionStatus}`}
+        </span>
+      </form>
     </div>
   );
-}
+};
+
+const App = () => {
+  return (
+    <div className="w-screen h-screen flex justify-center items-center">
+      <ChatPage />
+    </div>
+  );
+};
+
+export default App;

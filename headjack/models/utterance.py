@@ -1,11 +1,11 @@
-from typing import Generator, Optional, Set, Type
+from typing import Any, Generator, Optional, Set, Type
 
 from pydantic import BaseModel, Field
 from pydantic.types import Json
 
 
 class Utterance(BaseModel):
-    utterance: str
+    utterance: Any
     # timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     parent_: Optional["Utterance"] = None
     # id: Optional[UUID] = Field(default_factory=uuid4)
@@ -21,7 +21,7 @@ class Utterance(BaseModel):
             self.parent_ = parent
 
     def __str__(self):
-        return self.marker + self.utterance
+        return self.marker + str(self.utterance)
 
     def history(self, n: Optional[int] = None) -> Generator:
         n_ = n or float("inf")
@@ -38,7 +38,7 @@ class Utterance(BaseModel):
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
-        utterance_kinds = utterance_kinds or {User, Answer}
+        utterance_kinds = utterance_kinds or set(Utterance.__subclasses__())
         for utterance in self.history():
             if type(utterance) in utterance_kinds:
                 history.append(utterance)
@@ -55,12 +55,12 @@ class User(Utterance):
 
 
 class Observation(Utterance):
-    utterance: Json
+    utterance: dict
     marker = "Observation: "
 
 
 class Action(Utterance):
-    utterance: Json
+    utterance: Json | str
     marker = "Action: "
 
 
