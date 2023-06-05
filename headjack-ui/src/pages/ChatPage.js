@@ -48,8 +48,8 @@ const ChatPage = () => {
   }[readyState];
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex-grow p-4 overflow-y-auto">
+    <div className="container mx-auto mt-12">
+      <div className="bg-white rounded-lg shadow p-6">
         <ul className="space-y-4">
           {messageHistory.map((message, idx) => (
             <li
