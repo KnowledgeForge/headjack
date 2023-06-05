@@ -55,12 +55,12 @@ class User(Utterance):
 
 
 class Observation(Utterance):
-    utterance: Json
+    utterance: dict 
     marker = "Observation: "
 
 
 class Action(Utterance):
-    utterance: Json
+    utterance: Json|str
     marker = "Action: "
 
 
