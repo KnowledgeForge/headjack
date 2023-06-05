@@ -41,7 +41,7 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
         while input.max_steps>steps:
             "Is there information available in the existing conversation that can be used to respond? Yes or No.: [CONVO_INFO]\n"
             if CONVO_INFO=='No':
-                """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation? 
+                """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation?
                 Yes for specialist otherwise No.: [SPECIALIST]
                 """
             if CONVO_INFO=='No' and SPECIALIST=='Yes':

@@ -1,11 +1,11 @@
-from typing import Generator, Optional, Set, Type
+from typing import Any, Generator, Optional, Set, Type
 
 from pydantic import BaseModel, Field
 from pydantic.types import Json
 
 
 class Utterance(BaseModel):
-    utterance: str
+    utterance: Any
     # timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     parent_: Optional["Utterance"] = None
     # id: Optional[UUID] = Field(default_factory=uuid4)
@@ -55,12 +55,12 @@ class User(Utterance):
 
 
 class Observation(Utterance):
-    utterance: dict 
+    utterance: dict
     marker = "Observation: "
 
 
 class Action(Utterance):
-    utterance: Json|str
+    utterance: Json | str
     marker = "Action: "
 
 

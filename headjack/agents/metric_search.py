@@ -5,7 +5,12 @@ import lmql
 
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
-from headjack.models.utterance import Answer, Response, Utterance, Observation
+from headjack.models.utterance import (  # noqa: F401
+    Answer,
+    Observation,
+    Response,
+    Utterance,
+)
 from headjack.utils import fetch
 
 _logger = logging.getLogger("uvicorn")
