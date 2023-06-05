@@ -30,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class COLLECTION_TYPE(str, Enum):
     knowledge = "knowledge"
     metrics = "metrics"
