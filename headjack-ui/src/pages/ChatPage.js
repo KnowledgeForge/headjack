@@ -47,6 +47,26 @@ const ChatPage = () => {
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
   }[readyState];
 
+  const renderWSBadge = (connectionStatus) => {
+    switch (connectionStatus) {
+      case "Connecting":
+        return <span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">{connectionStatus}</span>
+        break;
+      case "Open":
+        return <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">{connectionStatus}</span>
+        break;
+      case "Closing":
+        return <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">{connectionStatus}</span>
+        break;
+      case "Closed":
+        return <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">{connectionStatus}</span>
+        break;
+      case "Uninstantiated":
+        return <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{connectionStatus}</span>
+        break;
+    }
+  }
+
   return (
     <div className="container mx-auto mt-12">
       <div className="bg-white rounded-lg shadow p-6">
@@ -69,7 +89,7 @@ const ChatPage = () => {
           ))}
         </ul>
       </div>
-      <form onSubmit={handleSubmit} className="p-4 bg-gray-300">
+      <form onSubmit={handleSubmit} className="p-3 bg-gray-100 rounded-lg">
         <div className="flex items-center">
           <input
             type="text"
@@ -92,7 +112,7 @@ const ChatPage = () => {
           </button>
         </div>
         <span className="text-gray-700 mt-2">
-          {`The WebSocket is currently ${connectionStatus}`}
+          {`Websocket Status: `}{renderWSBadge(connectionStatus)}
         </span>
       </form>
     </div>
