@@ -29,13 +29,15 @@ async def search_for_metrics(q, n: int = 5):
 
 
 @register_agent_function(
-    """This function takes a query to search for some metric which is a value that can be calculated such as average, total, etc.""",
-    "metric_search_agent",
+    """This function takes a query to search for some metric which is a value that can be calculated such as average, total, etc."""
 )
+async def metric_search_agent(question: Utterance, n: int = 1, temp: float = 0.0)-> Union[Answer, Response]:
+    return await _metric_search_agent(question, n, temp)
+
 @lmql.query
-async def metric_search_agent(question: Utterance) -> Union[Answer, Response]:  # type: ignore
+async def _metric_search_agent(question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
     '''lmql
-    argmax
+    sample(n = n, temperature = temp)
         """You are given some statement, terms or question below from the User.
         You will generate a list of diverse potential search terms that will be searched.
 
