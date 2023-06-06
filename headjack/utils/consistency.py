@@ -21,7 +21,7 @@ async def consolidate_responses(responses: List[Utterance]) -> Utterance:
         raise ValueError("Cannot have more than 26 responses.")
     if len(responses) == 1:
         return responses[0]
-    return await _consolidate_responses(responses)[0]
+    return (await _consolidate_responses(responses))[0]
 
 
 @lmql.query

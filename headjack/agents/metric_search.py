@@ -11,6 +11,7 @@ from headjack.models.utterance import (  # noqa: F401
     Response,
     Utterance,
 )
+from headjack.utils.consistency import consolidate_responses
 from headjack.utils import fetch
 
 _logger = logging.getLogger("uvicorn")
@@ -32,7 +33,7 @@ async def search_for_metrics(q, n: int = 5):
     """This function takes a query to search for some metric which is a value that can be calculated such as average, total, etc.""",
 )
 async def metric_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
-    return await _metric_search_agent(question, n, temp)
+    return await consolidate_responses(await _metric_search_agent(question, n, temp))#type: ignore
 
 
 @lmql.query
