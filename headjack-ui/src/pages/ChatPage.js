@@ -1,11 +1,15 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import React, { useState, useCallback, useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import { TypeAnimation } from "react-type-animation";
+import { Player } from "@lottiefiles/react-lottie-player";
+import animatedPurpleRobot from "../lottie/purpleRobot.json";
 
 const ChatPage = () => {
-  const [socketUrl] = useState('ws://localhost:8679/chat/');
+  const [socketUrl] = useState("ws://localhost:8679/chat/");
   const [messageHistory, setMessageHistory] = useState([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
@@ -18,6 +22,7 @@ const ChatPage = () => {
       const message = JSON.parse(lastMessage.data);
       addToMessageHistory(message);
       setSendDisabled(false);
+      setIsLoading(false)
     }
   }, [lastMessage]);
 
@@ -25,10 +30,11 @@ const ChatPage = () => {
     (e) => {
       e.preventDefault();
       const message = { utterance: inputValue.trim(), isUser: true };
-      if (message.utterance !== '') {
+      if (message.utterance !== "") {
+        setIsLoading(true)
         sendMessage(JSON.stringify(message));
         addToMessageHistory(message);
-        setInputValue('');
+        setInputValue("");
         setSendDisabled(true);
       }
     },
@@ -40,32 +46,47 @@ const ChatPage = () => {
   }, []);
 
   const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+    [ReadyState.CONNECTING]: "Connecting",
+    [ReadyState.OPEN]: "Open",
+    [ReadyState.CLOSING]: "Closing",
+    [ReadyState.CLOSED]: "Closed",
+    [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
   const renderWSBadge = (connectionStatus) => {
     switch (connectionStatus) {
       case "Connecting":
-        return <span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">{connectionStatus}</span>
-        break;
+        return (
+          <span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+            {connectionStatus}
+          </span>
+        );
       case "Open":
-        return <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">{connectionStatus}</span>
-        break;
+        return (
+          <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+            {connectionStatus}
+          </span>
+        );
       case "Closing":
-        return <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">{connectionStatus}</span>
-        break;
+        return (
+          <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
+            {connectionStatus}
+          </span>
+        );
       case "Closed":
-        return <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">{connectionStatus}</span>
-        break;
+        return (
+          <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
+            {connectionStatus}
+          </span>
+        );
       case "Uninstantiated":
-        return <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{connectionStatus}</span>
-        break;
+        return (
+          <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+            {connectionStatus}
+          </span>
+        );
     }
-  }
+  };
 
   return (
     <div className="container mx-auto mt-12">
@@ -75,18 +96,36 @@ const ChatPage = () => {
             <li
               key={idx}
               className={`flex ${
-                message.isUser ? 'justify-end ps-16' : 'pe-16'
+                message.isUser ? "justify-end ps-16" : "pe-16"
               } items-end`}
             >
               <div
                 className={`${
-                  message.isUser ? 'bg-gray-200' : 'bg-blue-400'
-                } px-4 py-4 rounded-md hover:bg-gray-50 overflow-hidden flex items-start`}
+                  message.isUser ? "bg-gray-200" : "bg-blue-400"
+                } px-4 py-4 rounded-md overflow-hidden flex items-start`}
               >
-                <p className="text-gray-800">{JSON.stringify(message.utterance)}</p>
+                <p className="text-gray-800">
+                  {message.isUser ? (
+                    message.utterance
+                  ) : (
+                    <TypeAnimation
+                      sequence={[message.utterance]}
+                      speed={90}
+                      cursor={false}
+                      repeat={0}
+                    />
+                  )}
+                </p>
               </div>
             </li>
           ))}
+          {isLoading ? <Player
+          src={animatedPurpleRobot}
+          style={{ height: "60px", width: "80px" }}
+          speed={2}
+          autoplay
+          loop
+          /> : <></>}
         </ul>
       </div>
       <form onSubmit={handleSubmit} className="p-3 bg-gray-100 rounded-lg">
@@ -103,8 +142,8 @@ const ChatPage = () => {
             type="submit"
             className={`${
               readyState === ReadyState.OPEN
-                ? 'bg-blue-500 hover:bg-blue-700 text-white'
-                : 'bg-red-500 text-white'
+                ? "bg-blue-500 hover:bg-blue-700 text-white"
+                : "bg-red-500 text-white"
             } font-bold py-2 px-4 rounded`}
             disabled={readyState !== ReadyState.OPEN || sendDisabled}
           >
@@ -112,7 +151,8 @@ const ChatPage = () => {
           </button>
         </div>
         <span className="text-gray-700 mt-2">
-          {`Websocket Status: `}{renderWSBadge(connectionStatus)}
+          {`Websocket Status: `}
+          {renderWSBadge(connectionStatus)}
         </span>
       </form>
     </div>
