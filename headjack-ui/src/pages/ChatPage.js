@@ -22,7 +22,7 @@ const ChatPage = () => {
       const message = JSON.parse(lastMessage.data);
       addToMessageHistory(message);
       setSendDisabled(false);
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }, [lastMessage]);
 
@@ -31,7 +31,7 @@ const ChatPage = () => {
       e.preventDefault();
       const message = { utterance: inputValue.trim(), isUser: true };
       if (message.utterance !== "") {
-        setIsLoading(true)
+        setIsLoading(true);
         sendMessage(JSON.stringify(message));
         addToMessageHistory(message);
         setInputValue("");
@@ -119,13 +119,17 @@ const ChatPage = () => {
               </div>
             </li>
           ))}
-          {isLoading ? <Player
-          src={animatedPurpleRobot}
-          style={{ height: "60px", width: "80px" }}
-          speed={2}
-          autoplay
-          loop
-          /> : <></>}
+          {isLoading ? (
+            <Player
+              src={animatedPurpleRobot}
+              style={{ height: "60px", width: "80px" }}
+              speed={2}
+              autoplay
+              loop
+            />
+          ) : (
+            <></>
+          )}
         </ul>
       </div>
       <form onSubmit={handleSubmit} className="p-3 bg-gray-100 rounded-lg">
