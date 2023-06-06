@@ -28,12 +28,12 @@ async def consolidate_responses(responses: List[Utterance]) -> Utterance:
 async def _consolidate_responses(responses: List[Utterance]) -> List[Utterance]:  # type: ignore
     '''lmql
     argmax
+        convo = indent(dedent(responses[0].parent.convo()), ' '*4)
+        responses = indent(dedent("\n".join(str(res) for res in responses)), ' '*4)
         """You will be presented with several responses to the following conversation:
 
-        Conversation:"""
-        convo = indent(dedent(responses[0].parent.convo()), " "*4)
-        responses = indent(dedent("\n".join(str(res) for res in responses), " "*4)
-        """
+        Conversation:
+
         {convo}
 
         Responses:
@@ -42,8 +42,8 @@ async def _consolidate_responses(responses: List[Utterance]) -> List[Utterance]:
             "{letter}:\n"
             response_str = indent(dedent(str(response)), " "*4)
             "{response_str}\n\n"
-
-        "Which of responses {list(ascii_letters[26:26+len(responses)])} best represents all of them: [LETTER]"
+        response_options = list(ascii_letters[26:26+len(responses)])
+        "Which of responses {response_options} best represents all of them: [LETTER]"
         response = responses[ascii_letters[26:26+len(responses)].index(LETTER)]
         if not isinstance(response, (Answer, Response)):
             return response
@@ -52,9 +52,9 @@ async def _consolidate_responses(responses: List[Utterance]) -> List[Utterance]:
             "\nUsing only information from the provided responses, your response would be: [ADDENDUM]"
             response.utterance=ADDENDUM
         return response
-    from
-        chatgpt
-    where
+    FROM
+        "chatgpt"
+    WHERE
         LETTER in ascii_letters[26:26+len(responses)] and
         DO_ADDENDUM in ['Yes', 'No']
     '''
