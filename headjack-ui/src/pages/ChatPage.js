@@ -139,6 +139,7 @@ const ChatPage = () => {
             name="message"
             value={inputValue}
             onChange={handleInputChange}
+            autoComplete="off"
             className="flex-grow border rounded px-2 py-1 mr-2"
             disabled={readyState !== ReadyState.OPEN || sendDisabled}
           />
