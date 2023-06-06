@@ -1,5 +1,5 @@
 from typing import List
-from string importascii_letters,  ascii_letters
+from string import ascii_letters
 import lmql
 from textwrap import indent, dedent # noqa: F401
 from headjack.models.utterance import Utterance
@@ -7,6 +7,8 @@ from headjack.models.utterance import Utterance
 async def consolidate_responses(responses: List[Utterance])-> Utterance:
     if not all((responses[0].parent is res.parent for res in responses)):
         raise ValueError("Responses have different parents.")
+    if len(responses)>26:
+        raise ValueError("Cannot have more than 26 responses.")
     return await _consolidate_responses(responses)
     
 @lmql.query
