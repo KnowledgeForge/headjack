@@ -1,6 +1,6 @@
 from enum import Enum
 from textwrap import dedent, indent  # noqa: F401
-from typing import List
+from typing import List, Tuple
 
 import lmql
 
@@ -8,10 +8,14 @@ from headjack.models.utterance import Answer, Response, Utterance  # noqa: F401
 
 
 class Consistency(Enum):
-    OFF = (1, 0.0)
-    LOW = (2, 0.5)
-    MED = (4, 0.6)
-    HIGH = (6, 0.7)
+    OFF = "OFF"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+    @staticmethod
+    def value(kind: "Consistency") -> Tuple[int, float]:
+        return {"OFF": (1, 0.0), "LOW": (2, 0.5), "MEDIUM": (4, 0.6), "HIGH": (6, 0.7)}[str(kind)]
 
 
 async def consolidate_responses(responses: List[Utterance]) -> Utterance:
