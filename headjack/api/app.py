@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
-from headjack.api import chat, dispatch, metric_calculate, metric_search, summary
+from headjack.api import chat, dispatch, metric_calculate, metric_search, summary, plot
 from headjack.config import get_settings
 from headjack.utils import fetch
 
@@ -22,6 +22,7 @@ app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
 app.include_router(dispatch.router)
+app.include_router(plot.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

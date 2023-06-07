@@ -21,7 +21,13 @@ class Consistency(Enum):
 
 
 async def consolidate_responses(responses: List[Utterance]) -> Utterance:
-    if not all((responses[0].parent.id == res.parent.id for res in responses)):
+    if not all(
+        (
+            (responses[0].parent.id if responses[0].parent is not None else None)
+            == (res.parent.id if res.parent is not None else None)
+            for res in responses
+        )
+    ):
         raise ValueError("Responses have different parents.")
     if len(responses) > 26:
         raise ValueError("Cannot have more than 26 responses.")
