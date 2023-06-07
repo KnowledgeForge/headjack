@@ -1,11 +1,12 @@
 import logging
-from collections import namedtuple
+from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
 
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
 from headjack.models.utterance import Action, Answer, Utterance  # noqa: F401
+from headjack.utils.consistency import Consistency  # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
 
@@ -16,17 +17,31 @@ dispatchable_agents = indent(
 )
 
 
-ChatInput = namedtuple("ChatInput", ("question", "max_steps"))
+async def chat_agent(
+    question: Utterance,
+    max_steps: int = 3,
+    chat_consistency: Consistency = Consistency.OFF,
+    agent_consistency: Consistency = Consistency.OFF,
+) -> Utterance:
+    return await _chat_agent(
+        ChatAgentArgs(question, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency)),
+    )
 
 
-async def chat_agent(question: Utterance, max_steps: int = 3) -> Utterance:
-    return await _chat_agent(ChatInput(question, max_steps))
+@dataclass
+class ChatAgentArgs:
+    question: Utterance
+    max_steps: int
+    n: int
+    temp: float
+    agent_n: int
+    agent_temp: float
 
 
 @lmql.query
-async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
+async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
     '''lmql
-    argmax
+    sample(n = n, temperature = temp)
         """You are an chatbot that takes a conversation between you and a User and continues the conversation appropriately.
         To aid you in responding to the user, you have access to several helpful specialist agents that can help with tasks or questions you dispatch to them.
 
@@ -34,11 +49,10 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
         {dispatchable_agents}
 
         Conversation:
-        {dedent(input.question.convo())}
+        {dedent(args.question.convo())}
         """
-        print(input.question.convo())
         steps = 0
-        while input.max_steps>steps:
+        while args.max_steps>steps:
             "Is there information available in the existing conversation that can be used to respond? Yes or No.: [CONVO_INFO]\n"
             if CONVO_INFO=='No':
                 """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation?
@@ -51,9 +65,9 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>. Your request should be as terse as possible, most likely less than 100 words.
                 <task>[TASK]task>
                 """
-                task = Action(utterance=TASK.strip('</'), parent_=input.question)
+                task = Action(utterance=TASK.strip('</'), parent_=args.question)
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
-                result = (await AGENT_REGISTRY[AGENT][1](task))[0]
+                result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
                 "Is the result of this specialist likely a response to the user? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
                     return result
@@ -65,11 +79,13 @@ async def _chat_agent(input: ChatInput) -> Utterance:  # type: ignore
             else:
                 """Respond to the user in a few words (less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
-                return Answer(utterance=ANSWER, parent_=input.question)
+                return Answer(utterance=ANSWER, parent_=args.question)
     from
         "chatgpt"
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
+        SPECIALIST in ['Yes', 'No'] and
+        CONVO_INFO in ['Yes', 'No'] and
         SPECIALIST in ['Yes', 'No'] and
         CONVO_INFO in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
