@@ -51,7 +51,6 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         Conversation:
         {dedent(args.question.convo())}
         """
-        print(args.question.convo())
         steps = 0
         while args.max_steps>steps:
             "Is there information available in the existing conversation that can be used to respond? Yes or No.: [CONVO_INFO]\n"
@@ -85,6 +84,8 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         "chatgpt"
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
+        SPECIALIST in ['Yes', 'No'] and
+        CONVO_INFO in ['Yes', 'No'] and
         SPECIALIST in ['Yes', 'No'] and
         CONVO_INFO in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
