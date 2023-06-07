@@ -14,10 +14,9 @@ authors = [
     {name = "Nick Ouellet", email = "nick@ouellet.dev"},
 ]
 dependencies = [
-    "lmql @ git+https://github.com/eth-sri/lmql.git@tiktoken",
+    "lmql @ git+https://github.com/KnowledgeForge/lmql.git@tiktoken",
     "chromadb==0.3.21",
     "fastapi>=0.71.0",
-    "PyJWT>=2.6.0",
     "sqlmodel>=0.0.8",
     "tiktoken>=0.4.0",
     "sentence_transformers>=2.2.0",

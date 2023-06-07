@@ -5,6 +5,7 @@ from fastapi import APIRouter, WebSocket
 
 from headjack.agents.chat_agent import chat_agent
 from headjack.models.utterance import User
+from headjack.utils.consistency import Consistency
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +13,12 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.websocket("/")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    chat_consistency: Consistency = Consistency.OFF,
+    agent_consistency=Consistency.OFF,
+    max_agent_uses: int = 3,
+):
     await websocket.accept()
     parent = None
     while True:
@@ -20,6 +26,6 @@ async def websocket_endpoint(websocket: WebSocket):
         user = User.parse_obj(data)
         user.parent_ = parent
         _logger.info(f"User chat message: `{user}`")
-        response = await chat_agent(user)
-        parent = response[0]
-        await websocket.send_text(json.dumps(response[0].dict()))
+        response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
+        parent = response
+        await websocket.send_text(json.dumps(response.dict()))

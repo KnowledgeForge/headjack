@@ -1,4 +1,5 @@
 from typing import Any, Generator, Optional, Set, Type
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 from pydantic.types import Json
@@ -8,8 +9,9 @@ class Utterance(BaseModel):
     utterance: Any
     # timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     parent_: Optional["Utterance"] = None
-    # id: Optional[UUID] = Field(default_factory=uuid4)
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     marker: Optional[str] = Field(default="")
+    source: Optional[str] = None
 
     @property
     def parent(self):

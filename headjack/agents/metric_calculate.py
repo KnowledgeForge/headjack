@@ -12,6 +12,8 @@ from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
 from headjack.models.utterance import Observation, Response, Utterance
 from headjack.utils import fetch
+from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
 _logger = logging.getLogger("uvicorn")
@@ -61,14 +63,16 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     """This agent takes a question that requests a numeric value
 that may include aggregations, filters, orderbys and limiting.""",
 )
-async def metric_calculate_agent(question: Utterance) -> Union[Observation, Response]:
-    return await _metric_calculate_agent(question, [], set())
+async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
+    return await consolidate_responses(
+        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),
+    )
 
 
 @lmql.query
-async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str]) -> Union[Observation, Response]:  # type: ignore
+async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore
     '''lmql
-    argmax(max_len=3000)
+    sample(n = n, temperature = temp, max_len=3000)
         """You are given a User request to calculate a metric.
 
         ### Here are some examples:
