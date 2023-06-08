@@ -34,7 +34,7 @@ async def search_for_dimensions(metrics):
 async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
     settings = get_settings()
     metrics = "&".join("metrics=" + f.strip("\n '.") for f in metrics)
-    dimensions = set(dimensions) | set(orderbys)
+    dimensions = set(dimensions)
     dimensions = "&".join("dimensions=" + f.strip("\n '.") for f in dimensions)
     filters = "&".join("filters=" + f.strip("\n '.") for f in filters)
     orderbys = set(orderbys)
