@@ -72,11 +72,11 @@ async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 
 @lmql.query
 async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp, max_len=3000)
+    sample(n = n, temperature = temp, max_len=4096)
         """You are given a User request to calculate a metric.
 
         ### Here are some examples:
-        {get_metric_calculate_examples(question, 2)}
+        {get_metric_calculate_examples(question.utterance, 2)}
         ### End of examples
 
         You must extract the necessary information from the user's query for the api request.
