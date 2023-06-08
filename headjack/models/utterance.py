@@ -2,7 +2,6 @@ from typing import Any, Generator, Optional, Set, Type
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
-from pydantic.types import Json
 
 
 class Utterance(BaseModel):
@@ -62,7 +61,7 @@ class Observation(Utterance):
 
 
 class Action(Utterance):
-    utterance: Json | str
+    utterance: dict
     marker = "Action: "
 
 
