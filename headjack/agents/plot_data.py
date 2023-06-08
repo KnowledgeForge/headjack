@@ -1,61 +1,42 @@
 import logging
-from io import StringIO
 from textwrap import dedent
-from typing import Any, List, Optional, Union
+from typing import Dict, List, Optional, TypedDict, Union, cast
 
 import lmql
+import plotly.express as px  # noqa: F401
 
 from headjack.agents.registry import register_agent_function
-from headjack.models.utterance import Action, Answer, Observation, Response, Utterance
-from headjack.utils import fetch
-from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.models.utterance import Answer, Response, Utterance
 from headjack.utils.consistency import consolidate_responses
 
 _logger = logging.getLogger("uvicorn")
-from typing import Any, Dict, List, TypedDict
-
-import pandas as pd
-import plotly.express as px  # noqa: F401
 
 
 class PlotDataColumn(TypedDict):
     name: str
-    type: Optional[str] = None
+    type: str
 
 
-class PlotData(TypedDict):
-    columns: List[PlotDataColumn]
-    rows: List[Any]
-
-    @staticmethod
-    def to_df(plot_data: Dict[str, Any]) -> pd.DataFrame:
-        columns = plot_data["columns"]
-        cols = [col["name"] for col in columns]
-        return pd.DataFrame(dict(zip(cols, plot_data["rows"])))
-
-
-def data_info(df: pd.DataFrame) -> str:
-    buffer = StringIO()
-    df.info(verbose=True, buf=buffer)
-    return buffer.getvalue()
-
-
-def utterance_is_data(utterance: Utterance) -> Union[bool, pd.DataFrame]:
+def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
-        return PlotData.to_df(utterance.utterance["results"])
-    except:
+        columns = utterance.utterance["results"]["columns"]
+        return columns
+    except Exception:
         return False
 
 
-def code_valid(df, code: str) -> Optional[Exception]:
+def code_valid(cols: List[PlotDataColumn], code: str) -> Optional[Exception]:
+    df: Dict[str, list] = {col["name"]: [] for col in cols}  # noqa: F841
     code = dedent(code) + "\nfig"
     try:
         exec(code)
+        return None
     except Exception as exc:
         return exc
 
 
-def plot_json(df, code: str) -> str:
+def plot_json(cols: List[PlotDataColumn], code: str) -> str:
+    df = {col["name"]: [] for col in cols}  # type: ignore
     code = dedent(code) + "\nret=fig.to_json()"
     exec(code)
     return locals()["ret"]
@@ -65,96 +46,66 @@ def plot_json(df, code: str) -> str:
     """This function takes a request such as 'make a bar plot of the average repair price' WITHOUT providing any data and creates a plot using plotly express. Data can be automatically deduced.""",
 )
 async def plot_data(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
-    df = None
+    cols = None
     for utterance in question.history():
         is_data = utterance_is_data(utterance)
         if is_data is not False:
-            df = is_data
-    if df is None:
+            cols = is_data
+    if cols is None:
         ret = Response(utterance="There was no data in the conversation history to plot.", parent_=question)
         ret.source = "plot_data"
         return ret
-
-    code = await _plot_data(df, question, n, temp)
+    cols = cast(List[PlotDataColumn], cols)
+    code = await _plot_data(cols, question, n, temp)
     if isinstance(code, Response):
         code.parent_ = question
         return code
-    ret = Answer(utterance=plot_json(df, code), parent_=question)
+    ret = Answer(utterance=plot_json(cols, code), parent_=question)
     ret.source = "plot_data"
     return ret
 
 
-async def _plot_data(df: pd.DataFrame, question: Utterance, n: int, temp: float) -> Union[str, Response]:
-    response = await consolidate_responses(await _plot_data_prompt(df, question, n, temp))  # type: ignore
+async def _plot_data(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[str, Response]:
+    response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp))  # type: ignore
     if isinstance(response, Answer):
         return response.utterance
     return response
 
 
-PLOTLY_METHODS = [
-    "bar",
-    "choropleth",
-    "density_contour",
-    "density_heatmap",
-    "histogram",
-    "line",
-    "scatter",
-    "scatter_3d",
-    "scatter_geo",
-    "scatter_mapbox",
-    "box",
-    "bar",
-    "choropleth_mapbox",
-    "density_mapbox",
-    "funnel",
-    "funnel_area",
-    "line_3d",
-    "line_geo",
-    "line_mapbox",
-    "line_polar",
-    "line_ternary",
-    "parallel_categories",
-    "parallel_coordinates",
-    "pie",
-    "scatter_matrix",
-    "violin",
-]
 # fmt: off
 @lmql.query
-async def _plot_data_prompt(df: pd.DataFrame, question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
+async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp, max_len=3000)
         """You are given the following request to plot some data.
         Request: {question.utterance}
-        The data you will plot is in a pandas dataframe `df`. plotly express is available as px.
+        The data you will plot is in a dictionary {{columns: lists of data}} `df`. plotly express is available as px.
+        """
+        data_info = "\n".join(f'{col["name"]}: {col["type"]}' for col in cols)
+        """
         Here is some info on the data:
-        {data_info(df)}
-        Thought: To create a plotly express plot for this request, I should [THOUGHT]
+        Column Name: Column Type
+        {data_info}
 
-        What are a few different methods seem most relevant for the Request and you would like to know more about:
-        """
+        You MUST do your best to complete the request. If there is information for the design of the plot missing in the request, you MUST try to complete it yourself.
+        What kind of plot and relevant attributes are needed to complete this request? Keep your thought as short as possible.
+        Thought: To create a plotly express plot for this request, [THOUGHT]
 
-        "Based on these descriptions, what method of would best be used to satisfy the request `{question.utterance}`: [METHOD]\n"
-        docstring = getattr(px, METHOD).__doc__[:3000]
-
-        """
-        Here is part of the docstring for this method:
-        {docstring}
-
-        Generate some valid python plotly express code within the code block to plot `df` as `fig` according to the request. Do not show the fig.:
+        Generate some valid python plotly express code within the code block to plot `df` as `fig` according to the request.
+        Do not show `fig`.:
         """
         for _ in range(5):# 5 tries
             """
         ```python
-        import plotly.express as px
-        [CODE]
-        ``
+        import plotly.express as px[CODE]
+        ```
             """
             code = CODE.strip('`')
+            code =code.split("\n")
+            code = "\n".join([code[0][1:] if code[0][0]==' ' else code[0], *code[1:]])
             _logger.info(f"Plot attempt: {code}")
 
-            if exc:=code_valid(df, code):
-                print(exc)
+            if exc:=code_valid(cols, code):
                 _logger.info(f"{exc}")
                 """
             Your code failed with the following python error:
@@ -163,7 +114,8 @@ async def _plot_data_prompt(df: pd.DataFrame, question: Utterance, n: int, temp:
                 """
             else:
                 return Answer(utterance=code)
-        return Response(utterance="Failed to generate a plot.")
+        "\nExplain in a few words why you were unable to complete the request:\n[EXPLANATION]"
+        return Response(utterance=EXPLANATION)
 
     FROM
         "chatgpt"
