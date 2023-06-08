@@ -36,10 +36,16 @@ async def messages_search_agent(question: Utterance, n: int = 1, temp: float = 0
 async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Answer]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp)
-        "Given the following question, use a term to search for relevant conversations in the messaging system and create a summary answer. "
-        "Try to find the names of the people in the conversation and include their names in the summary. Use quotes of the messages as examples "
-        "of key points in your summary. If there's a clear sentiment across the conversations returned by the messaging system, make sure to include "
-        "that in your answer.\n"
+        """Given the following question, use a term to search for relevant conversations in the messaging system and create a summary answer.
+        Try to find the names of the people in the conversation and include their names in the summary. Use quotes of the messages as examples
+        of key points in your summary. If there's a clear sentiment across the conversations returned by the messaging system, make sure to include
+        that in your answer. The structure of the answer absolutely must be JSON with a summary and a people key such as the following example:
+        
+        {
+            "summary": "John and Ashley are excited about the prospects for the new road construction project they're working on in Rhode Island.",
+            "people": ["John", "Ashley"]
+        }
+        """
         "Question: {question.utterance}\n"
         "Action: Let's search for the term '[TERM]\n"
         result = await search_for_messages(TERM)
