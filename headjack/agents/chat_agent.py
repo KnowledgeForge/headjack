@@ -6,8 +6,9 @@ import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
 from headjack.models.utterance import Action, Answer, Utterance  # noqa: F401
-from headjack.utils.consistency import Consistency, consolidate_responses
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.consistency import Consistency, consolidate_responses
+
 _logger = logging.getLogger("uvicorn")
 
 
@@ -33,7 +34,14 @@ async def chat_agent(
     chat_consistency: Consistency = Consistency.OFF,
     agent_consistency: Consistency = Consistency.OFF,
 ) -> Utterance:
-    return await consolidate_responses(add_source_to_utterances(await _chat_agent(ChatAgentArgs(question, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency))), 'chat_agent'))
+    return await consolidate_responses(
+        add_source_to_utterances(
+            await _chat_agent(
+                ChatAgentArgs(question, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency)),
+            ),
+            "chat_agent",
+        ),
+    )
 
 
 @lmql.query
@@ -61,7 +69,7 @@ async def _chat_agent(input: ChatAgentArgs) -> Utterance:  # type: ignore
                 steps+=1
                 """The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
-                Write your request in the task xml tags below e.g. <task>your task description or question here</task>. 
+                Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
                 Your request should be as terse as possible, most likely less than 100 words.
                 Do not add anything to your task request that is not derived from above.
                 <task>[TASK]task>
