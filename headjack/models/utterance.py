@@ -1,4 +1,4 @@
-from typing import Any, Generator, Optional, Set, Type
+from typing import Any, Generator, Optional, Set, Type, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -61,7 +61,7 @@ class Observation(Utterance):
 
 
 class Action(Utterance):
-    utterance: dict
+    utterance: Union[str, dict]
     marker = "Action: "
 
 
