@@ -74,7 +74,7 @@ async def _chat_agent(input: ChatAgentArgs) -> Utterance:  # type: ignore
                 Do not add anything to your task request that is not derived from above.
                 <task>[TASK]task>
                 """
-                task = Action(utterance=TASK.strip('</'), parent_=input.question)
+                task = Action(utterance=TASK.strip('</'), parent=input.question)
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, input.agent_n, input.agent_temp))
                 "Is the result of this specialist likely a response to the user? Yes or No.: [IS_DIRECT]"
@@ -88,7 +88,7 @@ async def _chat_agent(input: ChatAgentArgs) -> Utterance:  # type: ignore
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
-                return Answer(utterance=ANSWER, parent_=input.question)
+                return Answer(utterance=ANSWER, parent=input.question)
     from
         "chatgpt"
     where

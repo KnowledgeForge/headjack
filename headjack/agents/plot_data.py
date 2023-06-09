@@ -52,7 +52,7 @@ async def plot_data(question: Utterance, n: int = 1, temp: float = 0.0) -> Union
         if is_data is not False:
             cols = is_data
     if cols is None:
-        ret = Response(utterance="There was no data in the conversation history to plot.", parent_=question)
+        ret = Response(utterance="There was no data in the conversation history to plot.", parent=question)
         ret.source = "plot_data"
         return ret
     cols = cast(List[PlotDataColumn], cols)
@@ -60,7 +60,7 @@ async def plot_data(question: Utterance, n: int = 1, temp: float = 0.0) -> Union
     if isinstance(code, Response):
         code.parent_ = question
         return code
-    ret = Answer(utterance=plot_json(cols, code), parent_=question)
+    ret = Answer(utterance=plot_json(cols, code), parent=question)
     ret.source = "plot_data"
     return ret
 

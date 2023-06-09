@@ -14,5 +14,7 @@ router = APIRouter(prefix="/plot", tags=["plot"])
 
 @router.post("/{query}")
 async def plot(query: str, columns: List[PlotDataColumn], consistency: Consistency = Consistency.OFF) -> Utterance:
-    utterance = User(utterance=query, parent_=Observation(utterance={"results": {"columns": columns}}))
-    return await plot_data(utterance, *(consistency.map(consistency)))
+    utterance = User(utterance=query, parent=Observation(utterance={"results": {"columns": columns}}))
+    response = await plot_data(utterance, *(consistency.map(consistency)))
+    response.log(_logger.info)
+    return response

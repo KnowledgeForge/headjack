@@ -13,4 +13,6 @@ router = APIRouter(prefix="/dispatch", tags=["dispatch"])
 
 @router.post("/{query}")
 async def dispatch_request(query: str, consistency: Consistency = Consistency.OFF) -> Utterance:
-    return await agent_dispatch(User(utterance=query), *(consistency.map(consistency)))  # type: ignore
+    response = await agent_dispatch(User(utterance=query), *(consistency.map(consistency)))
+    response.log(_logger.info)
+    return response

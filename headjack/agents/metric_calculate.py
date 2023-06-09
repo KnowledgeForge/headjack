@@ -64,8 +64,8 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 that may include aggregations, filters, orderbys and limiting.""",
 )
 async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    return await consolidate_responses(
-        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),
+    return await consolidate_responses(  # type: ignore
+        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),  # type: ignore
     )
 
 

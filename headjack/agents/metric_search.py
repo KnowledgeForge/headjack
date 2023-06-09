@@ -62,8 +62,8 @@ async def _metric_search_agent(question: Utterance, n: int, temp: float) -> Unio
         "Terms: '[TERM]\n"
         result = await search_for_metrics(TERM)
         if result=='No results':
-            return Response(utterance=result, parent_=question)
-        return Observation(utterance=result, parent_=question)
+            return Response(utterance=result, parent=question)
+        return Observation(utterance=result, parent=question)
     FROM
         "chatgpt"
     WHERE

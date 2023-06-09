@@ -28,4 +28,5 @@ async def websocket_endpoint(
         _logger.info(f"User chat message: `{user}`")
         response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
         parent = response
+        parent.log(_logger.info)
         await websocket.send_text(json.dumps(response.dict()))
