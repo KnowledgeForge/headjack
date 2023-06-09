@@ -14,5 +14,5 @@ router = APIRouter(prefix="/summary", tags=["summary"])
 @router.post("/{query}")
 async def generate_a_summary(query: str, consistency: Consistency = Consistency.OFF) -> Utterance:
     response = await knowledge_search_agent(User(utterance=query), *Consistency.map(consistency))
-    response.log(_logger.info)
+    response.log()
     return response

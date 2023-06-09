@@ -24,9 +24,8 @@ async def websocket_endpoint(
     while True:
         data = await websocket.receive_json()
         user = User.parse_obj(data)
-        user.parent_ = parent
-        _logger.info(f"User chat message: `{user}`")
+        user.parent = parent
         response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
         parent = response
-        parent.log(_logger.info)
+        parent.log()
         await websocket.send_text(json.dumps(response.dict()))

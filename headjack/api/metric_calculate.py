@@ -14,5 +14,5 @@ router = APIRouter(prefix="/metric_calculate", tags=["metric_calculate"])
 @router.post("/{query}")
 async def calculate_metric(query: str, consistency: Consistency = Consistency.OFF) -> Utterance:
     response = await metric_calculate_agent(User(utterance=query), *(consistency.map(consistency)))
-    response.log(_logger.info)
+    response.log()
     return response

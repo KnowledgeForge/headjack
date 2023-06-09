@@ -58,7 +58,7 @@ async def plot_data(question: Utterance, n: int = 1, temp: float = 0.0) -> Union
     cols = cast(List[PlotDataColumn], cols)
     code = await _plot_data(cols, question, n, temp)
     if isinstance(code, Response):
-        code.parent_ = question
+        code.parent = question
         return code
     ret = Answer(utterance=plot_json(cols, code), parent=question)
     ret.source = "plot_data"

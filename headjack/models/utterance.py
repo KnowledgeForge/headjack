@@ -1,9 +1,11 @@
 import json
-from typing import Any, Callable, Generator, Optional, Set, Type, Union
-
+import logging
+from typing import Any, Generator, Optional, Set, Type, Union
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
+
+_logger = logging.getLogger("uvicorn")
 
 
 class Utterance(BaseModel):
@@ -13,7 +15,12 @@ class Utterance(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     marker: Optional[str] = Field(default="")
     source: Optional[str] = None
-    _logged: bool = False
+
+    def _logged(self):
+        return getattr(self, "__logged", False)
+
+    def _set_logged(self, value: bool):
+        object.__setattr__(self, "__logged", value)
 
     def __str__(self):
         return self.marker + str(self.utterance)
@@ -43,10 +50,9 @@ class Utterance(BaseModel):
         history = history[::-1]
         return "\n".join(str(u) for u in history) + "\n"
 
-    @property
-    def log_str(self) -> str:
+    def _log_str(self) -> str:
         """Creates a string for logging the utterance"""
-        return "Utterance: " + json.dumps(
+        return json.dumps(
             {
                 "class": self.__class__.__name__,
                 "id": self.id,
@@ -55,14 +61,14 @@ class Utterance(BaseModel):
             },
         )
 
-    def log(self, logger: Callable[[str, ...], None]):  # type: ignore
+    def log(self):
         """Logs all utterances that have not yet been logged"""
-        if not self._logged:
-            logger(self.log_str)  # type: ignore
-            self._logged = True
+        if not self._logged():
+            _logger.utterance(self._log_str())  # type: ignore
+            self._set_logged(True)
         for utterance in self.history():
             if not utterance._logged:
-                utterance.log(logger)
+                utterance.log()
 
 
 class User(Utterance):
