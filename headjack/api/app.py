@@ -60,11 +60,7 @@ def cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="Host", default=settings.host)
     parser.add_argument("--port", help="Port", default=settings.port, type=int)
-    parser.add_argument("--log_level", help="Log Level", default=logging.INFO, type=int)
+    parser.add_argument("--log-level", help="Log Level", default=None, type=int)
+    parser.add_argument("--log-config", help="Log config file", default=None, type=str)
     args = parser.parse_args()
-    uvicorn.run(
-        app,
-        host=args.host,
-        port=args.port,
-        log_level=args.log_level,
-    )
+    uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level, log_config=args.log_config)
