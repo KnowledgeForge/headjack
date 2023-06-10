@@ -1,7 +1,6 @@
 """
 Module containing all config related things
 """
-import logging
 import os
 from functools import lru_cache
 from typing import Optional
@@ -18,12 +17,6 @@ def get_chroma_client():  # pragma: no cover
     return chromadb.Client()
 
 
-UTTERANCE = 15
-logging.addLevelName(UTTERANCE, "UTTERANCE")
-_logger = logging.getLogger("headjack")
-_logger.utterance = lambda msg: _logger.log(UTTERANCE, msg)  # type: ignore
-
-
 class Settings(BaseSettings):
     """
     Headjack config
@@ -38,7 +31,6 @@ class Settings(BaseSettings):
     search_service: Optional[str] = "http://localhost:16410"
     metric_service: Optional[str] = "http://localhost:8000"
     secret: Optional[str] = "headjack_secret"
-    log_level: int = UTTERANCE
 
     class Config:
         env_prefix = "headjack_"  # all environment variables wil use this prefix
@@ -50,6 +42,3 @@ def get_settings():
 
 def get_headjack_secret() -> str:
     return os.environ.get("HEADJACK_SECRET", get_settings().secret)  # type: ignore
-
-
-_logger.level = get_settings().log_level

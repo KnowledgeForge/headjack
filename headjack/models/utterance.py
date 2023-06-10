@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from headjack.logging import UTTERANCE_LOG_LEVEL
+
 _logger = logging.getLogger("headjack")
 
 
@@ -64,7 +66,7 @@ class Utterance(BaseModel):
     def log(self):
         """Logs all utterances that have not yet been logged"""
         if not self._logged():
-            _logger.utterance(self._log_str())  # type: ignore
+            _logger.log(UTTERANCE_LOG_LEVEL, self._log_str())
             self._set_logged(True)
         for utterance in self.history():
             if not utterance._logged:
