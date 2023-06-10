@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-_logger = logging.getLogger("uvicorn")
+_logger = logging.getLogger("headjack")
 
 
 class Utterance(BaseModel):

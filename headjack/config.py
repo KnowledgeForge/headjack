@@ -20,7 +20,7 @@ def get_chroma_client():  # pragma: no cover
 
 UTTERANCE = 15
 logging.addLevelName(UTTERANCE, "UTTERANCE")
-_logger = logging.getLogger("uvicorn")
+_logger = logging.getLogger("headjack")
 _logger.utterance = lambda msg: _logger.log(UTTERANCE, msg)  # type: ignore
 
 
@@ -50,3 +50,6 @@ def get_settings():
 
 def get_headjack_secret() -> str:
     return os.environ.get("HEADJACK_SECRET", get_settings().secret)  # type: ignore
+
+
+_logger.level = get_settings().log_level
