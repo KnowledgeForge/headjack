@@ -51,7 +51,8 @@ async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Un
         participants=[]
         for i in range(3):
             "-[PARTICIPANT]"
-            participants.append(PARTICIPANT.strip())
+            if len(PARTICIPANT) < 20:
+                participants.append(PARTICIPANT.strip())
         return StructuredAnswer(utterance={"summary": ANSWER, "participants": participants}, parent_ = question)
     FROM
         "chatgpt"

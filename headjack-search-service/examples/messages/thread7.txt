@@ -1,19 +1,19 @@
 @marketing_team: We've just launched a new social media campaign for the company. Check it out and let us know what you think!
 
-@employee1: Looks great! I love the new graphics.
+@Rob: Looks great! I love the new graphics.
 
-@employee2: Awesome job, marketing team! Can you share some metrics on how the campaign is performing so far?
+@Zhen: Awesome job, marketing team! Can you share some metrics on how the campaign is performing so far?
 
 @marketing_team: Sure, we'll compile some data and send out a report next week.
 
-@employee3: Is there anything we can do to help promote the campaign on our personal social media accounts?
+@Abe: Is there anything we can do to help promote the campaign on our personal social media accounts?
 
 @marketing_team: Absolutely! We'll send out some suggested posts and hashtags for everyone to use.
 
-@employee4: I noticed a typo in one of the posts. Should I let someone on the marketing team know?
+@James: I noticed a typo in one of the posts. Should I let someone on the marketing team know?
 
 @marketing_team: Yes, please send us a direct message with the details. Thanks for catching that!
 
-@employee5: Can we get some branded merchandise to give away as part of the campaign?
+@James: Can we get some branded merchandise to give away as part of the campaign?
 
 @marketing_team: That's a great idea! We'll look into ordering some items and will keep you posted.

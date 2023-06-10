@@ -1,17 +1,17 @@
-@general: Just a reminder, we'll be having a company-wide meeting next Friday at 10am. All employees are expected to attend. We'll be discussing our progress on ongoing projects and outlining our plans for the next quarter.
+@Michelle: Just a reminder, we'll be having a company-wide meeting next Friday at 10am. All employees are expected to attend. We'll be discussing our progress on ongoing projects and outlining our plans for the next quarter.
 
-@employee1: Will the meeting be in-person or virtual?
+@Prashant: Will the meeting be in-person or virtual?
 
-@general: The meeting will be virtual, via Zoom. We'll send out a calendar invite with the details.
+@Michelle: The meeting will be virtual, via Zoom. We'll send out a calendar invite with the details.
 
-@employee2: Can we get an agenda for the meeting ahead of time?
+@Shruti: Can we get an agenda for the meeting ahead of time?
 
-@general: Yes, we'll send out an agenda along with the calendar invite so everyone knows what to expect.
+@Michelle: Yes, we'll send out an agenda along with the calendar invite so everyone knows what to expect.
 
-@employee3: Will there be an opportunity to ask questions during the meeting?
+@Mike: Will there be an opportunity to ask questions during the meeting?
 
-@general: Yes, we'll have a Q&A session at the end of the meeting where employees can ask questions and provide feedback.
+@Michelle: Yes, we'll have a Q&A session at the end of the meeting where employees can ask questions and provide feedback.
 
-@employee4: Will the meeting be recorded for those who can't attend?
+@Susan: Will the meeting be recorded for those who can't attend?
 
-@general: Yes, we'll record the meeting and make it available for anyone who can't attend or wants to review it later.
+@Michelle: Yes, we'll record the meeting and make it available for anyone who can't attend or wants to review it later.
