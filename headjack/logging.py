@@ -1,7 +1,7 @@
 import logging
 
 UTTERANCE_LOG_LEVEL = 15
-logging.addLevelName(UTTERANCE_LOG_LEVEL, "UTTERANCE_LOG_LEVEL")
+logging.addLevelName(UTTERANCE_LOG_LEVEL, "UTTERANCE")
 
 
 class UtteranceFilter(logging.Filter):
