@@ -41,10 +41,10 @@ async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> U
         "Action: Let's search for the term '[TERM]\n"
         result = await search_for_knowledge(TERM)
         if result == 'No results':
-            return Response(utterance=result, parent_ = question)
+            return Response(utterance=result, parent = question)
         "Result: {result}\n"
         "Final Answer:[ANSWER]"
-        return Answer(utterance=ANSWER, parent_ = question)
+        return Answer(utterance=ANSWER, parent = question)
     FROM
         "chatgpt"
     WHERE

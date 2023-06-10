@@ -47,13 +47,15 @@ async def get_number_of_documents(collection: COLLECTION_TYPE) -> JSONResponse:
 
 
 def cli():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", help="Host", default="0.0.0.0")
-    parser.add_argument("--port", help="Port", default=8679, type=int)
-    args = parser.parse_args()
-    uvicorn.run(app, host=args.host, port=args.port)
-
-
-if __name__ == "__main__":
     settings = get_settings()
-    uvicorn.run(app, host="0.0.0.0", port=settings.port)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", help="Host", default=settings.host)
+    parser.add_argument("--port", help="Port", default=settings.port, type=int)
+    parser.add_argument("--log_level", help="Log Level", default=logging.INFO, type=int)
+    args = parser.parse_args()
+    uvicorn.run(
+        app,
+        host=args.host,
+        port=args.port,
+        log_level=args.log_level,
+    )

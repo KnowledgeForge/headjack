@@ -64,8 +64,8 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 that may include aggregations, filters, orderbys and limiting.""",
 )
 async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    return await consolidate_responses(
-        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),
+    return await consolidate_responses(  # type: ignore
+        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),  # type: ignore
     )
 
 
@@ -99,7 +99,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return Response(utterance=RESPONSE, parent_ = question)
+                return Response(utterance=RESPONSE, parent = question)
 
             metrics = [md['name'] for md in res['metadatas'][0]]
             _metrics += metrics
@@ -122,7 +122,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return Response(utterance=RESPONSE, parent_ = question)
+                return Response(utterance=RESPONSE, parent = question)
         _logger.info(f"Decided metrics `{selected_metrics}`.")
         common_dimensions = await search_for_dimensions(selected_metrics)
 
@@ -133,7 +133,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "\nThere are no dimensions for this metric.\n"
             "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
             "Response: [RESPONSE]"
-            return Response(utterance=RESPONSE, parent_ = question)
+            return Response(utterance=RESPONSE, parent = question)
 
         for dim in common_dimensions:
             _dimensions.add(dim)
@@ -219,7 +219,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             else:
                 "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return Response(utterance=RESPONSE, parent_ = question)
+                return Response(utterance=RESPONSE, parent = question)
 
         selected_orderbys=[]
         for term in orderbys:
@@ -245,7 +245,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return Response(utterance=RESPONSE, parent_ = question)
+                return Response(utterance=RESPONSE, parent = question)
 
         selected_filters=[]
         for term in filters:
@@ -282,12 +282,12 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             else:
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
-                return Response(utterance=RESPONSE, parent_ = question)
+                return Response(utterance=RESPONSE, parent = question)
 
         results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
         if results == "Cannot calculate metric":
-            return Response(utterance=results, parent_ = question)
-        return Observation(utterance=results, parent_ = question)
+            return Response(utterance=results, parent = question)
+        return Observation(utterance=results, parent = question)
 
     from
         "chatgpt"

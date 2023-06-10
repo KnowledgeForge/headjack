@@ -13,4 +13,6 @@ router = APIRouter(prefix="/metric_search", tags=["metric_search"])
 
 @router.post("/{query}")
 async def search_for_metrics(query: str, consistency: Consistency = Consistency.OFF) -> Utterance:
-    return await metric_search_agent(User(utterance=query), *(consistency.map(consistency)))
+    response = await metric_search_agent(User(utterance=query), *(consistency.map(consistency)))
+    response.log()
+    return response
