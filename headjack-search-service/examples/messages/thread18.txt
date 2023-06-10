@@ -1,23 +1,23 @@
-Employee 1: Hey everyone, I have some exciting news to share! Our new project has been approved by the management.
+Marcus: Hey everyone, I have some exciting news to share! Our new project has been approved by the management.
 
-Employee 2: That's great news! What's the project about?
+Jay: That's great news! What's the project about?
 
-Employee 1: We'll be developing a new software system to optimize the construction workflow. It will automate many of the manual tasks, making our work much more efficient.
+Marcus: We'll be developing a new software system to optimize the construction workflow. It will automate many of the manual tasks, making our work much more efficient.
 
-Employee 3: Sounds like a huge undertaking. Do we have all the resources we need?
+Tim: Sounds like a huge undertaking. Do we have all the resources we need?
 
-Employee 1: Yes, the management has allocated a significant budget for this project. We'll have a dedicated team of developers, designers, and testers working on it.
+Marcus: Yes, the management has allocated a significant budget for this project. We'll have a dedicated team of developers, designers, and testers working on it.
 
-Employee 4: That's awesome! I can't wait to start working on it.
+Sam: That's awesome! I can't wait to start working on it.
 
-Employee 2: Any idea on the timeline?
+Jay: Any idea on the timeline?
 
-Employee 1: We're aiming to have a working prototype in six months and a full release in twelve months.
+Marcus: We're aiming to have a working prototype in six months and a full release in twelve months.
 
-Employee 3: Sounds like a tight schedule, but I'm up for the challenge.
+Tim: Sounds like a tight schedule, but I'm up for the challenge.
 
-Employee 4: Me too. Let's make this the best software system our company has ever seen!
+Sam: Me too. Let's make this the best software system our company has ever seen!
 
-Employee 2: Agreed. I'm excited to see what we can achieve as a team.
+Jay: Agreed. I'm excited to see what we can achieve as a team.
 
-Employee 1: I have complete faith in our team's ability to deliver. Let's do this!
+Marcus: I have complete faith in our team's ability to deliver. Let's do this!

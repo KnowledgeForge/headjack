@@ -10,7 +10,15 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 
-from headjack.api import chat, dispatch, metric_calculate, metric_search, plot, summary
+from headjack.api import (
+    chat,
+    dispatch,
+    messages,
+    metric_calculate,
+    metric_search,
+    plot,
+    summary,
+)
 from headjack.config import get_settings
 from headjack.utils import fetch
 
@@ -21,6 +29,7 @@ app.include_router(chat.router)
 app.include_router(summary.router)
 app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
+app.include_router(messages.router)
 app.include_router(dispatch.router)
 app.include_router(plot.router)
 app.add_middleware(
@@ -51,11 +60,7 @@ def cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="Host", default=settings.host)
     parser.add_argument("--port", help="Port", default=settings.port, type=int)
-    parser.add_argument("--log_level", help="Log Level", default=logging.INFO, type=int)
+    parser.add_argument("--log-level", help="Log Level", default=None, type=int)
+    parser.add_argument("--log-config", help="Log config file", default=None, type=str)
     args = parser.parse_args()
-    uvicorn.run(
-        app,
-        host=args.host,
-        port=args.port,
-        log_level=args.log_level,
-    )
+    uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level, log_config=args.log_config)

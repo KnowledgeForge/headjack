@@ -98,6 +98,11 @@ class Answer(Utterance):
     marker = "Answer: "
 
 
+class StructuredAnswer(Utterance):
+    utterance: dict
+    marker = ""
+
+
 class Response(Utterance):
     utterance: str
     marker = "Response: "

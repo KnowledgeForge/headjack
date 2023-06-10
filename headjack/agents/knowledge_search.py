@@ -34,7 +34,7 @@ async def knowledge_search_agent(question: Utterance, n: int = 1, temp: float = 
 
 @lmql.query
 async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Answer]:  # type: ignore
-    """lmql
+    '''lmql
     sample(n = n, temperature = temp)
         "Given the following question, use a term to search for relevant information and create a summary answer.\n"
         "Question: {question.utterance}\n"
@@ -49,4 +49,4 @@ async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> U
         "chatgpt"
     WHERE
         STOPS_AT(TERM, "'")
-    """
+    '''
