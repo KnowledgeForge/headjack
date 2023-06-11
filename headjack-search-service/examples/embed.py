@@ -127,6 +127,7 @@ def index_knowledge(knowledge_dir: str, client: chromadb.Client):
             metadatas.append({"file": kd, "part": idx})
             ids.append(kd + f"_{idx}")
 
+    _logger.info(f"Sending request to index {len(documents)} knowledge documents")
     knowledge_collection.add(
         documents=documents,
         metadatas=metadatas,
