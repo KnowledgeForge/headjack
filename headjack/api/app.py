@@ -16,6 +16,7 @@ from headjack.api import (
     messages,
     metric_calculate,
     metric_search,
+    people,
     plot,
     summary,
 )
@@ -31,6 +32,7 @@ app.include_router(metric_search.router)
 app.include_router(metric_calculate.router)
 app.include_router(messages.router)
 app.include_router(dispatch.router)
+app.include_router(people.router)
 app.include_router(plot.router)
 app.add_middleware(
     CORSMiddleware,
