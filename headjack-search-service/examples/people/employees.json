@@ -1,352 +1,965 @@
 [
-    {
-      "id": "200172",
-      "first_name": "John",
-      "last_name": "Smith",
-      "position": "Level 2 Welder",
-      "manager_id": "200129",
-      "description": "Welds and assembles metal pieces and products by using handheld welding equipment. Sets up parts for welding; uses hand tools, clamps, jigs and fixtures. Works from specifications, drawings and weld symbols. Prepares and completes work on materials by welding, cutting, grinding and cleaning metal.",
-      "hire_date": 20220715,
-      "employee": true
-    },
-    {
-      "id": "200128",
-      "first_name": "Sarah",
-      "last_name": "Jones",
-      "position": "Project Manager",
-      "manager_id": "200102",
-      "description": "Oversees construction projects from beginning to end, ensuring that projects are completed within time and budgetary constraints. Communicates with clients and stakeholders to ensure that project requirements are met. Collaborates with team members to plan and execute projects, and ensures that all necessary permits and licenses are obtained.",
-      "hire_date": 20200503,
-      "employee": true
-    },
-    {
-      "id": "200102",
-      "first_name": "David",
-      "last_name": "Lee",
-      "position": "Construction Manager",
-      "manager_id": "",
-      "description": "Oversees construction activities on assigned projects. Manages and supervises project personnel, including subcontractors. Develops and maintains project schedules, and ensures that work is completed on time and within budget. Collaborates with project managers and engineers to ensure that project requirements are met.",
-      "hire_date": 20180112,
-      "employee": true
-    },
-    {
-      "id": "200319",
-      "first_name": "Lisa",
-      "last_name": "Brown",
-      "position": "Civil Engineer",
-      "manager_id": "200102",
-      "description": "Designs and oversees construction of roads, bridges, and other infrastructure projects. Develops project plans and specifications, and works with contractors to ensure that project requirements are met. Analyzes survey reports, maps, and other data to plan projects and ensure that construction is in compliance with regulations.",
-      "hire_date": 20210420,
-      "employee": true
-    },
-    {
-      "id": "200534",
-      "first_name": "Mark",
-      "last_name": "Johnson",
-      "position": "Heavy Equipment Operator",
-      "manager_id": "200172",
-      "description": "Operates heavy machinery such as bulldozers, backhoes, and excavators to move earth and other materials. Ensures that equipment is in good working order, and performs routine maintenance and repairs. Coordinates with other workers to ensure that projects are completed safely and efficiently.",
-      "hire_date": 20191001,
-      "employee": true
-    },
-    {
-      "id": "200129",
-      "first_name": "Mary",
-      "last_name": "Jones",
-      "position": "Construction Supervisor",
-      "manager_id": "200086",
-      "description": "Oversees and directs construction projects from conception to completion. Coordinates and manages contractors and staff. Ensures projects are completed on time and within budget. Maintains a safe and efficient work environment.",
-      "hire_date": 20210401,
-      "employee": true
-    },
-    {
-      "id": "200086",
-      "first_name": "David",
-      "last_name": "Lee",
-      "position": "Project Manager",
-      "manager_id": "",
-      "description": "Manages construction projects from start to finish. Plans and coordinates resources, timelines, and budget. Communicates with stakeholders and ensures project goals are met. Provides leadership to project team.",
-      "hire_date": 20200115,
-      "employee": true
-    },
-    {
-      "id": "200437",
-      "first_name": "Emily",
-      "last_name": "Taylor",
-      "position": "Traffic Control Specialist",
-      "manager_id": "200129",
-      "description": "Designs and implements traffic control plans for construction sites. Monitors and directs traffic flow. Maintains safety of workers and public. Communicates with construction team and local authorities.",
-      "hire_date": 20230505,
-      "employee": true
-    },
-      {
-        "id": "200315",
-        "first_name": "Emily",
-        "last_name": "Johnson",
-        "position": "Road Crew Supervisor",
-        "manager_id": "200212",
-        "description": "Supervises road repair crews and ensures projects are completed on time and within budget. Coordinates with other supervisors to ensure efficient use of equipment and personnel. Maintains safety protocols and ensures workers are properly trained. Conducts performance evaluations and provides feedback to employees.",
-        "hire_date": 20180601,
-        "employee": true
-      },
-      {
-        "id": "200460",
-        "first_name": "Michael",
-        "last_name": "Williams",
-        "position": "Heavy Equipment Operator",
-        "manager_id": "200315",
-        "description": "Operates heavy equipment such as bulldozers, backhoes, and excavators to move materials, dig trenches, and perform other construction tasks. Maintains equipment and performs routine inspections. Follows safety protocols and communicates with crew members to ensure efficient workflow.",
-        "hire_date": 20190423,
-        "employee": true
-      },
-      {
-        "id": "200581",
-        "first_name": "Sarah",
-        "last_name": "Davis",
-        "position": "Concrete Finisher",
-        "manager_id": "200129",
-        "description": "Pours, levels, and finishes concrete surfaces such as sidewalks, curbs, and gutters. Sets forms and installs reinforcement bars as necessary. Uses hand tools and power tools to smooth and shape concrete surfaces. Follows safety protocols and ensures quality workmanship.",
-        "hire_date": 20200315,
-        "employee": true
-      },
-      {
-        "id": "200714",
-        "first_name": "David",
-        "last_name": "Wilson",
-        "position": "Traffic Control Specialist",
-        "manager_id": "200315",
-        "description": "Sets up traffic control devices such as cones, signs, and barricades to ensure safe passage through construction zones. Directs traffic using hand signals or flags. Monitors radio communications and responds to emergencies as necessary. Follows safety protocols and maintains equipment.",
-        "hire_date": 20151120,
-        "employee": true
-      },
-    {
-      "id": "200175",
-      "first_name": "Samantha",
-      "last_name": "Jones",
-      "position": "Project Manager",
-      "manager_id": "200120",
-      "description": "Oversees the planning, implementation, and tracking of a specific short-term project which has a beginning, an end, and specified deliverables. Develops project plans, including goals, schedules, and resource allocation. Coordinates project activities and ensures all project phases are documented appropriately.",
-      "hire_date": 20210101,
-      "employee": true
-    },
-    {
-      "id": "200185",
-      "first_name": "Michael",
-      "last_name": "Johnson",
-      "position": "Equipment Operator",
-      "manager_id": "200141",
-      "description": "Operates heavy machinery to perform construction and maintenance work on roads and highways. Drives and operates equipment such as bulldozers, graders, and loaders. Performs routine maintenance on equipment and troubleshoots equipment issues as needed.",
-      "hire_date": 20220105,
-      "employee": true
-    },
-    {
-      "id": "200193",
-      "first_name": "Emily",
-      "last_name": "Davis",
-      "position": "Civil Engineer",
-      "manager_id": "200175",
-      "description": "Designs and oversees the construction of roads, highways, and bridges. Develops project plans, estimates costs, and creates engineering designs. Collaborates with other engineers, construction teams, and government agencies to ensure projects are completed on time and within budget.",
-      "hire_date": 20220320,
-      "employee": true
-    },
-    {
-      "id": "200200",
-      "first_name": "Robert",
-      "last_name": "Wilson",
-      "position": "Level 3 Welder",
-      "manager_id": "200129",
-      "description": "Welds and assembles complex metal structures and products by using advanced welding techniques and equipment. Interprets blueprints, drawings, and other schematics. Inspects welds for accuracy and quality. May train and supervise other welders.",
-      "hire_date": 20210430,
-      "employee": true
-    },
-    {
-      "id": "200215",
-      "first_name": "Jessica",
-      "last_name": "Garcia",
-      "position": "Construction Laborer",
-      "manager_id": "200185",
-      "description": "Performs physical labor on construction sites. Assists with digging trenches, operating power tools, and carrying heavy materials. Maintains a clean and safe work environment.",
-      "hire_date": 20220902,
-      "employee": true
-    },
-    {
-      "id": "200221",
-      "first_name": "Christopher",
-      "last_name": "Martinez",
-      "position": "Construction Supervisor",
-      "manager_id": "200175",
-      "description": "Supervises and coordinates the activities of construction workers on a project site. Plans and schedules work, assigns tasks, and ensures compliance with safety regulations. May also assist with hiring and training new workers.",
-      "hire_date": 20220510,
-      "employee": true
-    },
-    {
-      "id": "200230",
-      "first_name": "Stephanie",
-      "last_name": "Rivera",
-      "position": "Safety Manager",
-      "manager_id": "200175",
-      "description": "Develops and implements safety policies and procedures for construction sites. Conducts safety training for workers and ensures compliance with safety regulations. Investigates accidents and incidents and makes recommendations for improvements to prevent future occurrences.",
-      "hire_date": 20210412,
-      "employee": true
-    },
-      {
-        "id": "200130",
-        "first_name": "Emma",
-        "last_name": "Lee",
-        "position": "Project Manager",
-        "manager_id": "",
-        "description": "Manages road construction and repair projects from start to finish, including planning, scheduling, budgeting, and resource allocation. Collaborates with stakeholders to ensure projects are completed on time and within budget. Provides regular progress updates and resolves any issues that arise.",
-        "hire_date": 20210501,
-        "employee": true
-      },
-      {
-        "id": "200131",
-        "first_name": "David",
-        "last_name": "Nguyen",
-        "position": "Civil Engineer",
-        "manager_id": "200130",
-        "description": "Designs and oversees the construction of roadways, bridges, and other infrastructure. Conducts feasibility studies, analyzes data, and prepares reports. Ensures compliance with safety and environmental regulations.",
-        "hire_date": 20211203,
-        "employee": true
-      },
-      {
-        "id": "200132",
-        "first_name": "Sarah",
-        "last_name": "Johnson",
-        "position": "Heavy Equipment Operator",
-        "manager_id": "200130",
-        "description": "Operates heavy machinery, such as bulldozers, excavators, and backhoes, to move earth, gravel, and other materials. Maintains and repairs equipment as needed. Follows safety protocols to prevent accidents and injuries.",
-        "hire_date": 20221010,
-        "employee": true
-      },
-      {
-        "id": "200133",
-        "first_name": "Michael",
-        "last_name": "Garcia",
-        "position": "Pavement Marking Technician",
-        "manager_id": "200131",
-        "description": "Applies paint, thermoplastic, and other materials to mark pavement for traffic control and safety. Operates equipment such as striping machines and stencils. Follows state and federal regulations regarding pavement marking.",
-        "hire_date": 20220615,
-        "employee": true
-      },
-      {
-        "id": "200134",
-        "first_name": "Ava",
-        "last_name": "Wilson",
-        "position": "Asphalt Paving Crew Member",
-        "manager_id": "200132",
-        "description": "Lays asphalt on roads, highways, and parking lots. Operates equipment such as pavers, rollers, and skid steers. Follows safety and quality standards to ensure a smooth, durable surface.",
-        "hire_date": 20220120,
-        "employee": true
-      },
-      {
-        "id": "200135",
-        "first_name": "Oliver",
-        "last_name": "Martinez",
-        "position": "Traffic Control Technician",
-        "manager_id": "200131",
-        "description": "Sets up and maintains traffic control devices, such as cones, signs, and barriers, to ensure safe and efficient traffic flow through work zones. Directs drivers and pedestrians as needed. Follows state and federal regulations regarding traffic control.",
-        "hire_date": 20221105,
-        "employee": true
-      },
-      {
-        "id": "200136",
-        "first_name": "Isabella",
-        "last_name": "Davis",
-        "position": "Construction Laborer",
-        "manager_id": "200130",
-        "description": "Performs a variety of tasks to support road construction and repair projects, including digging, hauling materials, and cleaning up job sites. Operates hand and power tools as needed. Follows safety protocols to prevent accidents",
-        "hire_date": 20220121,
-        "employee": true
-      },
-    {
-      "id": "200182",
-      "first_name": "Alice",
-      "last_name": "Johnson",
-      "position": "Project Manager",
-      "manager_id": "200129",
-      "description": "Manages road repair construction projects, including scheduling, budgeting, and coordinating with clients, subcontractors, and other stakeholders.",
-      "hire_date": 20210201,
-      "employee": true
-    },
-    {
-      "id": "200177",
-      "first_name": "Robert",
-      "last_name": "Garcia",
-      "position": "Civil Engineer",
-      "manager_id": "200129",
-      "description": "Designs and oversees construction of road repair projects, including roadways, bridges, and other infrastructure.",
-      "hire_date": 20210315,
-      "employee": true
-    },
-    {
-      "id": "200174",
-      "first_name": "Emily",
-      "last_name": "Wong",
-      "position": "Safety Manager",
-      "manager_id": "200129",
-      "description": "Ensures compliance with safety regulations and best practices on road repair construction sites. Develops and implements safety policies and procedures.",
-      "hire_date": 20220110,
-      "employee": true
-    },
-    {
-      "id": "200169",
-      "first_name": "David",
-      "last_name": "Nguyen",
-      "position": "Heavy Equipment Operator",
-      "manager_id": "200143",
-      "description": "Operates heavy machinery such as bulldozers, excavators, and backhoes to move earth and other materials on road repair construction sites.",
-      "hire_date": 20230105,
-      "employee": true
-    },
-    {
-      "id": "200186",
-      "first_name": "Sophia",
-      "last_name": "Davis",
-      "position": "Traffic Control Manager",
-      "manager_id": "200129",
-      "description": "Plans and coordinates traffic control measures during road repair construction projects. Ensures safe and efficient traffic flow in and around work sites.",
-      "hire_date": 20220320,
-      "employee": true
-    },
-    {
-      "id": "200191",
-      "first_name": "Mia",
-      "last_name": "Patel",
-      "position": "Materials Coordinator",
-      "manager_id": "200182",
-      "description": "Manages inventory of materials and supplies needed for road repair construction projects. Coordinates with suppliers to ensure timely delivery of materials.",
-      "hire_date": 20210901,
-      "employee": true
-    },
-    {
-      "id": "200163",
-      "first_name": "Daniel",
-      "last_name": "Kim",
-      "position": "Concrete Finisher",
-      "manager_id": "200143",
-      "description": "Prepares, pours, and finishes concrete surfaces for road repair projects.",
-      "hire_date": 20230510,
-      "employee": true
-    },
-    {
-      "id": "200155",
-      "first_name": "Jasmine",
-      "last_name": "Lee",
-      "position": "Office Manager",
-      "manager_id": "200182",
-      "description": "Manages administrative and clerical functions for the road repair construction company, including record-keeping, invoicing, and correspondence.",
-      "hire_date": 20220102,
-      "employee": true
-    },
-    {
-      "id": "200148",
-      "first_name": "William",
-      "last_name": "Ng",
-      "position": "Surveyor",
-      "manager_id": "200177",
-      "description": "Measures and maps out road repair construction sites",
-      "hire_date": 20220108,
-      "employee": true
-    }
-  ]  
+  {
+    "id": "200172",
+    "first_name": "John",
+    "last_name": "Smith",
+    "position": "Level 2 Welder",
+    "manager_id": "200129",
+    "description": "Welds and assembles metal pieces and products by using handheld welding equipment. Sets up parts for welding; uses hand tools, clamps, jigs and fixtures. Works from specifications, drawings and weld symbols. Prepares and completes work on materials by welding, cutting, grinding and cleaning metal.",
+    "hire_date": 20220715,
+    "employee": true
+  },
+  {
+    "id": "200128",
+    "first_name": "Sarah",
+    "last_name": "Jones",
+    "position": "Project Manager",
+    "manager_id": "200102",
+    "description": "Oversees construction projects from beginning to end, ensuring that projects are completed within time and budgetary constraints. Communicates with clients and stakeholders to ensure that project requirements are met. Collaborates with team members to plan and execute projects, and ensures that all necessary permits and licenses are obtained.",
+    "hire_date": 20200503,
+    "employee": true
+  },
+  {
+    "id": "200102",
+    "first_name": "David",
+    "last_name": "Lee",
+    "position": "Construction Manager",
+    "manager_id": "",
+    "description": "Oversees construction activities on assigned projects. Manages and supervises project personnel, including subcontractors. Develops and maintains project schedules, and ensures that work is completed on time and within budget. Collaborates with project managers and engineers to ensure that project requirements are met.",
+    "hire_date": 20180112,
+    "employee": true
+  },
+  {
+    "id": "200319",
+    "first_name": "Lisa",
+    "last_name": "Brown",
+    "position": "Civil Engineer",
+    "manager_id": "200102",
+    "description": "Designs and oversees construction of roads, bridges, and other infrastructure projects. Develops project plans and specifications, and works with contractors to ensure that project requirements are met. Analyzes survey reports, maps, and other data to plan projects and ensure that construction is in compliance with regulations.",
+    "hire_date": 20210420,
+    "employee": true
+  },
+  {
+    "id": "200534",
+    "first_name": "Mark",
+    "last_name": "Johnson",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200172",
+    "description": "Operates heavy machinery such as bulldozers, backhoes, and excavators to move earth and other materials. Ensures that equipment is in good working order, and performs routine maintenance and repairs. Coordinates with other workers to ensure that projects are completed safely and efficiently.",
+    "hire_date": 20191001,
+    "employee": true
+  },
+  {
+    "id": "200129",
+    "first_name": "Mary",
+    "last_name": "Jones",
+    "position": "Construction Supervisor",
+    "manager_id": "200086",
+    "description": "Oversees and directs construction projects from conception to completion. Coordinates and manages contractors and staff. Ensures projects are completed on time and within budget. Maintains a safe and efficient work environment.",
+    "hire_date": 20210401,
+    "employee": true
+  },
+  {
+    "id": "200086",
+    "first_name": "David",
+    "last_name": "Lee",
+    "position": "Project Manager",
+    "manager_id": "",
+    "description": "Manages construction projects from start to finish. Plans and coordinates resources, timelines, and budget. Communicates with stakeholders and ensures project goals are met. Provides leadership to project team.",
+    "hire_date": 20200115,
+    "employee": true
+  },
+  {
+    "id": "200437",
+    "first_name": "Emily",
+    "last_name": "Taylor",
+    "position": "Traffic Control Specialist",
+    "manager_id": "200129",
+    "description": "Designs and implements traffic control plans for construction sites. Monitors and directs traffic flow. Maintains safety of workers and public. Communicates with construction team and local authorities.",
+    "hire_date": 20230505,
+    "employee": true
+  },
+  {
+    "id": "200315",
+    "first_name": "Emily",
+    "last_name": "Johnson",
+    "position": "Road Crew Supervisor",
+    "manager_id": "200212",
+    "description": "Supervises road repair crews and ensures projects are completed on time and within budget. Coordinates with other supervisors to ensure efficient use of equipment and personnel. Maintains safety protocols and ensures workers are properly trained. Conducts performance evaluations and provides feedback to employees.",
+    "hire_date": 20180601,
+    "employee": true
+  },
+  {
+    "id": "200460",
+    "first_name": "Michael",
+    "last_name": "Williams",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200315",
+    "description": "Operates heavy equipment such as bulldozers, backhoes, and excavators to move materials, dig trenches, and perform other construction tasks. Maintains equipment and performs routine inspections. Follows safety protocols and communicates with crew members to ensure efficient workflow.",
+    "hire_date": 20190423,
+    "employee": true
+  },
+  {
+    "id": "200581",
+    "first_name": "Sarah",
+    "last_name": "Davis",
+    "position": "Concrete Finisher",
+    "manager_id": "200129",
+    "description": "Pours, levels, and finishes concrete surfaces such as sidewalks, curbs, and gutters. Sets forms and installs reinforcement bars as necessary. Uses hand tools and power tools to smooth and shape concrete surfaces. Follows safety protocols and ensures quality workmanship.",
+    "hire_date": 20200315,
+    "employee": true
+  },
+  {
+    "id": "200714",
+    "first_name": "David",
+    "last_name": "Wilson",
+    "position": "Traffic Control Specialist",
+    "manager_id": "200315",
+    "description": "Sets up traffic control devices such as cones, signs, and barricades to ensure safe passage through construction zones. Directs traffic using hand signals or flags. Monitors radio communications and responds to emergencies as necessary. Follows safety protocols and maintains equipment.",
+    "hire_date": 20151120,
+    "employee": true
+  },
+  {
+    "id": "200175",
+    "first_name": "Samantha",
+    "last_name": "Jones",
+    "position": "Project Manager",
+    "manager_id": "200120",
+    "description": "Oversees the planning, implementation, and tracking of a specific short-term project which has a beginning, an end, and specified deliverables. Develops project plans, including goals, schedules, and resource allocation. Coordinates project activities and ensures all project phases are documented appropriately.",
+    "hire_date": 20210101,
+    "employee": true
+  },
+  {
+    "id": "200185",
+    "first_name": "Michael",
+    "last_name": "Johnson",
+    "position": "Equipment Operator",
+    "manager_id": "200141",
+    "description": "Operates heavy machinery to perform construction and maintenance work on roads and highways. Drives and operates equipment such as bulldozers, graders, and loaders. Performs routine maintenance on equipment and troubleshoots equipment issues as needed.",
+    "hire_date": 20220105,
+    "employee": true
+  },
+  {
+    "id": "200193",
+    "first_name": "Emily",
+    "last_name": "Davis",
+    "position": "Civil Engineer",
+    "manager_id": "200175",
+    "description": "Designs and oversees the construction of roads, highways, and bridges. Develops project plans, estimates costs, and creates engineering designs. Collaborates with other engineers, construction teams, and government agencies to ensure projects are completed on time and within budget.",
+    "hire_date": 20220320,
+    "employee": true
+  },
+  {
+    "id": "200200",
+    "first_name": "Robert",
+    "last_name": "Wilson",
+    "position": "Level 3 Welder",
+    "manager_id": "200129",
+    "description": "Welds and assembles complex metal structures and products by using advanced welding techniques and equipment. Interprets blueprints, drawings, and other schematics. Inspects welds for accuracy and quality. May train and supervise other welders.",
+    "hire_date": 20210430,
+    "employee": true
+  },
+  {
+    "id": "200215",
+    "first_name": "Jessica",
+    "last_name": "Garcia",
+    "position": "Construction Laborer",
+    "manager_id": "200185",
+    "description": "Performs physical labor on construction sites. Assists with digging trenches, operating power tools, and carrying heavy materials. Maintains a clean and safe work environment.",
+    "hire_date": 20220902,
+    "employee": true
+  },
+  {
+    "id": "200221",
+    "first_name": "Christopher",
+    "last_name": "Martinez",
+    "position": "Construction Supervisor",
+    "manager_id": "200175",
+    "description": "Supervises and coordinates the activities of construction workers on a project site. Plans and schedules work, assigns tasks, and ensures compliance with safety regulations. May also assist with hiring and training new workers.",
+    "hire_date": 20220510,
+    "employee": true
+  },
+  {
+    "id": "200230",
+    "first_name": "Stephanie",
+    "last_name": "Rivera",
+    "position": "Safety Manager",
+    "manager_id": "200175",
+    "description": "Develops and implements safety policies and procedures for construction sites. Conducts safety training for workers and ensures compliance with safety regulations. Investigates accidents and incidents and makes recommendations for improvements to prevent future occurrences.",
+    "hire_date": 20210412,
+    "employee": true
+  },
+  {
+    "id": "200130",
+    "first_name": "Emma",
+    "last_name": "Lee",
+    "position": "Project Manager",
+    "manager_id": "",
+    "description": "Manages road construction and repair projects from start to finish, including planning, scheduling, budgeting, and resource allocation. Collaborates with stakeholders to ensure projects are completed on time and within budget. Provides regular progress updates and resolves any issues that arise.",
+    "hire_date": 20210501,
+    "employee": true
+  },
+  {
+    "id": "200131",
+    "first_name": "David",
+    "last_name": "Nguyen",
+    "position": "Civil Engineer",
+    "manager_id": "200130",
+    "description": "Designs and oversees the construction of roadways, bridges, and other infrastructure. Conducts feasibility studies, analyzes data, and prepares reports. Ensures compliance with safety and environmental regulations.",
+    "hire_date": 20211203,
+    "employee": true
+  },
+  {
+    "id": "200132",
+    "first_name": "Sarah",
+    "last_name": "Johnson",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200130",
+    "description": "Operates heavy machinery, such as bulldozers, excavators, and backhoes, to move earth, gravel, and other materials. Maintains and repairs equipment as needed. Follows safety protocols to prevent accidents and injuries.",
+    "hire_date": 20221010,
+    "employee": true
+  },
+  {
+    "id": "200133",
+    "first_name": "Michael",
+    "last_name": "Garcia",
+    "position": "Pavement Marking Technician",
+    "manager_id": "200131",
+    "description": "Applies paint, thermoplastic, and other materials to mark pavement for traffic control and safety. Operates equipment such as striping machines and stencils. Follows state and federal regulations regarding pavement marking.",
+    "hire_date": 20220615,
+    "employee": true
+  },
+  {
+    "id": "200134",
+    "first_name": "Ava",
+    "last_name": "Wilson",
+    "position": "Asphalt Paving Crew Member",
+    "manager_id": "200132",
+    "description": "Lays asphalt on roads, highways, and parking lots. Operates equipment such as pavers, rollers, and skid steers. Follows safety and quality standards to ensure a smooth, durable surface.",
+    "hire_date": 20220120,
+    "employee": true
+  },
+  {
+    "id": "200135",
+    "first_name": "Oliver",
+    "last_name": "Martinez",
+    "position": "Traffic Control Technician",
+    "manager_id": "200131",
+    "description": "Sets up and maintains traffic control devices, such as cones, signs, and barriers, to ensure safe and efficient traffic flow through work zones. Directs drivers and pedestrians as needed. Follows state and federal regulations regarding traffic control.",
+    "hire_date": 20221105,
+    "employee": true
+  },
+  {
+    "id": "200136",
+    "first_name": "Isabella",
+    "last_name": "Davis",
+    "position": "Construction Laborer",
+    "manager_id": "200130",
+    "description": "Performs a variety of tasks to support road construction and repair projects, including digging, hauling materials, and cleaning up job sites. Operates hand and power tools as needed. Follows safety protocols to prevent accidents",
+    "hire_date": 20220121,
+    "employee": true
+  },
+  {
+    "id": "200182",
+    "first_name": "Alice",
+    "last_name": "Johnson",
+    "position": "Project Manager",
+    "manager_id": "200129",
+    "description": "Manages road repair construction projects, including scheduling, budgeting, and coordinating with clients, subcontractors, and other stakeholders.",
+    "hire_date": 20210201,
+    "employee": true
+  },
+  {
+    "id": "200177",
+    "first_name": "Robert",
+    "last_name": "Garcia",
+    "position": "Civil Engineer",
+    "manager_id": "200129",
+    "description": "Designs and oversees construction of road repair projects, including roadways, bridges, and other infrastructure.",
+    "hire_date": 20210315,
+    "employee": true
+  },
+  {
+    "id": "200174",
+    "first_name": "Emily",
+    "last_name": "Wong",
+    "position": "Safety Manager",
+    "manager_id": "200129",
+    "description": "Ensures compliance with safety regulations and best practices on road repair construction sites. Develops and implements safety policies and procedures.",
+    "hire_date": 20220110,
+    "employee": true
+  },
+  {
+    "id": "200169",
+    "first_name": "David",
+    "last_name": "Nguyen",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200143",
+    "description": "Operates heavy machinery such as bulldozers, excavators, and backhoes to move earth and other materials on road repair construction sites.",
+    "hire_date": 20230105,
+    "employee": true
+  },
+  {
+    "id": "200186",
+    "first_name": "Sophia",
+    "last_name": "Davis",
+    "position": "Traffic Control Manager",
+    "manager_id": "200129",
+    "description": "Plans and coordinates traffic control measures during road repair construction projects. Ensures safe and efficient traffic flow in and around work sites.",
+    "hire_date": 20220320,
+    "employee": true
+  },
+  {
+    "id": "200191",
+    "first_name": "Mia",
+    "last_name": "Patel",
+    "position": "Materials Coordinator",
+    "manager_id": "200182",
+    "description": "Manages inventory of materials and supplies needed for road repair construction projects. Coordinates with suppliers to ensure timely delivery of materials.",
+    "hire_date": 20210901,
+    "employee": true
+  },
+  {
+    "id": "200163",
+    "first_name": "Daniel",
+    "last_name": "Kim",
+    "position": "Concrete Finisher",
+    "manager_id": "200143",
+    "description": "Prepares, pours, and finishes concrete surfaces for road repair projects.",
+    "hire_date": 20230510,
+    "employee": true
+  },
+  {
+    "id": "200155",
+    "first_name": "Jasmine",
+    "last_name": "Lee",
+    "position": "Office Manager",
+    "manager_id": "200182",
+    "description": "Manages administrative and clerical functions for the road repair construction company, including record-keeping, invoicing, and correspondence.",
+    "hire_date": 20220102,
+    "employee": true
+  },
+  {
+    "id": "200148",
+    "first_name": "William",
+    "last_name": "Ng",
+    "position": "Surveyor",
+    "manager_id": "200177",
+    "description": "Measures and maps out road repair construction sites",
+    "hire_date": 20220108,
+    "employee": true
+  },
+  {
+    "id": "200112",
+    "first_name": "Oliver",
+    "last_name": "Smith",
+    "position": "Project Manager",
+    "manager_id": "200129",
+    "description": "Oversees and manages construction projects from initiation to completion. Plans and coordinates resources, schedules, and budgets.",
+    "hire_date": 20220115,
+    "employee": true
+  },
+
+  {
+    "id": "200175",
+    "first_name": "Emma",
+    "last_name": "Johnson",
+    "position": "Equipment Operator",
+    "manager_id": "200143",
+    "description": "Operates heavy machinery and equipment for construction projects, such as excavators, bulldozers, and loaders.",
+    "hire_date": 20220803,
+    "employee": true
+  },
+
+  {
+    "id": "200189",
+    "first_name": "Liam",
+    "last_name": "Garcia",
+    "position": "Safety Coordinator",
+    "manager_id": "200129",
+    "description": "Develops and implements safety policies and procedures to ensure compliance with regulations and maintain a safe work environment.",
+    "hire_date": 20230228,
+    "employee": true
+  },
+
+  {
+    "id": "200137",
+    "first_name": "Ava",
+    "last_name": "Rodriguez",
+    "position": "Architectural Designer",
+    "manager_id": "200177",
+    "description": "Creates architectural designs and drawings for road repair construction projects, considering aesthetics, functionality, and structural integrity.",
+    "hire_date": 20211210,
+    "employee": true
+  },
+
+  {
+    "id": "200120",
+    "first_name": "Noah",
+    "last_name": "Martinez",
+    "position": "Heavy Equipment Mechanic",
+    "manager_id": "200143",
+    "description": "Repairs and maintains heavy construction equipment, ensuring their optimal performance and safety.",
+    "hire_date": 20220405,
+    "employee": true
+  },
+  {
+    "id": "200129",
+    "first_name": "David",
+    "last_name": "Smith",
+    "position": "Construction Project Manager",
+    "manager_id": "200013",
+    "description": "Oversees and manages construction projects from start to finish. Coordinates with subcontractors, monitors progress, and ensures adherence to project timelines and budgets.",
+    "hire_date": 20200110,
+    "employee": true
+  },
+  {
+    "id": "200345",
+    "first_name": "Emily",
+    "last_name": "Johnson",
+    "position": "Civil Engineer",
+    "manager_id": "200129",
+    "description": "Designs and oversees the construction of civil engineering projects, such as roads, bridges, and drainage systems. Conducts feasibility studies, prepares project plans, and ensures compliance with regulations.",
+    "hire_date": 20210205,
+    "employee": true
+  },
+  {
+    "id": "200502",
+    "first_name": "Michael",
+    "last_name": "Anderson",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200129",
+    "description": "Operates heavy machinery, such as bulldozers, excavators, and loaders, to perform various tasks on construction sites. Follows safety protocols, maintains equipment, and assists in site preparation.",
+    "hire_date": 20220518,
+    "employee": true
+  },
+  {
+    "id": "200345",
+    "first_name": "Jacob",
+    "last_name": "Smith",
+    "position": "Project Manager",
+    "manager_id": "200129",
+    "description": "Oversees the planning, execution, and completion of construction projects. Manages resources, schedules, and ensures adherence to project specifications.",
+    "hire_date": 20220510,
+    "employee": true
+  },
+  {
+    "id": "200529",
+    "first_name": "Olivia",
+    "last_name": "Johnson",
+    "position": "Civil Engineer",
+    "manager_id": "200345",
+    "description": "Designs and oversees the construction of infrastructure projects. Analyzes survey reports, performs calculations, and prepares engineering drawings.",
+    "hire_date": 20220402,
+    "employee": true
+  },
+  {
+    "id": "200712",
+    "first_name": "Liam",
+    "last_name": "Wilson",
+    "position": "Construction Supervisor",
+    "manager_id": "200345",
+    "description": "Supervises and coordinates construction activities on job sites. Monitors progress, ensures compliance with safety regulations, and manages work crews.",
+    "hire_date": 20220615,
+    "employee": true
+  },
+  {
+    "id": "200891",
+    "first_name": "Ava",
+    "last_name": "Martinez",
+    "position": "Electrical Technician",
+    "manager_id": "200712",
+    "description": "Installs, maintains, and repairs electrical systems and equipment at construction sites. Ensures proper functioning and compliance with electrical codes.",
+    "hire_date": 20220718,
+    "employee": true
+  },
+  {
+    "id": "201023",
+    "first_name": "Noah",
+    "last_name": "Anderson",
+    "position": "Heavy Equipment Operator",
+    "manager_id": "200712",
+    "description": "Operates heavy machinery, such as excavators and bulldozers, to excavate and move earth, rocks, and materials on construction sites.",
+    "hire_date": 20220605,
+    "employee": true
+  },
+  {
+    "id": "201147",
+    "first_name": "Isabella",
+    "last_name": "Garcia",
+    "position": "Safety Coordinator",
+    "manager_id": "200345",
+    "description": "Develops and implements safety policies, procedures, and training programs. Conducts site inspections and promotes a culture of safety awareness.",
+    "hire_date": 20220422,
+    "employee": true
+  },
+  {
+    "id": "201231",
+    "first_name": "William",
+    "last_name": "Thomas",
+    "position": "Construction Laborer",
+    "manager_id": "201147",
+    "description": "Performs general construction tasks, including site clean-up, material handling, and assisting skilled workers. Follows safety protocols and instructions.",
+    "hire_date": 20220705,
+    "employee": true
+  },
+  {
+    "id": "200129",
+    "first_name": "Michael",
+    "last_name": "Johnson",
+    "position": "President",
+    "manager_id": null,
+    "description": "Oversees overall company operations and strategic planning. Leads executive team in achieving company goals and objectives.",
+    "hire_date": 20180105,
+    "employee": true
+  },
+  {
+    "id": "200325",
+    "first_name": "Emily",
+    "last_name": "Smith",
+    "position": "Chief Financial Officer",
+    "manager_id": "200129",
+    "description": "Manages financial operations, budgeting, and financial reporting. Provides strategic financial guidance to the executive team.",
+    "hire_date": 20191012,
+    "employee": true
+  },
+  {
+    "id": "200415",
+    "first_name": "David",
+    "last_name": "Anderson",
+    "position": "Chief Operating Officer",
+    "manager_id": "200129",
+    "description": "Oversees day-to-day operations, including project management, procurement, and resource allocation. Ensures operational efficiency and quality standards.",
+    "hire_date": 20190718,
+    "employee": true
+  },
+  {
+    "id": "200529",
+    "first_name": "Olivia",
+    "last_name": "Taylor",
+    "position": "Chief Technology Officer",
+    "manager_id": "200129",
+    "description": "Leads technology strategy, innovation, and implementation. Oversees IT infrastructure, software development, and digital transformation initiatives.",
+    "hire_date": 20200202,
+    "employee": true
+  },
+  {
+    "id": "200632",
+    "first_name": "Daniel",
+    "last_name": "Harris",
+    "position": "Senior Vice President",
+    "manager_id": "200129",
+    "description": "Provides strategic guidance to executive team. Assists in driving company growth and expansion initiatives.",
+    "hire_date": 20170515,
+    "employee": true
+  },
+  {
+    "id": "200723",
+    "first_name": "Ava",
+    "last_name": "Martinez",
+    "position": "Senior Vice President",
+    "manager_id": "200129",
+    "description": "Leads business development efforts and client relationship management. Identifies new opportunities and fosters partnerships.",
+    "hire_date": 20180929,
+    "employee": true
+  },
+  {
+    "id": "200834",
+    "first_name": "James",
+    "last_name": "Walker",
+    "position": "Senior Vice President",
+    "manager_id": "200129",
+    "description": "Oversees human resources, talent acquisition, and employee development initiatives. Ensures a positive and inclusive work environment.",
+    "hire_date": 20180310,
+    "employee": true
+  },
+  {
+    "id": "200924",
+    "first_name": "Isabella",
+    "last_name": "Gonzalez",
+    "position": "Senior Vice President",
+    "manager_id": "200129",
+    "description": "Leads marketing and communications strategies. Drives brand awareness and supports business growth through effective marketing campaigns.",
+    "hire_date": 20190605,
+    "employee": true
+  },
+  {
+    "id": "201034",
+    "first_name": "Alexander",
+    "last_name": "Clark",
+    "position": "Senior Vice President",
+    "manager_id": "200129",
+    "description": "Oversees quality assurance, safety compliance, and risk management. Ensures adherence to industry standards and regulatory requirements.",
+    "hire_date": 20180820,
+    "employee": true
+  },
+  {
+    "id": "200198",
+    "first_name": "Michael",
+    "last_name": "Wilson",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees project planning and execution, ensuring compliance with safety standards and regulatory requirements. Manages project budgets and resources.",
+    "hire_date": 20220110,
+    "employee": true
+  },
+  {
+    "id": "200214",
+    "first_name": "Emily",
+    "last_name": "Anderson",
+    "position": "Lead Manager",
+    "manager_id": "200129",
+    "description": "Leads a team of construction supervisors and workers. Responsible for coordinating construction activities, ensuring project milestones are met.",
+    "hire_date": 20220405,
+    "employee": true
+  },
+  {
+    "id": "200229",
+    "first_name": "Daniel",
+    "last_name": "Taylor",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Manages construction projects from initiation to completion. Oversees project planning, resource allocation, and quality control.",
+    "hire_date": 20220128,
+    "employee": true
+  },
+  {
+    "id": "200242",
+    "first_name": "Olivia",
+    "last_name": "Clark",
+    "position": "Lead Manager",
+    "manager_id": "200129",
+    "description": "Coordinates construction activities with subcontractors and suppliers. Monitors project progress and resolves any issues that may arise.",
+    "hire_date": 20220614,
+    "employee": true
+  },
+  {
+    "id": "200257",
+    "first_name": "Andrew",
+    "last_name": "Mitchell",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Manages construction teams and oversees multiple projects. Develops project strategies and ensures adherence to safety and quality standards.",
+    "hire_date": 20220302,
+    "employee": true
+  },
+  {
+    "id": "200270",
+    "first_name": "Abigail",
+    "last_name": "Harris",
+    "position": "Lead Manager",
+    "manager_id": "200129",
+    "description": "Coordinates construction activities, including scheduling, resource allocation, and cost management. Ensures projects are completed on time and within budget.",
+    "hire_date": 20220819,
+    "employee": true
+  },
+  {
+    "id": "200282",
+    "first_name": "Ethan",
+    "last_name": "Lewis",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees construction operations, including budgeting, resource allocation, and risk management. Provides guidance and support to project teams.",
+    "hire_date": 20220430,
+    "employee": true
+  },
+  {
+    "id": "200297",
+    "first_name": "Mia",
+    "last_name": "Young",
+    "position": "Lead Manager",
+    "manager_id": "200129",
+    "description": "Manages construction projects, ensuring adherence to project plans, specifications, and timelines. Coordinates with various stakeholders to ensure successful project delivery.",
+    "hire_date": 20220602,
+    "employee": true
+  },
+  {
+    "id": "200309",
+    "first_name": "Alexander",
+    "last_name": "Lee",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees the planning and execution of construction projects. Provides technical expertise and guidance to project teams.",
+    "hire_date": 20220515,
+    "employee": true
+  },
+  {
+    "id": "200187",
+    "first_name": "James",
+    "last_name": "Smith",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees overall project management and execution. Responsible for ensuring timely completion and adherence to quality standards.",
+    "hire_date": 20220110,
+    "employee": true
+  },
+  {
+    "id": "200188",
+    "first_name": "Olivia",
+    "last_name": "Johnson",
+    "position": "Lead Manager",
+    "manager_id": "200186",
+    "description": "Manages construction teams and coordinates daily activities on job sites. Ensures compliance with safety protocols and project specifications.",
+    "hire_date": 20220405,
+    "employee": true
+  },
+  {
+    "id": "200189",
+    "first_name": "William",
+    "last_name": "Jones",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees budgeting, cost control, and financial analysis for construction projects. Develops strategic plans to optimize resource allocation.",
+    "hire_date": 20220315,
+    "employee": true
+  },
+  {
+    "id": "200190",
+    "first_name": "Ava",
+    "last_name": "Brown",
+    "position": "Lead Manager",
+    "manager_id": "200186",
+    "description": "Coordinates procurement of construction materials and equipment. Ensures timely delivery and adherence to project requirements.",
+    "hire_date": 20220128,
+    "employee": true
+  },
+  {
+    "id": "200191",
+    "first_name": "Liam",
+    "last_name": "Miller",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees architectural and engineering design for construction projects. Ensures compliance with building codes and regulations.",
+    "hire_date": 20220302,
+    "employee": true
+  },
+  {
+    "id": "200192",
+    "first_name": "Mia",
+    "last_name": "Wilson",
+    "position": "Lead Manager",
+    "manager_id": "200186",
+    "description": "Manages subcontractor relationships and negotiates contracts. Monitors subcontractor performance and quality of work.",
+    "hire_date": 20220415,
+    "employee": true
+  },
+  {
+    "id": "200193",
+    "first_name": "Jackson",
+    "last_name": "Taylor",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Leads environmental impact assessments and ensures compliance with environmental regulations. Implements sustainable construction practices.",
+    "hire_date": 20220212,
+    "employee": true
+  },
+  {
+    "id": "200194",
+    "first_name": "Isabella",
+    "last_name": "Anderson",
+    "position": "Lead Manager",
+    "manager_id": "200186",
+    "description": "Manages project scheduling and resource allocation. Monitors progress and ensures timely completion of construction milestones.",
+    "hire_date": 20220318,
+    "employee": true
+  },
+  {
+    "id": "200195",
+    "first_name": "Ethan",
+    "last_name": "Thomas",
+    "position": "Director",
+    "manager_id": "200129",
+    "description": "Oversees safety protocols and conducts site inspections to identify and mitigate construction-related risks. Implements safety training programs.",
+    "hire_date": 20220225,
+    "employee": true
+  },
+  {
+    "id": "200187",
+    "first_name": "Oliver",
+    "last_name": "Wilson",
+    "position": "Human Resources Manager",
+    "manager_id": "200186",
+    "description": "Manages and oversees the human resources department. Develops HR strategies and policies to support the company's goals and objectives.",
+    "hire_date": 20220105,
+    "employee": true
+  },
+  {
+    "id": "200188",
+    "first_name": "Emma",
+    "last_name": "Thompson",
+    "position": "Human Resources Coordinator",
+    "manager_id": "200187",
+    "description": "Assists in the implementation of HR programs and policies. Maintains employee records and handles administrative tasks related to HR.",
+    "hire_date": 20220414,
+    "employee": true
+  },
+  {
+    "id": "200189",
+    "first_name": "Liam",
+    "last_name": "Harris",
+    "position": "Human Resources Specialist",
+    "manager_id": "200187",
+    "description": "Recruits and screens potential candidates. Conducts interviews and assists in the selection process for hiring new employees.",
+    "hire_date": 20221001,
+    "employee": true
+  },
+  {
+    "id": "200190",
+    "first_name": "Ava",
+    "last_name": "Clark",
+    "position": "Human Resources Assistant",
+    "manager_id": "200188",
+    "description": "Provides administrative support to the HR department. Assists with employee onboarding, benefits administration, and HR-related inquiries.",
+    "hire_date": 20220719,
+    "employee": true
+  },
+  {
+    "id": "200191",
+    "first_name": "Noah",
+    "last_name": "Walker",
+    "position": "Human Resources Analyst",
+    "manager_id": "200188",
+    "description": "Performs data analysis and prepares reports on HR metrics. Assists in developing HR strategies based on data-driven insights.",
+    "hire_date": 20221130,
+    "employee": true
+  },
+  {
+    "id": "200192",
+    "first_name": "Isabella",
+    "last_name": "Baker",
+    "position": "Human Resources Specialist",
+    "manager_id": "200187",
+    "description": "Handles employee relations issues and provides guidance on HR policies and procedures. Assists in resolving workplace conflicts.",
+    "hire_date": 20220908,
+    "employee": true
+  },
+  {
+    "id": "200193",
+    "first_name": "Mason",
+    "last_name": "Gonzalez",
+    "position": "Human Resources Assistant",
+    "manager_id": "200190",
+    "description": "Assists with HR projects and initiatives. Maintains accurate employee records and assists in HR-related data entry and tracking.",
+    "hire_date": 20220815,
+    "employee": true
+  },
+  {
+    "id": "200194",
+    "first_name": "Charlotte",
+    "last_name": "Rodriguez",
+    "position": "Human Resources Coordinator",
+    "manager_id": "200188",
+    "description": "Coordinates employee training and development programs. Assists in organizing HR events and employee engagement initiatives.",
+    "hire_date": 20220603,
+    "employee": true
+  },
+  {
+    "id": "200195",
+    "first_name": "Elijah",
+    "last_name": "Wright",
+    "position": "Human Resources Specialist",
+    "manager_id": "200187",
+    "description": "Conducts performance evaluations and provides feedback to employees. Assists in implementing performance management programs.",
+    "hire_date": 20221212,
+    "employee": true
+  },
+  {
+    "id": "200123",
+    "first_name": "Jacob",
+    "last_name": "Smith",
+    "position": "Finance Manager",
+    "manager_id": "200129",
+    "description": "Oversees financial operations and provides strategic guidance to ensure financial stability and profitability of the company.",
+    "hire_date": 20220105,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200987",
+    "first_name": "Emily",
+    "last_name": "Johnson",
+    "position": "Financial Analyst",
+    "manager_id": "200123",
+    "description": "Performs financial analysis and provides insights on cost-saving measures and investment opportunities for the company.",
+    "hire_date": 20220510,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200542",
+    "first_name": "Matthew",
+    "last_name": "Anderson",
+    "position": "Senior Accountant",
+    "manager_id": "200123",
+    "description": "Handles financial records, prepares financial statements, and ensures compliance with accounting standards and regulations.",
+    "hire_date": 20220817,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200789",
+    "first_name": "Olivia",
+    "last_name": "Wilson",
+    "position": "Tax Specialist",
+    "manager_id": "200123",
+    "description": "Manages tax planning, compliance, and reporting activities for the construction company, ensuring adherence to tax laws and regulations.",
+    "hire_date": 20221002,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200456",
+    "first_name": "William",
+    "last_name": "Thompson",
+    "position": "Payroll Administrator",
+    "manager_id": "200123",
+    "description": "Responsible for processing payroll, maintaining payroll records, and ensuring accurate and timely payment of employees.",
+    "hire_date": 20221219,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200654",
+    "first_name": "Ava",
+    "last_name": "White",
+    "position": "Billing Coordinator",
+    "manager_id": "200123",
+    "description": "Coordinates billing activities, prepares invoices, and resolves any billing discrepancies for the construction company's projects.",
+    "hire_date": 20230128,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200321",
+    "first_name": "James",
+    "last_name": "Martinez",
+    "position": "Financial Controller",
+    "manager_id": "200123",
+    "description": "Oversees financial reporting, budgeting, and forecasting processes. Provides financial insights and recommendations to senior management.",
+    "hire_date": 20230410,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200888",
+    "first_name": "Mia",
+    "last_name": "Lee",
+    "position": "Cost Analyst",
+    "manager_id": "200123",
+    "description": "Analyzes project costs, monitors budget variances, and identifies areas for cost optimization in construction projects.",
+    "hire_date": 20230701,
+    "employee": true,
+    "department": "Finance"
+  },
+  {
+    "id": "200111",
+    "first_name": "Liam",
+    "last_name": "Garcia",
+    "position": "Financial Planner",
+    "manager_id": "200123",
+    "description": "Develops and implements financial plans for the construction company, including investment strategies and risk management.",
+    "hire_date": 20231015,
+    "employee": true,
+    "department": "Finance"
+  }
+]
