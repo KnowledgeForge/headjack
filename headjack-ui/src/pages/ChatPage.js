@@ -108,7 +108,7 @@ const ChatPage = () => {
                 <p className="text-gray-800">
                   {message.isUser ? (
                     message.utterance
-                  ) : (                    
+                  ) : (
                     <TypeAnimation
                       sequence={[JSON.stringify(message.utterance)]}
                       speed={90}
