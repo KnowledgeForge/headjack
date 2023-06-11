@@ -57,18 +57,20 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         Conversation:
         {dedent(args.question.convo())}
 
-        Be proactive. Do not pester the user with unnecessary questions.
-        Do your best to answer user questions using the specialists if needed and let them respond.
-        If you can infer information from the conversation, do so and fulfill the user request.
+        Be proactive and do NOT ask the user questions about whether to use an agent or not.
+        Do your best to answer user questions using the specialists.
         """
 
         steps = 0
         while args.max_steps>steps:
-            "Is there information available in above that can be used to respond? Yes or No.: [CONVO_INFO]\n"
+            """Consider whether the user is asking for a task to be complete that there is no information about above already or is this a simple question based on content already above.
+            Is there information available in the above that can be used to immediately SATISFY the user? Yes or No.: [CONVO_INFO]
+            """
             if CONVO_INFO=='No':
                 """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation?
                 Yes for specialist otherwise No.: [SPECIALIST]
                 """
+            _logger.info(f"For {args.question}, a direct response can be issued: `{CONVO_INFO}`")
             if CONVO_INFO=='No' and SPECIALIST=='Yes':
                 steps+=1
                 """The agent that seems best suited to handle this request is: [AGENT]
