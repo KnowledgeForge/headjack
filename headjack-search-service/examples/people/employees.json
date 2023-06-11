@@ -24,7 +24,7 @@
     "first_name": "David",
     "last_name": "Lee",
     "position": "Construction Manager",
-    "manager_id": "",
+    "manager_id": "200632",
     "description": "Oversees construction activities on assigned projects. Manages and supervises project personnel, including subcontractors. Develops and maintains project schedules, and ensures that work is completed on time and within budget. Collaborates with project managers and engineers to ensure that project requirements are met.",
     "hire_date": 20180112,
     "employee": true
@@ -64,7 +64,7 @@
     "first_name": "David",
     "last_name": "Lee",
     "position": "Project Manager",
-    "manager_id": "",
+    "manager_id": "200632",
     "description": "Manages construction projects from start to finish. Plans and coordinates resources, timelines, and budget. Communicates with stakeholders and ensures project goals are met. Provides leadership to project team.",
     "hire_date": 20200115,
     "employee": true
@@ -194,7 +194,7 @@
     "first_name": "Emma",
     "last_name": "Lee",
     "position": "Project Manager",
-    "manager_id": "",
+    "manager_id": "200632",
     "description": "Manages road construction and repair projects from start to finish, including planning, scheduling, budgeting, and resource allocation. Collaborates with stakeholders to ensure projects are completed on time and within budget. Provides regular progress updates and resolves any issues that arise.",
     "hire_date": 20210501,
     "employee": true
@@ -361,7 +361,7 @@
   },
 
   {
-    "id": "200175",
+    "id": "100175",
     "first_name": "Emma",
     "last_name": "Johnson",
     "position": "Equipment Operator",
@@ -404,7 +404,7 @@
     "employee": true
   },
   {
-    "id": "200129",
+    "id": "200139",
     "first_name": "David",
     "last_name": "Smith",
     "position": "Construction Project Manager",
@@ -434,7 +434,7 @@
     "employee": true
   },
   {
-    "id": "200345",
+    "id": "200346",
     "first_name": "Jacob",
     "last_name": "Smith",
     "position": "Project Manager",
@@ -504,11 +504,11 @@
     "employee": true
   },
   {
-    "id": "200129",
+    "id": "100129",
     "first_name": "Michael",
     "last_name": "Johnson",
     "position": "President",
-    "manager_id": null,
+    "manager_id": "200632",
     "description": "Oversees overall company operations and strategic planning. Leads executive team in achieving company goals and objectives.",
     "hire_date": 20180105,
     "employee": true
@@ -534,7 +534,7 @@
     "employee": true
   },
   {
-    "id": "200529",
+    "id": "100529",
     "first_name": "Olivia",
     "last_name": "Taylor",
     "position": "Chief Technology Officer",
@@ -704,7 +704,7 @@
     "employee": true
   },
   {
-    "id": "200189",
+    "id": "100189",
     "first_name": "William",
     "last_name": "Jones",
     "position": "Director",
@@ -724,7 +724,7 @@
     "employee": true
   },
   {
-    "id": "200191",
+    "id": "100191",
     "first_name": "Liam",
     "last_name": "Miller",
     "position": "Director",
@@ -744,7 +744,7 @@
     "employee": true
   },
   {
-    "id": "200193",
+    "id": "200103",
     "first_name": "Jackson",
     "last_name": "Taylor",
     "position": "Director",
@@ -774,7 +774,7 @@
     "employee": true
   },
   {
-    "id": "200187",
+    "id": "100187",
     "first_name": "Oliver",
     "last_name": "Wilson",
     "position": "Human Resources Manager",
@@ -784,7 +784,7 @@
     "employee": true
   },
   {
-    "id": "200188",
+    "id": "100188",
     "first_name": "Emma",
     "last_name": "Thompson",
     "position": "Human Resources Coordinator",
@@ -794,7 +794,7 @@
     "employee": true
   },
   {
-    "id": "200189",
+    "id": "100190",
     "first_name": "Liam",
     "last_name": "Harris",
     "position": "Human Resources Specialist",
@@ -804,7 +804,7 @@
     "employee": true
   },
   {
-    "id": "200190",
+    "id": "100196",
     "first_name": "Ava",
     "last_name": "Clark",
     "position": "Human Resources Assistant",
@@ -814,7 +814,7 @@
     "employee": true
   },
   {
-    "id": "200191",
+    "id": "100192",
     "first_name": "Noah",
     "last_name": "Walker",
     "position": "Human Resources Analyst",
@@ -824,7 +824,7 @@
     "employee": true
   },
   {
-    "id": "200192",
+    "id": "100193",
     "first_name": "Isabella",
     "last_name": "Baker",
     "position": "Human Resources Specialist",
@@ -834,7 +834,7 @@
     "employee": true
   },
   {
-    "id": "200193",
+    "id": "200104",
     "first_name": "Mason",
     "last_name": "Gonzalez",
     "position": "Human Resources Assistant",
@@ -844,7 +844,7 @@
     "employee": true
   },
   {
-    "id": "200194",
+    "id": "100194",
     "first_name": "Charlotte",
     "last_name": "Rodriguez",
     "position": "Human Resources Coordinator",
@@ -854,7 +854,7 @@
     "employee": true
   },
   {
-    "id": "200195",
+    "id": "100195",
     "first_name": "Elijah",
     "last_name": "Wright",
     "position": "Human Resources Specialist",

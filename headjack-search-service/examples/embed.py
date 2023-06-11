@@ -231,14 +231,6 @@ if __name__ == "__main__":
     except Exception:
         index_metrics(dj_url=args.dj, client=client)
         _logger.info("Metrics indexing completed")
-
-    try:
-        client.get_collection(name="knowledge")
-        _logger.info("Skipped embedding knowledge data, collection already exists.")
-        skipped_knowledge = True
-    except Exception:
-        index_knowledge(knowledge_dir=args.knowledge, client=client)
-        _logger.info("Knowledge indexing completed")
     
     try:
         client.get_collection(name="messages")
@@ -256,14 +248,22 @@ if __name__ == "__main__":
         index_people(people_file=args.people, client=client)
         _logger.info("People indexing completed")
 
+    try:
+        client.get_collection(name="knowledge")
+        _logger.info("Skipped embedding knowledge data, collection already exists.")
+        skipped_knowledge = True
+    except Exception:
+        index_knowledge(knowledge_dir=args.knowledge, client=client)
+        _logger.info("Knowledge indexing completed")
+
     if skipped_metrics:
         sys.exit("`metrics` collection already exists")
-
-    if skipped_knowledge:
-        sys.exit("`knowledge` collection already exists")
     
     if skipped_messages:
         sys.exit("`messages` collection already exists")
 
     if skipped_people:
         sys.exit("`people` collection already exists")
+
+    if skipped_knowledge:
+        sys.exit("`knowledge` collection already exists")
