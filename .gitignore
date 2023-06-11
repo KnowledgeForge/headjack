@@ -136,6 +136,7 @@ notebooks/playground.ipynb
 
 *.db
 .pdm-python
+pdm.lock
 .DS_Store
 
 # secrets file
