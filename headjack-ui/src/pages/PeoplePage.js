@@ -129,9 +129,9 @@ export default function PeoplePage() {
         </div>
       )}
       {peopleList ? (
-        <div class="grid mb-8 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 md:mb-12 md:grid-cols-2">
+        <div class="grid mb-8 border border-gray-200 rounded-lg shadow-sm md:mb-12 md:grid-cols-2">
           {peopleList.map((person) => (
-            <figure class="flex flex-col items-center justify-center p-8 text-center bg-white border-gray-200 rounded-b-lg md:rounded-br-lg dark:bg-gray-800 dark:border-gray-700">
+            <figure class="flex flex-col items-center justify-center p-8 text-center bg-white border-gray-200 rounded-b-lg md:rounded-br-lg">
               <figcaption class="flex items-center justify-center space-x-3">
                 {person.profileImage ? (
                   <img
@@ -155,16 +155,16 @@ export default function PeoplePage() {
                     ></path>
                   </svg>
                 )}
-                <div class="space-y-0.5 font-medium dark:text-white text-left">
+                <div class="space-y-0.5 font-medium text-left">
                   <div>
                     {person.first_name} {person.last_name}
                   </div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">
+                  <div class="text-sm text-gray-500">
                     {person.position}
                   </div>
                 </div>
               </figcaption>
-              <blockquote class="max-w-2xl mx-auto mb-4 text-gray-500 lg:mb-8 dark:text-gray-400">
+              <blockquote class="max-w-2xl mx-auto mb-4 text-gray-500 lg:mb-8">
                 <p class="my-4">{person.description}</p>
               </blockquote>
             </figure>
