@@ -45,7 +45,7 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> str:
 @register_agent_function(
     """This function takes a request such as 'make a bar plot of the average repair price' WITHOUT providing any data and creates a plot using plotly express. Data can be automatically deduced.""",
 )
-async def plot_data(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
+async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
     cols = None
     for utterance in question.history():
         is_data = utterance_is_data(utterance)
