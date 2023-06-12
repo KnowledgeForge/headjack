@@ -63,22 +63,16 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
 
         steps = 0
         while args.max_steps>steps:
-            """Consider whether the user is asking for a task to be complete that there is no information about above already or is this a simple question based on content already above.
-            Using the information above in just a few words, explain what the user is requesting with their latest statement. 
-            Explain why or why not you believe you need help from a specialist (your response should be a terse as possible):
-            [REASONING]
-            
-            With that in mind, answer the following question(s).
-            Is there information available in the above that can be used to immediately SATISFY the user? Yes or No.: [CONVO_INFO]
             """
-            if CONVO_INFO=='No':
-                """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation?
-                Yes for specialist otherwise No.: [SPECIALIST]
-                """
-            _logger.info(f"For {args.question}, a direct response can be issued: `{CONVO_INFO}`")
-            if CONVO_INFO=='No' and SPECIALIST=='Yes':
+            Would a specialist likely help respond to the user or is the response already above?
+            Yes for specialist otherwise No.: [SPECIALIST]
+            """
+            if SPECIALIST=='Yes':
                 steps+=1
-                """The agent that seems best suited to handle this request is: [AGENT]
+                """
+                In a few words, explain which specialists you thing would be best for this and why based on their descriptions. 
+                [REASONING]
+                The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
                 Your request should be as terse as possible, most likely less than 100 words.
@@ -105,7 +99,6 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
-        CONVO_INFO in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
         STOPS_AT(TASK, '</')
     '''

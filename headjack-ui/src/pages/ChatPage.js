@@ -11,24 +11,26 @@ const MessageContent = ({ message }) => {
     const columns = results[0].columns;
     const rows = results[0].rows;
     return (
-      <table>
-        <thead>
-          <tr>
-            {columns.map((column, index) => (
-              <th key={index}>{column}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={index}>
-              {row.map((cell, index) => (
-                <td key={index}>{cell}</td>
+      <div className="max-h-96 overflow-y-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((column, index) => (
+                <th key={index} className="py-2 px-4 border border-gray-300">{column.name}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={index} className="bg-white">
+                {row.map((cell, index) => (
+                  <td key={index} className="py-2 px-4 border border-gray-300">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   } else if (message.source === "plot_agent" && message.marker.startsWith('Obs')) {
     const plotData = JSON.parse(message.utterance);
