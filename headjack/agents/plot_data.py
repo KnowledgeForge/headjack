@@ -4,9 +4,9 @@ from typing import Dict, List, Optional, TypedDict, Union, cast
 
 import lmql
 import plotly.express as px  # noqa: F401
-
+import json
 from headjack.agents.registry import register_agent_function
-from headjack.models.utterance import Answer, Response, Utterance
+from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils.consistency import consolidate_responses
 
 _logger = logging.getLogger("uvicorn")
@@ -19,7 +19,7 @@ class PlotDataColumn(TypedDict):
 
 def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
-        columns = utterance.utterance["results"]["columns"]
+        columns = utterance.utterance["results"][0]["columns"]
         return columns
     except Exception:
         return False
@@ -35,17 +35,18 @@ def code_valid(cols: List[PlotDataColumn], code: str) -> Optional[Exception]:
         return exc
 
 
-def plot_json(cols: List[PlotDataColumn], code: str) -> str:
+def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
     df = {col["name"]: [] for col in cols}  # type: ignore
     code = dedent(code) + "\nret=fig.to_json()"
     exec(code)
-    return locals()["ret"]
+    return json.loads(locals()["ret"])
 
 
 @register_agent_function(
-    """This function takes a request such as 'make a bar plot of the average repair price' WITHOUT providing any data and creates a plot using plotly express. Data can be automatically deduced.""",
+    """This function takes a request such as 'make a bar plot' WITHOUT providing any data and creates a plot using plotly express. 
+    Data will be automatically deduced by the specialist.""",
 )
-async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
+async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
     cols = None
     for utterance in question.history():
         is_data = utterance_is_data(utterance)
@@ -60,7 +61,7 @@ async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) ->
     if isinstance(code, Response):
         code.parent = question
         return code
-    ret = Answer(utterance=plot_json(cols, code), parent=question)
+    ret = Observation(utterance=plot_json(cols, code), parent=question)
     ret.source = "plot_data"
     return ret
 
