@@ -3,6 +3,49 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { TypeAnimation } from "react-type-animation";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
+import Plot from "react-plotly.js";
+
+const MessageContent = ({ message }) => {
+  if (message.source === "metric_calculate_agent" && message.marker.startsWith('Obs') && message.utterance.results.length>0) {
+    const { results } = message.utterance;
+    const columns = results[0].columns;
+    const rows = results[0].rows;
+    return (
+      <table>
+        <thead>
+          <tr>
+            {columns.map((column, index) => (
+              <th key={index}>{column}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={index}>
+              {row.map((cell, index) => (
+                <td key={index}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  } else if (message.source === "plot_agent" && message.marker.startsWith('Obs')) {
+    const plotData = JSON.parse(message.utterance);
+    return <Plot data={plotData.data} layout={plotData.layout} />;
+  } else {
+    return (
+      <p>
+        <TypeAnimation
+          sequence={[JSON.stringify(message.utterance)]}
+          speed={90}
+          cursor={false}
+          repeat={0}
+        />
+      </p>
+    );
+  }
+};
 
 const ChatPage = () => {
   const [socketUrl] = useState("ws://localhost:8679/chat/");
@@ -109,12 +152,7 @@ const ChatPage = () => {
                   {message.isUser ? (
                     message.utterance
                   ) : (
-                    <TypeAnimation
-                      sequence={[JSON.stringify(message.utterance)]}
-                      speed={90}
-                      cursor={false}
-                      repeat={0}
-                    />
+                    <MessageContent message={message}/>
                   )}
                 </p>
               </div>

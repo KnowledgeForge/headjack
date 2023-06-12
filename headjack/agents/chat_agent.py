@@ -64,6 +64,11 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         steps = 0
         while args.max_steps>steps:
             """Consider whether the user is asking for a task to be complete that there is no information about above already or is this a simple question based on content already above.
+            Using the information above in just a few words, explain what the user is requesting with their latest statement. 
+            Explain why or why not you believe you need help from a specialist (your response should be a terse as possible):
+            [REASONING]
+            
+            With that in mind, answer the following question(s).
             Is there information available in the above that can be used to immediately SATISFY the user? Yes or No.: [CONVO_INFO]
             """
             if CONVO_INFO=='No':
