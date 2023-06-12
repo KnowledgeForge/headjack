@@ -1,6 +1,6 @@
 import logging
 from textwrap import dedent
-from typing import Dict, List, Optional, TypedDict, Union, cast
+from typing import Dict, List, Optional, TypedDict, Union, cast, Any
 
 import lmql
 import plotly.express as px  # noqa: F401
@@ -15,11 +15,17 @@ _logger = logging.getLogger("uvicorn")
 class PlotDataColumn(TypedDict):
     name: str
     type: str
+    values: List[Any]
 
 
 def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
         columns = utterance.utterance["results"][0]["columns"]
+        if 'rows' in utterance.utterance["results"][0]:
+            for row in utterance.utterance["results"][0]['rows']:
+                for i, col in enumerate(columns):
+                    col['values']=col.get('values') or []
+                    col['values'].append(row[i])
         return columns
     except Exception:
         return False
@@ -36,7 +42,7 @@ def code_valid(cols: List[PlotDataColumn], code: str) -> Optional[Exception]:
 
 
 def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
-    df = {col["name"]: [] for col in cols}  # type: ignore
+    df = {col["name"]: [] if 'values' not in col else col['values'] for col in cols}  # type: ignore
     code = dedent(code) + "\nret=fig.to_json()"
     exec(code)
     return json.loads(locals()["ret"])

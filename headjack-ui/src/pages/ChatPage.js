@@ -5,7 +5,7 @@ import { Player } from "@lottiefiles/react-lottie-player";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
 import Plot from "react-plotly.js";
 
-const MessageContent = ({ message, plotData, setPlotData }) => {
+const MessageContent = ({ message }) => {
   if (
     message.source === "metric_calculate_agent" &&
     message.marker.startsWith("Obs") &&
@@ -14,7 +14,6 @@ const MessageContent = ({ message, plotData, setPlotData }) => {
     const { results } = message.utterance;
     const columns = results[0].columns;
     const rows = results[0].rows;
-    setPlotData(null); // clear plot data
     return (
       <div className="max-h-96 overflow-y-auto">
         <table className="w-full border-collapse border border-gray-300">
@@ -51,9 +50,8 @@ const MessageContent = ({ message, plotData, setPlotData }) => {
     message.source === "plot_data" &&
     message.marker.startsWith("Obs")
   ) {
-    const newPlotData = message.utterance;
-    setPlotData(newPlotData); // update plot data
-    return <Plot data={newPlotData.data} layout={newPlotData.layout} />;
+    const plotData = message.utterance;
+    return <Plot data={plotData.data} layout={plotData.layout} />;
   } else {
     return (
       <p>
@@ -74,7 +72,6 @@ const ChatPage = () => {
   const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [plotData, setPlotData] = useState(null); // state variable for plot data
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
@@ -173,8 +170,6 @@ const ChatPage = () => {
                 >
                   <MessageContent
                     message={message}
-                    plotData={plotData} // pass plot data as prop
-                    setPlotData={setPlotData} // pass setter function for plot data
                   />
                 </div>
               </div>
