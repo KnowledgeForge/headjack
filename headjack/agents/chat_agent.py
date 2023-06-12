@@ -55,7 +55,7 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         {dispatchable_agents}
 
         Conversation:
-        {dedent(args.question.convo())}
+        {dedent(args.question.convo(set((Observation,))))}
 
         Be proactive and do NOT ask the user questions about whether to use an agent or not.
         Do your best to answer user questions using the specialists.
@@ -76,7 +76,8 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
                 Your request should be as terse as possible, most likely less than 100 words.
-                Do not add anything to your task request that is not derived from above.
+                Do not add anything to your task request that is not derived from above. 
+                Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
                 """
                 task = Action(utterance=TASK.strip('</'), parent=args.question)
