@@ -214,7 +214,7 @@ const ChatPage = () => {
 
   return (
     <div className="container flex flex-col h-screen w-full">
-      <div className="flex items-center justify-center bg-gray-500 h-24">
+      <div className="flex items-center justify-center bg-gray-300 h-24">
         <h1 className="text-3xl font-bold">HeadJack Chat</h1>
         <Player
           autoplay
