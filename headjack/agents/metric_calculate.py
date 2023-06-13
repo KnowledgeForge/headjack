@@ -25,7 +25,8 @@ async def search_for_dimensions(metrics):
         metrics = "&".join("metric=" + f.strip("\n '.") for f in metrics)
         _logger.info(f"Searching for dimensions using the metrics service: `{metrics}`")
         results = await fetch(f"{settings.metric_service}/metrics/common/dimensions/?{metrics}", "GET", return_json=True)
-        return results
+        dimension_names = [dimension["name"] for dimension in results]
+        return dimension_names
     except Exception as e:
         _logger.info(f"Error while attempting to reach the metric service {str(e)}")
         return "No results"
