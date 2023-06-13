@@ -60,8 +60,15 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 
 
 @register_agent_function(
-    """This agent takes a question that requests a numeric value
-that may include aggregations, filters, orderbys and limiting.""",
+    """This agent takes a question that requests a numeric value (e.g. metric)
+that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
+Use this for questions like:
+    calculate the average...
+    find the total...
+    what is the mean...
+    count the number of...
+    etc.
+""",
 )
 async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
     return await consolidate_responses(  # type: ignore

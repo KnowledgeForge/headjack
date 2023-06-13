@@ -38,11 +38,11 @@ class Utterance(BaseModel):
     def convo(
         self,
         n: Optional[int] = None,
-        utterance_kinds: Optional[Set[Type["Utterance"]]] = None,
+        exlude_utterances: Optional[Set[Type["Utterance"]]] = None,
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
-        utterance_kinds = utterance_kinds or set(Utterance.__subclasses__())
+        utterance_kinds = set(Utterance.__subclasses__()) - (exlude_utterances or set())
         for utterance in self.history():
             if type(utterance) in utterance_kinds:
                 history.append(utterance)

@@ -137,7 +137,7 @@ export default function PeoplePage() {
                   <img
                     class="rounded-full w-9 h-9"
                     src={person.profileImage}
-                    alt="profile picture"
+                    alt="profile"
                   />
                 ) : (
                   <svg

@@ -3,6 +3,138 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { TypeAnimation } from "react-type-animation";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
+import Plot from "react-plotly.js";
+
+const MessageContent = ({ message }) => {
+  const [showQuery, setShowQuery] = useState(false);
+  const [showSql, setShowSql] = useState([]);
+
+  if (
+    message.source === "metric_calculate_agent" &&
+    message.marker.startsWith("Obs") &&
+    message.utterance.results.length > 0
+  ) {
+    const { results, submitted_query } = message.utterance;
+    const columns = results[0].columns;
+    const rows = results[0].rows;
+    return (
+      <div className="max-h-96 overflow-y-auto">
+        <div className="flex justify-end mb-2">
+          <button
+            className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded mr-2"
+            onClick={() => setShowQuery(!showQuery)}
+          >
+            {showQuery ? "Hide Query" : "Show Query"}
+          </button>
+        </div>
+        {showQuery && (
+          <pre className="bg-gray-100 p-2 mb-2">
+            <code>{submitted_query}</code>
+          </pre>
+        )}
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((column, index) => (
+                <th key={index} className="py-2 px-4 border border-gray-300">
+                  {column.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={rowIndex} className="bg-white">
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={cellIndex}
+                    className="py-2 px-4 border border-gray-300"
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  } else if (
+    message.source === "metric_search_agent" &&
+    message.marker.startsWith("Obs") &&
+    message.utterance.metadatas.length > 0
+  ) {
+    const { metadatas, documents } = message.utterance;
+
+    const handleShowSql = (index) => {
+      setShowSql((prevShowSql) => {
+        const newShowSql = [...prevShowSql];
+        newShowSql[index] = !newShowSql[index];
+        return newShowSql;
+      });
+    };
+
+    return (
+      <div className="max-h-96 overflow-y-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="py-2 px-4 border border-gray-300">Name</th>
+              <th className="py-2 px-4 border border-gray-300">
+                Description
+              </th>
+              <th className="py-2 px-4 border border-gray-300">SQL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {metadatas[0].map((metadata, index) => (
+              <tr key={index} className="bg-white">
+                <td className="py-2 px-4 border border-gray-300">
+                  {metadata.name}
+                </td>
+                <td className="py-2 px-4 border border-gray-300">
+                  {documents[0][index]}
+                </td>
+                <td className="py-2 px-4 border border-gray-300">
+                  <div className="flex items-center">
+                    <button
+                      className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded mr-2"
+                      onClick={() => handleShowSql(index)}
+                    >
+                      {showSql[index] ? "Hide SQL" : "Show SQL"}
+                    </button>
+                    {showSql[index] && (
+                      <pre className="bg-gray-100 p-2">
+                        <code>{metadata.query}</code>
+                      </pre>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  } else if (
+    message.source === "plot_data" &&
+    message.marker.startsWith("Obs")
+  ) {
+    const plotData = message.utterance;
+    return <Plot data={plotData.data} layout={plotData.layout} />;
+  } else {
+    return (
+      <p>
+        <TypeAnimation
+          sequence={[JSON.stringify(message.utterance)]}
+          speed={90}
+          cursor={false}
+          repeat={0}
+        />
+      </p>
+    );
+  }
+};
 
 const ChatPage = () => {
   const [socketUrl] = useState("ws://localhost:8679/chat/");
@@ -23,7 +155,7 @@ const ChatPage = () => {
       addToMessageHistory(message);
       setSendDisabled(false);
       setIsLoading(false);
-      console.log(messageHistory)
+      console.log(messageHistory);
     }
   }, [lastMessage]);
 
@@ -58,119 +190,114 @@ const ChatPage = () => {
     switch (connectionStatus) {
       case "Connecting":
         return (
-          <span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+          <span className="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
             {connectionStatus}
           </span>
-        ) ;
+        );
       case "Open":
         return (
-          <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+          <span className="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
             {connectionStatus}
           </span>
         );
-      case "Closing":
-        return (
-          <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
-            {connectionStatus}
-          </span>
-        );
+      case "Closing": return null;
       case "Closed":
         return (
-          <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
+          <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
             {connectionStatus}
           </span>
         );
-      case "Uninstantiated":
-        return (
-          <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
-            {connectionStatus}
-          </span>
-        );
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="container mx-auto mt-12">
-      <div className="bg-white rounded-lg shadow p-6">
-        <ul className="space-y-4 ">
-          {messageHistory.map((message, idx) => (
-            <li
-              key={idx}
-              className={`flex ${
-                message.isUser ? "justify-end ps-16" : "pe-16"
-              } items-end`}
-            >
-              <div
-                className={`${
-                  message.isUser ? "bg-gray-200" : "bg-blue-400"
-                } px-4 py-4 rounded-md overflow-hidden flex items-start`}
-              >
-                <p className="text-gray-800">
-                  {message.isUser ? (
-                    message.utterance
-                  ) : (
-                    <TypeAnimation
-                      sequence={[JSON.stringify(message.utterance)]}
-                      speed={90}
-                      cursor={false}
-                      repeat={0}
-                    />
-                  )}
-                </p>
-              </div>
-            </li>
-          ))}
-          {isLoading ? (
-            <Player
-              src={animatedPurpleRobot}
-              style={{ height: "60px", width: "80px" }}
-              speed={2}
-              autoplay
-              loop
-            />
-          ) : (
-            <></>
-          )}
-        </ul>
+    <div className="container flex flex-col h-screen w-full">
+      <div className="flex items-center justify-center bg-gray-300 h-24">
+        <h1 className="text-3xl font-bold">HeadJack Chat</h1>
+        <Player
+          autoplay
+          loop
+          src={animatedPurpleRobot}
+          style={{ height: "80px", width: "80px" }}
+        />
       </div>
-      <form onSubmit={handleSubmit} className="p-3 bg-gray-100 rounded-lg">
-        <div className="flex items-center">
-          <input
-            type="text"
-            name="message"
-            value={inputValue}
-            onChange={handleInputChange}
-            autoComplete="off"
-            className="flex-grow border rounded px-2 py-1 mr-2"
-            disabled={readyState !== ReadyState.OPEN || sendDisabled}
-          />
-          <button
-            type="submit"
-            className={`${
-              readyState === ReadyState.OPEN
-                ? "bg-blue-500 hover:bg-blue-700 text-white"
-                : "bg-red-500 text-white"
-            } font-bold py-2 px-4 rounded`}
-            disabled={readyState !== ReadyState.OPEN || sendDisabled}
-          >
-            Send
-          </button>
+      <div className="flex flex-col flex-grow bg-gray-100 w-full">
+        <div className="py-6 px-4 sm:px-6 lg:py-12 lg:px-8 h-full flex flex-col w-full">
+  <div className="flex-grow overflow-y-auto">
+    {messageHistory.map((message, index) => (
+      <div
+        key={index}
+        className={`flex ${
+          message.isUser ? "justify-end" : "justify-start"
+        }`}
+      >
+        <div
+          className={`${
+            message.isUser ? "bg-blue-400" : "bg-white"
+          } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
+          style={{textAlign: message.isUser ? 'right' : 'left'}}
+        >
+          <MessageContent message={message} />
         </div>
-        <span className="text-gray-700 mt-2">
-          {`Websocket Status: `}
+      </div>
+    ))}
+  </div>
+  <form onSubmit={handleSubmit} className="mt-4">
+    <div className="flex">
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        className="block w-full rounded-md border-gray-300 shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        placeholder="Type your message here..."
+        disabled={sendDisabled}
+      />
+      <button
+        type="submit"
+        className={`ml-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+          sendDisabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+        disabled={sendDisabled}
+      >
+        {isLoading ? (
+          <svg
+            className="animate-spin h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm12 0a8 8 0 100-16 8 8 0 000 16z"
+            ></path>
+          </svg>
+        ) : (
+          <span>Send</span>
+        )}
+      </button>
+    </div>
+  </form>
+  <div className="bg-gray-900 text-white py-2 px-4 fixed bottom-0 left-0 w-full">
           {renderWSBadge(connectionStatus)}
-        </span>
-      </form>
-    </div>
-  );
-};
+          WebSocket Connection Status
+        </div>
+      </div>
+</div>
 
-const App = () => {
-  return (
-    <div className="w-screen h-screen flex justify-center items-center">
-      <ChatPage />
-    </div>
-  );
-};
+        </div>
 
-export default App;
+    );
+  };
+
+  export default ChatPage;

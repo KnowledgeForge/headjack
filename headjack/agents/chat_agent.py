@@ -55,7 +55,7 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
         {dispatchable_agents}
 
         Conversation:
-        {dedent(args.question.convo())}
+        {dedent(args.question.convo(set((Observation,))))}
 
         Be proactive and do NOT ask the user questions about whether to use an agent or not.
         Do your best to answer user questions using the specialists.
@@ -63,21 +63,21 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
 
         steps = 0
         while args.max_steps>steps:
-            """Consider whether the user is asking for a task to be complete that there is no information about above already or is this a simple question based on content already above.
-            Is there information available in the above that can be used to immediately SATISFY the user? Yes or No.: [CONVO_INFO]
             """
-            if CONVO_INFO=='No':
-                """Do you need help from a specialist to continue or can you respond immediately based on information from the existing conversation?
-                Yes for specialist otherwise No.: [SPECIALIST]
-                """
-            _logger.info(f"For {args.question}, a direct response can be issued: `{CONVO_INFO}`")
-            if CONVO_INFO=='No' and SPECIALIST=='Yes':
+            Would a specialist likely help respond to the user or is the response already above?
+            Yes for specialist otherwise No.: [SPECIALIST]
+            """
+            if SPECIALIST=='Yes':
                 steps+=1
-                """The agent that seems best suited to handle this request is: [AGENT]
+                """
+                In a few words, explain which specialists you thing would be best for this and why based on their descriptions.
+                [REASONING]
+                The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
                 Your request should be as terse as possible, most likely less than 100 words.
                 Do not add anything to your task request that is not derived from above.
+                Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
                 """
                 task = Action(utterance=TASK.strip('</'), parent=args.question)
@@ -100,7 +100,6 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
-        CONVO_INFO in ['Yes', 'No'] and
         IS_DIRECT in ['Yes', 'No'] and
         STOPS_AT(TASK, '</')
     '''
