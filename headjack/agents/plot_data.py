@@ -1,10 +1,11 @@
+import json
 import logging
 from textwrap import dedent
-from typing import Dict, List, Optional, TypedDict, Union, cast, Any
+from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 
 import lmql
 import plotly.express as px  # noqa: F401
-import json
+
 from headjack.agents.registry import register_agent_function
 from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils.consistency import consolidate_responses
@@ -24,7 +25,7 @@ def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]
         if 'rows' in utterance.utterance["results"][0]:
             for row in utterance.utterance["results"][0]['rows']:
                 for i, col in enumerate(columns):
-                    col['values']=col.get('values') or []
+                    col['values'] = col.get('values') or []
                     col['values'].append(row[i])
         return columns
     except Exception:
@@ -49,7 +50,7 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
 
 
 @register_agent_function(
-    """This function takes a request such as 'make a bar plot' WITHOUT providing any data and creates a plot using plotly express. 
+    """This function takes a request such as 'make a bar plot' WITHOUT providing any data and creates a plot using plotly express.
     Data will be automatically deduced by the specialist.""",
 )
 async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:

@@ -70,13 +70,13 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
             if SPECIALIST=='Yes':
                 steps+=1
                 """
-                In a few words, explain which specialists you thing would be best for this and why based on their descriptions. 
+                In a few words, explain which specialists you thing would be best for this and why based on their descriptions.
                 [REASONING]
                 The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
                 Your request should be as terse as possible, most likely less than 100 words.
-                Do not add anything to your task request that is not derived from above. 
+                Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
                 """
