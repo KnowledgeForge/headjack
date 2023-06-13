@@ -63,7 +63,7 @@ services:
       - headjack
     volumes:
       - ./headjack-search-service/docker/chroma:/chroma
-      - ./headjack-search-service/examples/index_data:/index_data
+      - index_data:/index_data
     command: uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 16411 --log-config log_config.yml
     environment:
       - CHROMA_DB_IMPL=duckdb+parquet
@@ -85,3 +85,7 @@ services:
       - hss-chromadb
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+volumes:
+  index_data:
+    driver: local
