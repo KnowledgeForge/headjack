@@ -158,10 +158,10 @@ const ChatPage = () => {
   useEffect(() => {
     if (lastMessage !== null) {
       const message = JSON.parse(lastMessage.data);
-      reply_finished =message.utterance==null
+      let reply_finished = message.utterance==null
       if (!reply_finished){addToMessageHistory(message)}
-      setSendDisabled(reply_finished);
-      setIsLoading(reply_finished);
+      setSendDisabled(!reply_finished);
+      setIsLoading(!reply_finished);
       console.log(messageHistory);
     }
   }, [lastMessage]);

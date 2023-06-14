@@ -57,8 +57,9 @@ async def chat_agent(
         async_buffer[response.queue_index].append(response.utterance)
         if len(async_buffer[working_index]) == n_async:
             if all((res is None for res in async_buffer[working_index])):  # all agent paths completed already
+                yield None
                 break
-            fin = await consolidate_responses(  # otherwise rollup the utterances which were not None
+            fin = await consolidate_responses(  # otherwise rollup the utterances which were not None to a consensus or best utterance
                 add_source_to_utterances(
                     [res for res in async_buffer[working_index] if res is not None],
                     "chat_agent",
@@ -66,7 +67,6 @@ async def chat_agent(
             )
             yield fin
             working_index += 1
-    yield None
     chat_task.cancel()
 
 
@@ -108,36 +108,39 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         CONVERSATION:
         {dedent(args.question.convo(set((Observation,))))}
         """)
-        steps = 0
+        steps = -1
         while args.max_steps>steps:
+            steps+=1
             """
             Describe a high-level plan to continue to respond to the user. You should be able to describe in less than 50 words.
             Plan: [PLAN]
             """
             _logger.info(PLAN)
-            """
-            Based on your plan and any additional information above, do you need to ask any clarifying questions? You will need to explain to the user why you are asking and how you will use the information to help them.
-            Yes for clarifying information otherwise No.: [CLARIFY]
-            """
-            if CLARIFY=='Yes':
-                "Ask and explain your question as tersely as possible:"
-                "[CLARIFICATION]"
+            if steps>1:
+                """
+                Based on your plan and any additional information above, do you need to ask any clarifying questions? You will need to explain to the user why you are asking and how you will use the information to help them.
+                Yes for clarifying information otherwise No.: [CLARIFY]
+                """
+                if CLARIFY=='Yes':
+                    "Ask and explain your question as tersely as possible:"
+                    "[CLARIFICATION]"
 
-                await args.queue.put(ChatRollupWrapper(Response(utterance=CLARIFICATION, parent=args.question), steps))
-                break
+                    await args.queue.put(ChatRollupWrapper(Response(utterance=CLARIFICATION, parent=args.question), steps))
+                    break
             """
             Based on your plan and any additional information above, do you need to dispatch a specialist to assist in your response?
             Yes for specialist otherwise No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
-                steps+=1
+                
                 """
                 In a few words, explain which specialists you thing would be best for this and why based on their descriptions.
                 [REASONING]
-                The agent that seems best suited to handle this request is: [AGENT]
+                The agent that seems best suited to handle this part of your plan is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
-                Your request should be as terse as possible, most likely less than 100 words. Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
+                Your request should be as terse as possible, most likely less than 100 words. 
+                Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
@@ -150,7 +153,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 """
                 result_str = str(result)[:500]
                 if SPECIALIST=='Yes':
-                    "The {AGENT} gave this\n"
+                    "The {AGENT} gave this (shown here truncated to the first 500 chars)\n"
                     "{result_str}\n"
                     continue
 
@@ -162,8 +165,9 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                     await args.queue.put(ChatRollupWrapper(result, steps))
                     break
                 else:
+                    "(result shown here truncated to the first 500 chars)\n"
                     "{result_str}\n"
-                    "Seeing the result, is it likely it should be a direct response to the user's message? Yes or No.: [IS_DIRECT]"
+                    "Seeing this part of the result, is it likely it should be a direct response to the user's message? Yes or No.: [IS_DIRECT]"
                     if IS_DIRECT=='Yes':
                         await args.queue.put(ChatRollupWrapper(result, steps))
                         break
