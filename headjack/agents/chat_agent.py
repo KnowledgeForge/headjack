@@ -1,8 +1,10 @@
 import logging
 from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
-
+from asyncio import Queue
+from typing import Dict, List, Optional
 import lmql
+from uuid import UUID, uuid4
 
 from headjack.agents.registry import AGENT_REGISTRY
 from headjack.models.utterance import Action, Answer, Response, Utterance  # noqa: F401
@@ -27,26 +29,45 @@ class ChatAgentArgs:
     agent_n: int
     agent_temp: float
 
+@dataclass
+class ChatRollupWrapper:
+    utterance: Optional[Utterance]
+    queue_index: int
+    async_id: UUID
 
 async def chat_agent(
+    queue: Queue,
     question: Utterance,
     max_steps: int = 3,
     chat_consistency: Consistency = Consistency.OFF,
     agent_consistency: Consistency = Consistency.OFF,
 ) -> Utterance:
-    return await consolidate_responses(
-        add_source_to_utterances(
-            await _chat_agent(
-                ChatAgentArgs(question, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency)),
-            ),
-            "chat_agent",
-        ),
-    )
+
+    n_async = Consistency.map(chat_consistency)[0]
+    async_buffer = [[] for _ in range(n_async)]
+    working_index = 0
+    while True:
+        response = await queue.get()
+        async_buffer[response.queue_index].append(response.utterance)
+        if len(async_buffer[working_index])==n_async:
+            if all((res is None for res in async_buffer[working_index])):
+                break
+            fin = await consolidate_responses(
+                add_source_to_utterances(
+                    async_buffer[working_index],
+                    "chat_agent",
+                )
+            )
+            yield fin
+            working_index+=1
+    
 
 
 @lmql.query
-async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
+async def _chat_agent(args: ChatAgentArgs, queue: Queue) -> ChatRollupWrapper:  # type: ignore
     '''lmql
+    async_id = uuid4()
+    queue_index = 0
     sample(n = args.n, temperature = args.temp, max_len=4096)
         """You are a chatbot that takes a conversation between you and a User and continues the conversation appropriately.
 
@@ -93,7 +114,9 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
             if CLARIFY=='Yes':
                 "Ask and explain your question as tersely as possible:"
                 "[CLARIFICATION]"
-                return Response(utterance=CLARIFICATION, parent=args.question)
+                
+                await queue.put(ChatRollupWrapper(Response(utterance=CLARIFICATION, parent=args.question), queue_index, async_id))
+                queue_index+=1
             """
             Based on your plan and any additional information above, do you need to dispatch a specialist to assist in your response?
             Yes for specialist otherwise No.: [SPECIALIST]
@@ -124,20 +147,25 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
                     continue
 
                 if result.direct_response:
-                    return result
+                    await queue.put(ChatRollupWrapper(result, queue_index, async_id))
+                    queue_index+=1
 
                 "Is the result of this {AGENT} likely a response to the user? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
-                    return result
+                    await queue.put(ChatRollupWrapper(result, queue_index, async_id))
+                    queue_index+=1
                 else:
                     "{result_str}\n"
                     "Seeing the result, is it likely it constitutes a direct response to the user? Yes or No.: [IS_DIRECT]"
                     if IS_DIRECT=='Yes':
-                        return result
+                        await queue.put(ChatRollupWrapper(result, queue_index, async_id))
+                        queue_index+=1
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
-                return Answer(utterance=ANSWER, parent=args.question)
+                await queue.put(ChatRollupWrapper(Answer(utterance=ANSWER, parent=args.question), queue_index, async_id))
+                queue_index+=1
+        await queue.put(ChatRollupWrapper(None, queue_index, async_id))
     from
         "chatgpt"
     where
