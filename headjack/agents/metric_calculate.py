@@ -63,6 +63,7 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 @register_agent_function(
     """This agent takes a question that requests a numeric value (e.g. metric)
 that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
+This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own.
 Use this for questions like:
     calculate the average...
     find the total...
@@ -158,7 +159,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         "</Group By>\n"
         _logger.info(f"Determined groupings of `{groupbys}`.")
         """
-        Count the number of order bys or sortings from the user query '{question}'.
+        Count the number of order bys or sortings from the user query '{question}'. You only need to order if it is obvious from the query.
         Thought: There's [ORDER_COUNT] order by dimension(s).
         List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending.
         <Order By>

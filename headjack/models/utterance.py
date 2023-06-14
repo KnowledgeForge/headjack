@@ -17,6 +17,7 @@ class Utterance(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     marker: Optional[str] = Field(default="")
     source: Optional[str] = None
+    direct_response: bool = False
 
     def _logged(self):
         return getattr(self, "__logged", False)
@@ -81,6 +82,7 @@ class User(Utterance):
 class Observation(Utterance):
     utterance: dict
     marker = "Observation: "
+    direct_response = True
 
 
 class Action(Utterance):
