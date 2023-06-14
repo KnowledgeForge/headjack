@@ -5,7 +5,7 @@ from textwrap import dedent, indent  # noqa: F401
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.models.utterance import Action, Answer, Utterance  # noqa: F401
+from headjack.models.utterance import Action, Answer, Utterance, Response # noqa: F401
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import Consistency, consolidate_responses
 
@@ -49,22 +49,53 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
     '''lmql
     sample(n = args.n, temperature = args.temp, max_len=4096)
         """You are a chatbot that takes a conversation between you and a User and continues the conversation appropriately.
-        To aid you in responding to the user, you have access to several helpful specialist agents that can help with tasks or questions you dispatch to them.
+
+        DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
+            Example interaction:
+            User: what are you capable of?/what can you help me with?/how can you help me?
+            Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
+            Answer: I have access to several specialist agents...
+            
+            Example interaction:
+            User: what is the total sales for the products
+            Plan: The user has asked for something that sounds like a computable value and so I will dispatch the metric_calculate_agent.
+            Action: ...
+            
+            Example interaction:
+            User: is there any information about the company dj roads?
+            Plan: I will check with the knowledge search agent, but there may be information in the user messages so I will clarify with the user if I should search messages as well.
+            Response: Should I search the message system in addition to the knowledge repository?
+            User: yes
+            Action: ...uses knowledge search...
+        END OF EXAMPLE INFORMATION TO IGNORE
+        
+        To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
 
         The specialists at your disposal to dispatch to are:
         {dispatchable_agents}
-
+        
         Conversation:
         {dedent(args.question.convo(set((Observation,))))}
 
-        Be proactive and do NOT ask the user questions about whether to use an agent or not.
-        Do your best to answer user questions using the specialists.
         """
 
         steps = 0
         while args.max_steps>steps:
             """
-            Would a specialist likely help respond to the user or is the response already above?
+            Describe a high-level plan to continue to respond to the user. You should be able to describe in less than 50 words.
+            Plan: [PLAN]
+            """
+            _logger.info(PLAN)
+            """
+            Based on your plan and any additional information above, do you need to ask any clarifying questions? You will need to explain to the user why you are asking and how you will use the information to help them.
+            Yes for clarifying information otherwise No.: [CLARIFY]
+            """
+            if CLARIFY=='Yes':
+                "Ask and explain your question as tersely as possible:"
+                "[CLARIFICATION]"
+                return Response(utterance=CLARIFICATION, parent=args.question)
+            """
+            Based on your plan and any additional information above, do you need to dispatch a specialist to assist in your response?
             Yes for specialist otherwise No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
@@ -75,7 +106,7 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
                 The agent that seems best suited to handle this request is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
-                Your request should be as terse as possible, most likely less than 100 words.
+                Your request should be as terse as possible, most likely less than 100 words. Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
@@ -83,11 +114,23 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
                 task = Action(utterance=TASK.strip('</'), parent=args.question)
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
-                "Is the result of this specialist likely a response to the user? Yes or No.: [IS_DIRECT]"
+                """
+                The {AGENT} completed the task. Did your plan necessitate using any further specialists? Yes or No: [SPECIALIST]
+                """
+                result_str = str(result)[:500]
+                if SPECIALIST=='Yes':
+                    "The {AGENT} gave this\n"
+                    "{result_str}\n"
+                    continue
+                    
+                if result.direct_response:
+                    return result
+                    
+                "Is the result of this {AGENT} likely a response to the user? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
                     return result
                 else:
-                    "{result}\n"
+                    "{result_str}\n"
                     "Seeing the result, is it likely it constitutes a direct response to the user? Yes or No.: [IS_DIRECT]"
                     if IS_DIRECT=='Yes':
                         return result
@@ -100,6 +143,6 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
-        IS_DIRECT in ['Yes', 'No'] and
+        CLARIFY in ['Yes', 'No'] and
         STOPS_AT(TASK, '</')
     '''

@@ -5,7 +5,7 @@ import lmql
 
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
-from headjack.models.utterance import Answer, Response, StructuredAnswer, Utterance
+from headjack.models.utterance import Answer, Response, Observation, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import consolidate_responses
@@ -37,7 +37,7 @@ async def people_search_agent(question: Utterance, n: int = 1, temp: float = 0.0
 
 
 @lmql.query
-async def _people_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, StructuredAnswer]:  # type: ignore
+async def _people_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Observation]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp)
         "Given the following question or topic, use a term to search for people in the human resource system and create a list of people. "
@@ -51,7 +51,7 @@ async def _people_search_agent(question: Utterance, n: int, temp: float) -> Unio
             return Response(utterance=result, parent_ = question)
         "Result: {result}\n"
         "Final Answer:[ANSWER]\n"
-        return StructuredAnswer(utterance={"summary": ANSWER, "people": result}, parent_ = question)
+        return Observation(utterance={"summary": ANSWER, "people": result}, parent_ = question)
     FROM
         "chatgpt"
     WHERE
