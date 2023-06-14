@@ -49,6 +49,7 @@ services:
     environment:
       - PORT=4000
       - REACT_APP_HEADJACK_SERVER=http://localhost:8679
+      - REACT_APP_DJ_URL=http://localhost:3000
     volumes:
       - ./headjack-ui:/code
     ports:
