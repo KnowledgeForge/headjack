@@ -63,7 +63,7 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 @register_agent_function(
     """This agent takes a question that requests a numeric value (e.g. metric)
 that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
-This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own. 
+This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own.
 Use this for questions like:
     calculate the average...
     find the total...

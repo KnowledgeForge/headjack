@@ -84,6 +84,7 @@ class Observation(Utterance):
     marker = "Observation: "
     direct_response = True
 
+
 class Action(Utterance):
     utterance: Union[str, dict]
     marker = "Action: "

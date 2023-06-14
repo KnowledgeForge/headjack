@@ -5,7 +5,7 @@ from textwrap import dedent, indent  # noqa: F401
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.models.utterance import Action, Answer, Utterance, Response # noqa: F401
+from headjack.models.utterance import Action, Answer, Response, Utterance  # noqa: F401
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import Consistency, consolidate_responses
 
@@ -55,12 +55,12 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
             User: what are you capable of?/what can you help me with?/how can you help me?
             Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
             Answer: I have access to several specialist agents...
-            
+
             Example interaction:
             User: what is the total sales for the products
             Plan: The user has asked for something that sounds like a computable value and so I will dispatch the metric_calculate_agent.
             Action: ...
-            
+
             Example interaction:
             User: is there any information about the company dj roads?
             Plan: I will check with the knowledge search agent, but there may be information in the user messages so I will clarify with the user if I should search messages as well.
@@ -68,12 +68,12 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
             User: yes
             Action: ...uses knowledge search...
         END OF EXAMPLE INFORMATION TO IGNORE
-        
+
         To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
 
         The specialists at your disposal to dispatch to are:
         {dispatchable_agents}
-        
+
         Conversation:
         {dedent(args.question.convo(set((Observation,))))}
 
@@ -122,10 +122,10 @@ async def _chat_agent(args: ChatAgentArgs) -> Utterance:  # type: ignore
                     "The {AGENT} gave this\n"
                     "{result_str}\n"
                     continue
-                    
+
                 if result.direct_response:
                     return result
-                    
+
                 "Is the result of this {AGENT} likely a response to the user? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
                     return result
