@@ -29,7 +29,7 @@ async def search_for_people(q):
 
 
 @register_agent_function(
-    "This is a search over a human resources system with information on people within the organization."
+    "This is a search over a human resources system with information on people within the organization. "
     "Provided a query, this will give a summary of conversations found in the messaging system.",
 )
 async def people_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:

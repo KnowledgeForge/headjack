@@ -26,9 +26,15 @@ async def websocket_endpoint(
         user = User.parse_obj(data)
         user.parent = parent
         try:
-            response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
+            async for response in chat_agent(user, max_agent_uses, chat_consistency, agent_consistency):
+                if response is not None:
+                    await websocket.send_text(json.dumps(response.dict()))
+                    parent = response
+                    parent.log()
+                else:
+                    await websocket.send_text(json.dumps({'utterance': None}))
         except Exception as e:
             response = Utterance(utterance=f"The chat agent ran into an unexpected error: {str(e)}")
-        parent = response
-        parent.log()
-        await websocket.send_text(json.dumps(response.dict()))
+            await websocket.send_text(json.dumps(response.dict()))
+            parent = response
+            parent.log()
