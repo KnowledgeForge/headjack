@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { TypeAnimation } from "react-type-animation";
 import { Player } from "@lottiefiles/react-lottie-player";
+import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
 import Plot from "react-plotly.js";
 
@@ -80,9 +81,7 @@ const MessageContent = ({ message }) => {
           <thead className="bg-gray-50">
             <tr>
               <th className="py-2 px-4 border border-gray-300">Name</th>
-              <th className="py-2 px-4 border border-gray-300">
-                Description
-              </th>
+              <th className="py-2 px-4 border border-gray-300">Description</th>
               <th className="py-2 px-4 border border-gray-300">SQL</th>
             </tr>
           </thead>
@@ -123,10 +122,17 @@ const MessageContent = ({ message }) => {
     const plotData = message.utterance;
     return <Plot data={plotData.data} layout={plotData.layout} />;
   } else {
-    return (
+    console.log(message);
+    return message.isUser ? (
+      message.utterance
+    ) : (
       <p>
         <TypeAnimation
-          sequence={[JSON.stringify(message.utterance)]}
+          sequence={[
+            typeof message.utterance !== "string"
+              ? JSON.stringify(message.utterance)
+              : message.utterance,
+          ]}
           speed={90}
           cursor={false}
           repeat={0}
@@ -200,7 +206,8 @@ const ChatPage = () => {
             {connectionStatus}
           </span>
         );
-      case "Closing": return null;
+      case "Closing":
+        return null;
       case "Closed":
         return (
           <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
@@ -213,91 +220,90 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="container flex flex-col h-screen w-full">
-      <div className="flex items-center justify-center bg-gray-300 h-24">
-        <h1 className="text-3xl font-bold">HeadJack Chat</h1>
+    <div className="flex flex-col h-screen w-full">
+      <div className="flex items-center justify-center bg-gray-200 h-24">
+        <h2 className="text-2xl font-bold">HeadJack Chat</h2>
         <Player
           autoplay
           loop
-          src={animatedPurpleRobot}
-          style={{ height: "80px", width: "80px" }}
+          src={isLoading ? animatedPurpleRobot : animatedYellowRobot}
+          speed={isLoading ? 2 : 1}
+          style={{ height: "50px", width: "50px" }}
         />
       </div>
       <div className="flex flex-col flex-grow bg-gray-100 w-full">
         <div className="py-6 px-4 sm:px-6 lg:py-12 lg:px-8 h-full flex flex-col w-full">
-  <div className="flex-grow overflow-y-auto">
-    {messageHistory.map((message, index) => (
-      <div
-        key={index}
-        className={`flex ${
-          message.isUser ? "justify-end" : "justify-start"
-        }`}
-      >
-        <div
-          className={`${
-            message.isUser ? "bg-blue-400" : "bg-white"
-          } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
-          style={{textAlign: message.isUser ? 'right' : 'left'}}
-        >
-          <MessageContent message={message} />
+          <div className="flex-grow overflow-y-auto">
+            {messageHistory.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${
+                  message.isUser ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`${
+                    message.isUser ? "bg-blue-300" : "bg-white"
+                  } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
+                  style={{ textAlign: message.isUser ? "right" : "left" }}
+                >
+                  <MessageContent message={message} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <form onSubmit={handleSubmit} className="mt-4">
+            <div className="flex">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                className="block w-full rounded-md border-gray-300 shadow-lg px-4 py-2 focus:ring-blue-100 sm:text-sm"
+                placeholder="Type your message here..."
+                disabled={sendDisabled}
+              />
+              <button
+                type="submit"
+                className={`ml-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                  sendDisabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={sendDisabled}
+              >
+                {isLoading ? (
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm12 0a8 8 0 100-16 8 8 0 000 16z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <span>Send</span>
+                )}
+              </button>
+            </div>
+          </form>
+          <div className="bg-gray-900 text-white py-2 px-4 fixed bottom-0 left-0 w-full">
+            {renderWSBadge(connectionStatus)}
+            WebSocket Connection Status
+          </div>
         </div>
       </div>
-    ))}
-  </div>
-  <form onSubmit={handleSubmit} className="mt-4">
-    <div className="flex">
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        className="block w-full rounded-md border-gray-300 shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        placeholder="Type your message here..."
-        disabled={sendDisabled}
-      />
-      <button
-        type="submit"
-        className={`ml-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-          sendDisabled ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        disabled={sendDisabled}
-      >
-        {isLoading ? (
-          <svg
-            className="animate-spin h-5 w-5 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm12 0a8 8 0 100-16 8 8 0 000 16z"
-            ></path>
-          </svg>
-        ) : (
-          <span>Send</span>
-        )}
-      </button>
     </div>
-  </form>
-  <div className="bg-gray-900 text-white py-2 px-4 fixed bottom-0 left-0 w-full">
-          {renderWSBadge(connectionStatus)}
-          WebSocket Connection Status
-        </div>
-      </div>
-</div>
+  );
+};
 
-        </div>
-
-    );
-  };
-
-  export default ChatPage;
+export default ChatPage;
