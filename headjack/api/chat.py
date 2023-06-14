@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, WebSocket
 
 from headjack.agents.chat_agent import chat_agent
-from headjack.models.utterance import User
+from headjack.models.utterance import User, Utterance
 from headjack.utils.consistency import Consistency
 
 _logger = logging.getLogger(__name__)
@@ -25,7 +25,10 @@ async def websocket_endpoint(
         data = await websocket.receive_json()
         user = User.parse_obj(data)
         user.parent = parent
-        response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
+        try:
+            response = await chat_agent(user, max_agent_uses, chat_consistency, agent_consistency)
+        except Exception as e:
+            response = Utterance(utterance=f"The chat agent ran into an unexpected error: {str(e)}")
         parent = response
         parent.log()
         await websocket.send_text(json.dumps(response.dict()))
