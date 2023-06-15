@@ -36,13 +36,13 @@ class ChatRollupWrapper:
     utterance: Optional[Utterance]
     queue_index: int
 
-
 async def chat_agent(
     question: Utterance,
-    max_steps: int = 3,
+    max_steps: int = 5,
     chat_consistency: Consistency = Consistency.OFF,
     agent_consistency: Consistency = Consistency.OFF,
 ) -> Utterance:
+    global used
     n_async = Consistency.map(chat_consistency)[0]
     async_buffer = [[] for _ in range(max_steps)]
     working_index = 0
@@ -52,6 +52,7 @@ async def chat_agent(
             ChatAgentArgs(question, queue, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency)),
         ),
     )
+
     while True:
         response = await queue.get()
         async_buffer[response.queue_index].append(response.utterance)
@@ -67,14 +68,15 @@ async def chat_agent(
             )
             yield fin
             working_index += 1
-    chat_task.cancel()
+    # chat_task.cancel()
 
+        
 
 @lmql.query
 async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
     '''lmql
     sample(n = args.n, temperature = args.temp, max_len=4096)
-        """You are a chatbot that takes a conversation between you and a User and continues the conversation appropriately.
+        """You are a chatbot named HeadJack that takes a conversation between you and a User and continues the conversation appropriately.
 
         DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
             Example interaction:
@@ -101,18 +103,23 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         {dispatchable_agents}
 
         Conversation:
-        {dedent(args.question.convo(set((Observation,))))}
+        """
+        convo = dedent(args.question.convo(truncate_utterances = set((Observation,))))
+        """
+        {convo}
 
         """
+        import pdb; pdb.set_trace()
         _logger.info(f"""
         CONVERSATION:
-        {dedent(args.question.convo(set((Observation,))))}
+        {convo}
         """)
         steps = -1
+        parent = args.question
         while args.max_steps>steps:
             steps+=1
             """
-            Describe a high-level plan to continue to respond to the user. You should be able to describe in less than 50 words.
+            Describe a high-level plan to continue to respond to the user. You should be able to describe in less than 50 words and on a single line and mention the order of all agents you will use.
             Plan: [PLAN]
             """
             _logger.info(PLAN)
@@ -124,8 +131,9 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 if CLARIFY=='Yes':
                     "Ask and explain your question as tersely as possible:"
                     "[CLARIFICATION]"
-
-                    await args.queue.put(ChatRollupWrapper(Response(utterance=CLARIFICATION, parent=args.question), steps))
+                    response = Response(utterance=CLARIFICATION, parent=parent)
+                    parent = response
+                    await args.queue.put(ChatRollupWrapper(response, steps))
                     break
             """
             Based on your plan and any additional information above, do you need to dispatch a specialist to assist in your response?
@@ -134,7 +142,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             if SPECIALIST=='Yes':
                 
                 """
-                In a few words, explain which specialists you thing would be best for this and why based on their descriptions.
+                In a few words and on a single line, explain which specialists you thing would be best for this and why based on their descriptions.
                 [REASONING]
                 The agent that seems best suited to handle this part of your plan is: [AGENT]
                 What is the question or task this specialist should assist you with?
@@ -145,14 +153,17 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]task>
                 """
-                task = Action(utterance=TASK.strip('</'), parent=args.question)
+                task = Action(utterance=TASK.strip('</'), parent=parent)
+                parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
+                parent = result
                 """
                 The {AGENT} completed the task. Did your plan necessitate using any further specialists? Yes or No: [SPECIALIST]
                 """
                 result_str = str(result)[:500]
                 if SPECIALIST=='Yes':
+                    await args.queue.put(ChatRollupWrapper(result, steps))
                     "The {AGENT} gave this (shown here truncated to the first 500 chars)\n"
                     "{result_str}\n"
                     continue
@@ -160,7 +171,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 if result.direct_response:
                     await args.queue.put(ChatRollupWrapper(result, steps))
                     break
-                "Is the result of this {AGENT} likely a response to the user? Yes or No.: [IS_DIRECT]"
+                "Is the result of this {AGENT} the final part of your response to the user according to your plan? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
                     await args.queue.put(ChatRollupWrapper(result, steps))
                     break
@@ -174,7 +185,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
-                await args.queue.put(ChatRollupWrapper(Answer(utterance=ANSWER, parent=args.question), steps))
+                answer = Answer(utterance=ANSWER, parent=parent)
+                await args.queue.put(ChatRollupWrapper(answer, steps))
                 break
         for i in range(1+args.max_steps-steps):
             await args.queue.put(ChatRollupWrapper(None, steps+1+i))
@@ -184,5 +196,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
         CLARIFY in ['Yes', 'No'] and
-        STOPS_AT(TASK, '</')
+        STOPS_AT(TASK, '</') and
+        STOPS_AT(PLAN, '\n') and 
+        STOPS_AT(REASONING, '\n')
     '''
