@@ -7,7 +7,7 @@ from typing import Optional
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.models.utterance import Action, Answer, Response, Utterance  # noqa: F401
+from headjack.models.utterance import Action, Answer, Response, Utterance, Thought  # noqa: F401
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import Consistency, consolidate_responses
 
@@ -34,7 +34,7 @@ class ChatAgentArgs:
 @dataclass
 class ChatRollupWrapper:
     utterance: Optional[Utterance]
-    queue_index: int
+    queue_index: Optional[int] = None
 
 async def chat_agent(
     question: Utterance,
@@ -42,7 +42,6 @@ async def chat_agent(
     chat_consistency: Consistency = Consistency.OFF,
     agent_consistency: Consistency = Consistency.OFF,
 ) -> Utterance:
-    global used
     n_async = Consistency.map(chat_consistency)[0]
     async_buffer = [[] for _ in range(max_steps)]
     working_index = 0
@@ -55,6 +54,9 @@ async def chat_agent(
 
     while True:
         response = await queue.get()
+        if response.queue_index is None:
+            yield response.utterance
+            continue
         async_buffer[response.queue_index].append(response.utterance)
         if len(async_buffer[working_index]) == n_async:
             if all((res is None for res in async_buffer[working_index])):  # all agent paths completed already
@@ -102,14 +104,16 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         The specialists at your disposal to dispatch to are:
         {dispatchable_agents}
 
+        If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
+        
+        
         Conversation:
         """
-        convo = dedent(args.question.convo(truncate_utterances = set((Observation,))))
+        convo = dedent(args.question.convo())
         """
         {convo}
 
         """
-        import pdb; pdb.set_trace()
         _logger.info(f"""
         CONVERSATION:
         {convo}
@@ -136,14 +140,23 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                     await args.queue.put(ChatRollupWrapper(response, steps))
                     break
             """
-            Based on your plan and any additional information above, do you need to dispatch a specialist to assist in your response?
+            Based on your plan and any additional information above, in particular information from dispatching specialists, do you need to dispatch a specialist to assist in continuing in your response?
             Yes for specialist otherwise No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
                 
                 """
-                In a few words and on a single line, explain which specialists you thing would be best for this and why based on their descriptions.
+                In a few words and on a single line, explain which specialists you think would be best for this and why based on their descriptions.
                 [REASONING]
+                
+                In a few words and on a single line, explain what you are doing now and why. 
+                Be as terse as possible and speak directly to the user using general terms.
+                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`:
+                [USER_REASONING]"""
+                thought = Thought(utterance=USER_REASONING, parent=parent)
+                await args.queue.put(ChatRollupWrapper(thought))
+                parent = thought
+                """
                 The agent that seems best suited to handle this part of your plan is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
@@ -198,5 +211,6 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         CLARIFY in ['Yes', 'No'] and
         STOPS_AT(TASK, '</') and
         STOPS_AT(PLAN, '\n') and 
-        STOPS_AT(REASONING, '\n')
+        STOPS_AT(REASONING, '\n') and
+        STOPS_AT(USER_REASONING, '\n')
     '''

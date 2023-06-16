@@ -90,6 +90,13 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
 
         You must extract the necessary information from the user's query for the api request.
         User: {question.utterance}
+        
+        First, reason about the user's query. What kind of metrics are there? Are there any things that would require grouping? Is ordering specified or is it required to use with a limit? Are there any filters? Answer these questions and explain your rationale.
+        Fit your reasoning on a single line.
+        [REASONING]
+        """
+        _logger.info(f"Reasoning `{REASONING}`.")
+        """
         Count the number of metrics, e.g. terms that describe some calculated number.
         Thought: There's [METRIC_COUNT] metric(s).
         List the terms that describe each metric.
@@ -255,7 +262,6 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
-
         selected_filters=[]
         for term in filters:
             temp_dims=semantic_sort(term, common_dimensions, 10)
@@ -301,6 +307,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
     from
         "chatgpt"
     where
+        STOPS_AT(REASONING, "\n") and
         STOPS_AT(METRIC_TERM, "\n") and
         STOPS_AT(GROUPBY_TERM, "\n") and
         STOPS_AT(ORDERBY_TERM, "\n") and
