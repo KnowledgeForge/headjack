@@ -7,7 +7,13 @@ from typing import Optional
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
-from headjack.models.utterance import Action, Answer, Response, Utterance, Thought  # noqa: F401
+from headjack.models.utterance import (  # noqa: F401
+    Action,
+    Answer,
+    Response,
+    Thought,
+    Utterance,
+)
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import Consistency, consolidate_responses
 
@@ -35,6 +41,7 @@ class ChatAgentArgs:
 class ChatRollupWrapper:
     utterance: Optional[Utterance]
     queue_index: Optional[int] = None
+
 
 async def chat_agent(
     question: Utterance,
@@ -72,7 +79,6 @@ async def chat_agent(
             working_index += 1
     # chat_task.cancel()
 
-        
 
 @lmql.query
 async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
@@ -105,8 +111,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-        
-        
+
+
         Conversation:
         """
         convo = dedent(args.question.convo())
@@ -144,12 +150,12 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             Yes for specialist otherwise No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
-                
+
                 """
                 In a few words and on a single line, explain which specialists you think would be best for this and why based on their descriptions.
                 [REASONING]
-                
-                In a few words and on a single line, explain what you are doing now and why. 
+
+                In a few words and on a single line, explain what you are doing now and why.
                 Be as terse as possible and speak directly to the user using general terms.
                 If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`:
                 [USER_REASONING]"""
@@ -160,7 +166,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 The agent that seems best suited to handle this part of your plan is: [AGENT]
                 What is the question or task this specialist should assist you with?
                 Write your request in the task xml tags below e.g. <task>your task description or question here</task>.
-                Your request should be as terse as possible, most likely less than 100 words. 
+                Your request should be as terse as possible, most likely less than 100 words.
                 Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
@@ -210,7 +216,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         SPECIALIST in ['Yes', 'No'] and
         CLARIFY in ['Yes', 'No'] and
         STOPS_AT(TASK, '</') and
-        STOPS_AT(PLAN, '\n') and 
+        STOPS_AT(PLAN, '\n') and
         STOPS_AT(REASONING, '\n') and
         STOPS_AT(USER_REASONING, '\n')
     '''

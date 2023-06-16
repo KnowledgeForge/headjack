@@ -90,7 +90,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
 
         You must extract the necessary information from the user's query for the api request.
         User: {question.utterance}
-        
+
         First, reason about the user's query. What kind of metrics are there? Are there any things that would require grouping? Is ordering specified or is it required to use with a limit? Are there any filters? Answer these questions and explain your rationale.
         Fit your reasoning on a single line.
         [REASONING]

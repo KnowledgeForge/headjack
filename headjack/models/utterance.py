@@ -1,8 +1,9 @@
 import json
 import logging
+import re
 from typing import Any, Generator, Optional, Set, Type, Union
 from uuid import uuid4
-import re
+
 from pydantic import BaseModel, Field
 
 from headjack.logging import UTTERANCE_LOG_LEVEL
@@ -37,21 +38,20 @@ class Utterance(BaseModel):
             n_ -= 1
 
     def convo(
-        self,
-        n: Optional[int] = None,
-        truncate_utterances: Optional[Set[Type["Utterance"]]] = None,
-        truncation_length: int = 150
+        self, n: Optional[int] = None, truncate_utterances: Optional[Set[Type["Utterance"]]] = None, truncation_length: int = 150,
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
         for utterance in self.history():
             if truncate_utterances is None or type(utterance) in truncate_utterances:
                 utterance_strs = re.split(r"[' ']+", str(utterance.utterance).replace("\n", " \n"))
-                if len(utterance_strs)>truncation_length:
-                    utterance_strs=utterance.marker.replace(':', ' (truncated):')+" ".join(utterance_strs[:truncation_length//2]+["..."]+utterance_strs[-(truncation_length//2):])
+                if len(utterance_strs) > truncation_length:
+                    utterance_strs = utterance.marker.replace(':', ' (truncated):') + " ".join(
+                        utterance_strs[: truncation_length // 2] + ["..."] + utterance_strs[-(truncation_length // 2) :],
+                    )
                 else:
                     utterance_strs = str(utterance)
-                history.append(utterance_strs)                    
+                history.append(utterance_strs)
             else:
                 history.append(utterance)
             if len(history) == n:
@@ -115,5 +115,6 @@ class StructuredAnswer(Utterance):
 class Response(Utterance):
     utterance: str
     marker = "Response: "
+
 
 UTTERANCES = {User, Observation, Action, Thought, Answer, StructuredAnswer, Response}
