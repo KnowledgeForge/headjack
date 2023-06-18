@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
-from typing import Optional
+from typing import AsyncGenerator, List, Optional, cast
 
 import lmql
 
@@ -48,12 +48,12 @@ async def chat_agent(
     max_steps: int = 5,
     chat_consistency: Consistency = Consistency.OFF,
     agent_consistency: Consistency = Consistency.OFF,
-) -> Utterance:
+) -> AsyncGenerator[Optional[Utterance], None]:
     n_async = Consistency.map(chat_consistency)[0]
-    async_buffer = [[] for _ in range(max_steps)]
+    async_buffer: List[List[Utterance]] = [[] for _ in range(max_steps)]
     working_index = 0
-    queue = asyncio.Queue()
-    chat_task = asyncio.create_task(
+    queue: asyncio.Queue[ChatRollupWrapper] = asyncio.Queue()
+    asyncio.create_task(
         _chat_agent(
             ChatAgentArgs(question, queue, max_steps, *Consistency.map(chat_consistency), *Consistency.map(agent_consistency)),
         ),
@@ -64,7 +64,7 @@ async def chat_agent(
         if response.queue_index is None:
             yield response.utterance
             continue
-        async_buffer[response.queue_index].append(response.utterance)
+        async_buffer[response.queue_index].append(cast(Utterance, response.utterance))
         if len(async_buffer[working_index]) == n_async:
             if all((res is None for res in async_buffer[working_index])):  # all agent paths completed already
                 yield None
@@ -77,7 +77,6 @@ async def chat_agent(
             )
             yield fin
             working_index += 1
-    # chat_task.cancel()
 
 
 @lmql.query

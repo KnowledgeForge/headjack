@@ -38,7 +38,10 @@ class Utterance(BaseModel):
             n_ -= 1
 
     def convo(
-        self, n: Optional[int] = None, truncate_utterances: Optional[Set[Type["Utterance"]]] = None, truncation_length: int = 150,
+        self,
+        n: Optional[int] = None,
+        truncate_utterances: Optional[Set[Type["Utterance"]]] = None,
+        truncation_length: int = 150,
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
@@ -46,12 +49,14 @@ class Utterance(BaseModel):
             if truncate_utterances is None or type(utterance) in truncate_utterances:
                 utterance_strs = re.split(r"[' ']+", str(utterance.utterance).replace("\n", " \n"))
                 if len(utterance_strs) > truncation_length:
-                    utterance_strs = utterance.marker.replace(':', ' (truncated):') + " ".join(
-                        utterance_strs[: truncation_length // 2] + ["..."] + utterance_strs[-(truncation_length // 2) :],
+                    utterance_str = utterance.marker.replace(':', ' (truncated):') + " ".join(
+                        utterance_strs[: truncation_length // 2]
+                        + ["..."]
+                        + utterance_strs[-(truncation_length // 2) :],  # noqa: E203
                     )
                 else:
-                    utterance_strs = str(utterance)
-                history.append(utterance_strs)
+                    utterance_str = str(utterance)
+                history.append(utterance_str)
             else:
                 history.append(utterance)
             if len(history) == n:
