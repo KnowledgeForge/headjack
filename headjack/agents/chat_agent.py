@@ -83,9 +83,9 @@ async def chat_agent(
 async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
     '''lmql
     sample(n = args.n, temperature = args.temp, max_len=4096)
-        """You are a chatbot named HeadJack that takes a conversation between you and a User and continues the conversation appropriately.
+        """You are to play a chatbot named HeadJack that takes a conversation between you and a User and continues the conversation appropriately.
 
-        DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
+        # DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
             Example interaction:
             User: what are you capable of?/what can you help me with?/how can you help me?
             Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
@@ -102,22 +102,20 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             Response: Should I search the message system in addition to the knowledge repository?
             User: yes
             Action: ...uses knowledge search...
-        END OF EXAMPLE INFORMATION TO IGNORE
+        #END OF EXAMPLE INFORMATION TO IGNORE
 
-        To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
-
-        The specialists at your disposal to dispatch to are:
-        {dispatchable_agents}
-
-        If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-
-
-        Conversation:
+        # Conversation:
         """
         convo = dedent(args.question.convo())
         """
         {convo}
 
+        # END CONVERSATION
+        To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
+        The specialists at your disposal are the following. Use them EXACTLY as their descriptions direct.:
+        {dispatchable_agents}
+
+        If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
         """
         _logger.info(f"""
         CONVERSATION:
@@ -128,7 +126,10 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         while args.max_steps>steps:
             steps+=1
             """
-            Describe a high-level plan to continue to respond to the user. You should be able to describe in less than 50 words and on a single line and mention the order of all agents you will use.
+            Consider the conversation history, the latest user message, and the specialists at your disposal. 
+            Describe a high-level plan to continue to respond to the user. 
+            You should be able to describe in less than 200 words and mention the order of all agents you will use. Fit your reasoning on a single line and do not start any new lines.
+            Remember, only do tasks explicitly requested by the user UNLESS an action is required to to be completed to get to actions that will ultimately fulfill the users' request.
             Plan: [PLAN]
             """
             _logger.info(PLAN)
@@ -149,14 +150,13 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             Yes for specialist otherwise No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
-
                 """
-                In a few words and on a single line, explain which specialists you think would be best for this and why based on their descriptions.
+                In a few words, explain which specialists you think would be best for this and why based on their descriptions. Fit your reasoning on a single line and do not start any new lines.
                 [REASONING]
 
-                In a few words and on a single line, explain what you are doing now and why.
+                In a few words, explain what you are doing now and why.
                 Be as terse as possible and speak directly to the user using general terms.
-                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`:
+                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`. Fit your response on a single line and do not start any new lines.:
                 [USER_REASONING]"""
                 thought = Thought(utterance=USER_REASONING, parent=parent)
                 await args.queue.put(ChatRollupWrapper(thought))
@@ -209,7 +209,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         for i in range(1+args.max_steps-steps):
             await args.queue.put(ChatRollupWrapper(None, steps+1+i))
     from
-        "chatgpt"
+        "openai/text-davinci-003"
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and

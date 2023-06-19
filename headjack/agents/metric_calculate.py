@@ -62,14 +62,15 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 
 @register_agent_function(
     """This agent takes a question that requests a numeric value (e.g. metric)
-that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
-This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own.
 Use this for questions like:
     calculate the average...
     find the total...
     what is the mean...
     count the number of...
     etc.
+that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
+This agent is fully capable, DO NOT search for a specific metric to provide this agent. 
+This agent will determine everything necessary to complete your request on its own from the task descrition.
 """,
 )
 async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
@@ -91,8 +92,14 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         You must extract the necessary information from the user's query for the api request.
         User: {question.utterance}
 
-        First, reason about the user's query. What kind of metrics are there? Are there any things that would require grouping? Is ordering specified or is it required to use with a limit? Are there any filters? Answer these questions and explain your rationale.
-        Fit your reasoning on a single line.
+        First, reason about the user's query. 
+        - What kind of metrics are there? 
+        - Are there any things that would require grouping - specify them distinctly like `group by ... and group by ...`? 
+        - Is ordering specified or is it required to use with a limit - specify orderings distinctly like `order by ... and order by ...` and if they are only required to use with a limit explain? 
+        - Are there any filters - specify them distinctly like `filter by ... and filter by ...`? 
+        - Is there any kind of limit required?
+        Answer these questions and explain your rationale.
+        Fit your reasoning on a single line and do not start any new lines.
         [REASONING]
         """
         _logger.info(f"Reasoning `{REASONING}`.")
@@ -113,7 +120,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             res = await search_for_metrics(term)
             if res=='No results':
                 "No results were found searching for {term}. The search server may be down or no metrics met a relevance threshold."
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
@@ -136,7 +143,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 if METRIC not in selected_metrics:
                     selected_metrics.append(METRIC)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         _logger.info(f"Decided metrics `{selected_metrics}`.")
@@ -147,7 +154,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "\nThere are no shared dimensions for these metrics.\n"
             else:
                 "\nThere are no dimensions for this metric.\n"
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
             "Response: [RESPONSE]"
             return Response(utterance=RESPONSE, parent = question)
 
@@ -156,9 +163,10 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of group bys or aggregations from the user query '{question}'.
         Thought: There's [GROUPBY_COUNT] group by dimension(s).
-        List the terms that describe each group by.
+        List the terms that describe each group by. Be sure to put each list of terms on a separate line for each proposed group by.
         <Group By>
         """
+        _logger.info(f"Decided on {GROUPBY_COUNT} groupings for `{question}`") 
         groupbys=[]
         for i in range(int(GROUPBY_COUNT)):
             "[GROUPBY_TERM]"
@@ -168,7 +176,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of order bys or sortings from the user query '{question}'. You only need to order if it is obvious from the query.
         Thought: There's [ORDER_COUNT] order by dimension(s).
-        List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending.
+        List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending. Be sure to put each list of terms on a separate line for each proposed order by.
         <Order By>
         """
         orderbys=[]
@@ -202,7 +210,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {filter_consideration}
         With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
         Thought: There's still [FILTER_COUNT] filter(s) needed.
-        Describe each filter.
+        Describe each filter. Be sure to put each description on a separate line for each proposed filter.
         <Filter By>
         """
         filters=[]
@@ -233,7 +241,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "\nExplain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
@@ -259,7 +267,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         selected_filters=[]
@@ -295,7 +303,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 selected_filters.append(FILTER.split('</')[0])
                 _logger.info(f"Adding filter `{selected_filters[-1]}`.")
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request. Fit your response on a single line and do not start any new lines.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
@@ -313,7 +321,6 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         STOPS_AT(ORDERBY_TERM, "\n") and
         STOPS_AT(FILTER_TERM, "\n") and
         STOPS_AT(RESPONSE, "\n") and
-        len(RESPONSE)<300 and
         STOPS_AT(FILTER, "</") and
         STOPS_AT(LIMIT, "</") and
         METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and
