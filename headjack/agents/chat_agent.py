@@ -103,19 +103,18 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             User: yes
             Action: ...uses knowledge search...
         #END OF EXAMPLE INFORMATION TO IGNORE
-
-        # Conversation:
-        """
-        convo = dedent(args.question.convo())
-        """
-        {convo}
-
-        # END CONVERSATION
+    
         To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
         The specialists at your disposal are the following. Use them EXACTLY as their descriptions direct.:
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
+        
+        Conversation:
+        """
+        convo = dedent(args.question.convo())
+        """
+        {convo}
         """
         _logger.info(f"""
         CONVERSATION:
@@ -128,9 +127,11 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             """
             Consider the conversation history, the latest user message, and the specialists at your disposal. 
             Describe a high-level plan to continue to respond to the user. 
-            You should be able to describe in less than 200 words and mention the order of all agents you will use. Fit your reasoning on a single line and do not start any new lines.
-            Remember, only do tasks explicitly requested by the user UNLESS an action is required to to be completed to get to actions that will ultimately fulfill the users' request.
-            Plan: [PLAN]
+            You should be able to describe in less than 200 words and describe the order of all agents you will use. Only describe the agents you will use if you will use them to respond now.
+            Only plan for tasks necessary to repond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
+            If you plan to use specialists, use only the narrowest set most likely only 1 or 2 agents are needed if any.
+            Put your plan in plan tags `<plan>your plan</plan>
+            <plan>[PLAN]
             """
             _logger.info(PLAN)
             if steps>1:
@@ -151,14 +152,17 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             """
             if SPECIALIST=='Yes':
                 """
-                In a few words, explain which specialists you think would be best for this and why based on their descriptions. Fit your reasoning on a single line and do not start any new lines.
+                In a few words, explain which specialists you think would be best for this and why based on their descriptions.
+                Put your reasoning in reasoning tags `<reasoning>your reasoning</reasoning>
                 [REASONING]
 
                 In a few words, explain what you are doing now and why.
                 Be as terse as possible and speak directly to the user using general terms.
-                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`. Fit your response on a single line and do not start any new lines.:
-                [USER_REASONING]"""
-                thought = Thought(utterance=USER_REASONING, parent=parent)
+                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
+                Put your response in response tags `<response>your response to the user</response>
+                <response>[USER_REASONING]"""
+                _logger.info(REASONING)
+                thought = Thought(utterance=USER_REASONING.strip('</response>'), parent=parent)
                 await args.queue.put(ChatRollupWrapper(thought))
                 parent = thought
                 """
@@ -169,9 +173,9 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
-                <task>[TASK]task>
+                <task>[TASK]
                 """
-                task = Action(utterance=TASK.strip('</'), parent=parent)
+                task = Action(utterance=TASK.strip('</task>'), parent=parent)
                 parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
@@ -201,7 +205,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                         await args.queue.put(ChatRollupWrapper(result, steps))
                         break
             else:
-                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
+                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation. If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
                 Answer: [ANSWER]"""
                 answer = Answer(utterance=ANSWER, parent=parent)
                 await args.queue.put(ChatRollupWrapper(answer, steps))
@@ -214,8 +218,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
         CLARIFY in ['Yes', 'No'] and
-        STOPS_AT(TASK, '</') and
-        STOPS_AT(PLAN, '\n') and
-        STOPS_AT(REASONING, '\n') and
-        STOPS_AT(USER_REASONING, '\n')
+        STOPS_AT(TASK, '</task>') and
+        STOPS_AT(PLAN, '</plan>') and
+        STOPS_AT(REASONING, '</reasoning>') and
+        STOPS_AT(USER_REASONING, '</response>')
     '''
