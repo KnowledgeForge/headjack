@@ -129,7 +129,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             Describe a high-level plan to continue to respond to the user. 
             You should be able to describe in less than 200 words and describe the order of all agents you will use. Only describe the agents you will use if you will use them to respond now.
             Only plan for tasks necessary to repond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
-            If you plan to use specialists, use only the narrowest set most likely only 1 or 2 agents are needed if any.
+            If you plan to use specialists, ensure they are the most specifically dedicated to fulfilling the user's request and the most specific.
             Put your plan in plan tags `<plan>your plan</plan>
             <plan>[PLAN]
             """
@@ -154,7 +154,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 """
                 In a few words, explain which specialists you think would be best for this and why based on their descriptions.
                 Put your reasoning in reasoning tags `<reasoning>your reasoning</reasoning>
-                [REASONING]
+                <reasoning>[REASONING]
 
                 In a few words, explain what you are doing now and why.
                 Be as terse as possible and speak directly to the user using general terms.
@@ -175,7 +175,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]
                 """
-                task = Action(utterance=TASK.strip('</task>'), parent=parent)
+                task = Action(utterance=TASK.strip('</'), parent=parent)
                 parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
