@@ -103,13 +103,13 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             User: yes
             Action: ...uses knowledge search...
         #END OF EXAMPLE INFORMATION TO IGNORE
-    
+
         To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
         The specialists at your disposal are the following. Use them EXACTLY as their descriptions direct.:
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-        
+
         Conversation:
         """
         convo = dedent(args.question.convo())
@@ -125,11 +125,14 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         while args.max_steps>steps:
             steps+=1
             """
-            Consider the conversation history, the latest user message, and the specialists at your disposal. 
-            Describe a high-level plan to continue to respond to the user. 
-            You should be able to describe in less than 200 words and describe the order of all agents you will use. Only describe the agents you will use if you will use them to respond now.
+            Consider the conversation history, the latest user message, and the specialists at your disposal.
+            Describe a high-level plan to continue to respond to the user.
+            If the user is asking a question or telling you to do something and you cannot directly answer the user from the information already above you MUST use at least one specialist.
+            You should be able to describe in less than 200 words and describe the order of all agents you will use.
+            Only describe the agents you will use if you will use them to respond now.
             Only plan for tasks necessary to repond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
             If you plan to use specialists, ensure they are the most specifically dedicated to fulfilling the user's request and the most specific.
+            Do not use irrelevant specialists. Follow the agent descriptions exactly.
             Put your plan in plan tags `<plan>your plan</plan>
             <plan>[PLAN]
             """
@@ -147,22 +150,21 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                     await args.queue.put(ChatRollupWrapper(response, steps))
                     break
             """
-            Based on your plan and any additional information above, in particular information from dispatching specialists, do you need to dispatch a specialist to assist in continuing in your response?
-            Yes for specialist otherwise No.: [SPECIALIST]
+            Does your plan call for using a specialist? Yes or No.: [SPECIALIST]
             """
             if SPECIALIST=='Yes':
                 """
                 In a few words, explain which specialists you think would be best for this and why based on their descriptions.
-                Put your reasoning in reasoning tags `<reasoning>your reasoning</reasoning>
-                <reasoning>[REASONING]
+                Put your reasoning in reasoning tags `<logic>your reasoning</logic>
+                <logic>[REASONING]
 
-                In a few words, explain what you are doing now and why.
-                Be as terse as possible and speak directly to the user using general terms.
+                In a few words, explain what you are doing now and why. Keep it short and sweet.
+                Speak directly to the user using general terms.
                 If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
-                Put your response in response tags `<response>your response to the user</response>
-                <response>[USER_REASONING]"""
+                Put your response in response tags `<logic>your logic response directly to the user</logic>
+                <logic>[USER_REASONING]"""
                 _logger.info(REASONING)
-                thought = Thought(utterance=USER_REASONING.strip('</response>'), parent=parent)
+                thought = Thought(utterance=USER_REASONING.strip('</logic>'), parent=parent)
                 await args.queue.put(ChatRollupWrapper(thought))
                 parent = thought
                 """
@@ -175,7 +177,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be sure to include all the necessary information so long as it is from the above.
                 <task>[TASK]
                 """
-                task = Action(utterance=TASK.strip('</'), parent=parent)
+                task = Action(utterance=TASK.strip('</task>'), parent=parent)
                 parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
@@ -205,7 +207,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                         await args.queue.put(ChatRollupWrapper(result, steps))
                         break
             else:
-                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation. If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
+                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
                 answer = Answer(utterance=ANSWER, parent=parent)
                 await args.queue.put(ChatRollupWrapper(answer, steps))
@@ -213,13 +215,13 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         for i in range(1+args.max_steps-steps):
             await args.queue.put(ChatRollupWrapper(None, steps+1+i))
     from
-        "openai/text-davinci-003"
+        "chatgpt"
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
         CLARIFY in ['Yes', 'No'] and
         STOPS_AT(TASK, '</task>') and
         STOPS_AT(PLAN, '</plan>') and
-        STOPS_AT(REASONING, '</reasoning>') and
-        STOPS_AT(USER_REASONING, '</response>')
+        STOPS_AT(REASONING, '</logic>') and
+        STOPS_AT(USER_REASONING, '</logic>')
     '''
