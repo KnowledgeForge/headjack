@@ -2,8 +2,9 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
-from typing import AsyncGenerator, List, Optional, cast, Dict
-from uuid import UUID, uuid4 # noqa: F401
+from typing import AsyncGenerator, Dict, List, Optional, cast
+from uuid import UUID, uuid4  # noqa: F401
+
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
@@ -64,15 +65,15 @@ async def chat_agent(
         if response.agent_id is None:
             yield response.utterance
             continue
-        async_buffer[response.agent_id]=async_buffer.get(response.agent_id, [])+[cast(Utterance, response.utterance)]
+        async_buffer[response.agent_id] = async_buffer.get(response.agent_id, []) + [cast(Utterance, response.utterance)]
         temp = []
         for utterance_list in async_buffer.values():
-            if working_index>=len(utterance_list):
+            if working_index >= len(utterance_list):
                 break
             temp.append(utterance_list[working_index])
-        if len(temp)!=n_async:
+        if len(temp) != n_async:
             continue
-        
+
         if all((res is None for res in temp)):  # all agent paths completed already
             yield None
             break
@@ -119,7 +120,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
         If you ever refer to a specialist agent in a message for the user such as `some_agent` put it in tags `<agent>some_agent</agent>`.
-        
+
         Conversation:
         """
         convo = dedent(args.question.convo())
@@ -235,6 +236,6 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         STOPS_AT(TASK, '</task>') and
         STOPS_AT(PLAN, '</plan>') and
         STOPS_AT(REASONING, '</logic>') and
-        STOPS_AT(USER_REASONING, '</logic>') and 
+        STOPS_AT(USER_REASONING, '</logic>') and
         STOPS_AT(CLARIFICATION, '</response>')
     '''
