@@ -2,8 +2,8 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
-from typing import AsyncGenerator, List, Optional, cast
-
+from typing import AsyncGenerator, List, Optional, cast, Dict
+from uuid import UUID, uuid4 # noqa: F401
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
@@ -40,7 +40,7 @@ class ChatAgentArgs:
 @dataclass
 class ChatRollupWrapper:
     utterance: Optional[Utterance]
-    queue_index: Optional[int] = None
+    agent_id: UUID
 
 
 async def chat_agent(
@@ -50,7 +50,7 @@ async def chat_agent(
     agent_consistency: Consistency = Consistency.OFF,
 ) -> AsyncGenerator[Optional[Utterance], None]:
     n_async = Consistency.map(chat_consistency)[0]
-    async_buffer: List[List[Utterance]] = [[] for _ in range(max_steps)]
+    async_buffer: Dict[UUID, List[Utterance]] = {}
     working_index = 0
     queue: asyncio.Queue[ChatRollupWrapper] = asyncio.Queue()
     asyncio.create_task(
@@ -61,22 +61,31 @@ async def chat_agent(
 
     while True:
         response = await queue.get()
-        if response.queue_index is None:
+        if response.agent_id is None:
             yield response.utterance
             continue
-        async_buffer[response.queue_index].append(cast(Utterance, response.utterance))
-        if len(async_buffer[working_index]) == n_async:
-            if all((res is None for res in async_buffer[working_index])):  # all agent paths completed already
-                yield None
+        async_buffer[response.agent_id]=async_buffer.get(response.agent_id, [])+[cast(Utterance, response.utterance)]
+        temp = []
+        for utterance_list in async_buffer.values():
+            if working_index>=len(utterance_list):
                 break
-            fin = await consolidate_responses(  # otherwise rollup the utterances which were not None to a consensus or best utterance
-                add_source_to_utterances(
-                    [res for res in async_buffer[working_index] if res is not None],
-                    "chat_agent",
-                ),
-            )
-            yield fin
-            working_index += 1
+            temp.append(utterance_list[working_index])
+        if len(temp)!=n_async:
+            continue
+        
+        if all((res is None for res in temp)):  # all agent paths completed already
+            yield None
+            break
+
+        fin = await consolidate_responses(  # otherwise rollup the utterances which were not None to a consensus or best utterance
+            add_source_to_utterances(
+                [res if res is not None else Response(utterance="None") for res in temp],
+                "chat_agent",
+            ),
+        )
+
+        yield fin
+        working_index += 1
 
 
 @lmql.query
@@ -109,7 +118,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-
+        If you ever refer to a specialist agent in a message for the user such as `some_agent` put it in tags `<agent>some_agent</agent>`.
+        
         Conversation:
         """
         convo = dedent(args.question.convo())
@@ -120,6 +130,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         CONVERSATION:
         {convo}
         """)
+        agent_id = uuid4()
         steps = -1
         parent = args.question
         while args.max_steps>steps:
@@ -131,24 +142,13 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
             You should be able to describe in less than 200 words and describe the order of all agents you will use.
             Only describe the agents you will use if you will use them to respond now.
             Only plan for tasks necessary to repond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
-            If you plan to use specialists, ensure they are the most specifically dedicated to fulfilling the user's request and the most specific.
+            If you plan to use specialists, ensure they are the most specifically dedicated to fulfilling the user's request and the narrowest set of agents possible that can accomplish all tasks.
             Do not use irrelevant specialists. Follow the agent descriptions exactly.
             Put your plan in plan tags `<plan>your plan</plan>
             <plan>[PLAN]
             """
             _logger.info(PLAN)
-            if steps>1:
-                """
-                Based on your plan and any additional information above, do you need to ask any clarifying questions? You will need to explain to the user why you are asking and how you will use the information to help them.
-                Yes for clarifying information otherwise No.: [CLARIFY]
-                """
-                if CLARIFY=='Yes':
-                    "Ask and explain your question as tersely as possible:"
-                    "[CLARIFICATION]"
-                    response = Response(utterance=CLARIFICATION, parent=parent)
-                    parent = response
-                    await args.queue.put(ChatRollupWrapper(response, steps))
-                    break
+
             """
             Does your plan call for using a specialist? Yes or No.: [SPECIALIST]
             """
@@ -158,6 +158,17 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Put your reasoning in reasoning tags `<logic>your reasoning</logic>
                 <logic>[REASONING]
 
+                Based on your plan and any additional information above, do you need to ask any clarifying questions or whether the user would like something more done? You will need to explain to the user why you are asking and how you will use the information to help them.
+                Yes for clarifying information otherwise No.: [CLARIFY]
+                """
+                if CLARIFY=='Yes':
+                    "Ask and explain your question as tersely as possible in <response>your question and explanation for the user</response>: "
+                    "<response>[CLARIFICATION]\n"
+                    response = Response(utterance=CLARIFICATION.strip('</response>'), parent=parent)
+                    parent = response
+                    await args.queue.put(ChatRollupWrapper(response, agent_id))
+                    break
+                """
                 In a few words, explain what you are doing now and why. Keep it short and sweet.
                 Speak directly to the user using general terms.
                 If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
@@ -165,7 +176,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 <logic>[USER_REASONING]"""
                 _logger.info(REASONING)
                 thought = Thought(utterance=USER_REASONING.strip('</logic>'), parent=parent)
-                await args.queue.put(ChatRollupWrapper(thought))
+                await args.queue.put(ChatRollupWrapper(thought, agent_id))
                 parent = thought
                 """
                 The agent that seems best suited to handle this part of your plan is: [AGENT]
@@ -187,33 +198,34 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 """
                 result_str = str(result)[:500]
                 if SPECIALIST=='Yes':
-                    await args.queue.put(ChatRollupWrapper(result, steps))
+                    await args.queue.put(ChatRollupWrapper(result, agent_id))
                     "The {AGENT} gave this (shown here truncated to the first 500 chars)\n"
                     "{result_str}\n"
                     continue
 
                 if result.direct_response:
-                    await args.queue.put(ChatRollupWrapper(result, steps))
+                    await args.queue.put(ChatRollupWrapper(result, agent_id))
                     break
                 "Is the result of this {AGENT} the final part of your response to the user according to your plan? Yes or No.: [IS_DIRECT]"
                 if IS_DIRECT=='Yes':
-                    await args.queue.put(ChatRollupWrapper(result, steps))
+                    await args.queue.put(ChatRollupWrapper(result, agent_id))
                     break
                 else:
                     "(result shown here truncated to the first 500 chars)\n"
                     "{result_str}\n"
                     "Seeing this part of the result, is it likely it should be a direct response to the user's message? Yes or No.: [IS_DIRECT]"
                     if IS_DIRECT=='Yes':
-                        await args.queue.put(ChatRollupWrapper(result, steps))
+                        await args.queue.put(ChatRollupWrapper(result, agent_id))
                         break
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
                 Answer: [ANSWER]"""
                 answer = Answer(utterance=ANSWER, parent=parent)
-                await args.queue.put(ChatRollupWrapper(answer, steps))
+                await args.queue.put(ChatRollupWrapper(answer, agent_id))
                 break
-        for i in range(1+args.max_steps-steps):
-            await args.queue.put(ChatRollupWrapper(None, steps+1+i))
+        for i in range(100):
+            await args.queue.put(ChatRollupWrapper(None, agent_id))
+        "{uuid4()}"
     from
         "chatgpt"
     where
@@ -223,5 +235,6 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         STOPS_AT(TASK, '</task>') and
         STOPS_AT(PLAN, '</plan>') and
         STOPS_AT(REASONING, '</logic>') and
-        STOPS_AT(USER_REASONING, '</logic>')
+        STOPS_AT(USER_REASONING, '</logic>') and 
+        STOPS_AT(CLARIFICATION, '</response>')
     '''
