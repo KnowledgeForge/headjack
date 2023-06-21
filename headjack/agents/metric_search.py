@@ -32,7 +32,7 @@ async def search_for_metrics(q, n: int = 5):
 
 @register_agent_function(
     """This function takes a query to search for some metric which DEFINES something like an average, total, etc. over some data.
-    This is NOT an agent for calculation.""",
+    This is NOT an agent for calculation nor is it needed before running a calculation. It is used only for discovering metrics.""",
 )
 async def metric_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
     return await consolidate_responses(add_source_to_utterances(await _metric_search_agent(question, n, temp), "metric_search_agent"))  # type: ignore

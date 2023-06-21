@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any, Generator, Optional, Set, Type, Union
 from uuid import uuid4
 
@@ -39,13 +40,24 @@ class Utterance(BaseModel):
     def convo(
         self,
         n: Optional[int] = None,
-        exlude_utterances: Optional[Set[Type["Utterance"]]] = None,
+        truncate_utterances: Optional[Set[Type["Utterance"]]] = None,
+        truncation_length: int = 150,
     ) -> str:
         history = []
         n = n or float("inf")  # type: ignore
-        utterance_kinds = set(Utterance.__subclasses__()) - (exlude_utterances or set())
         for utterance in self.history():
-            if type(utterance) in utterance_kinds:
+            if truncate_utterances is None or type(utterance) in truncate_utterances:
+                utterance_strs = re.split(r"[' ']+", str(utterance.utterance).replace("\n", " \n"))
+                if len(utterance_strs) > truncation_length:
+                    utterance_str = utterance.marker.replace(':', ' (truncated):') + " ".join(
+                        utterance_strs[: truncation_length // 2]
+                        + ["..."]
+                        + utterance_strs[-(truncation_length // 2) :],  # noqa: E203
+                    )
+                else:
+                    utterance_str = str(utterance)
+                history.append(utterance_str)
+            else:
                 history.append(utterance)
             if len(history) == n:
                 break
@@ -108,3 +120,6 @@ class StructuredAnswer(Utterance):
 class Response(Utterance):
     utterance: str
     marker = "Response: "
+
+
+UTTERANCES = {User, Observation, Action, Thought, Answer, StructuredAnswer, Response}

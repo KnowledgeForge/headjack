@@ -1,8 +1,9 @@
-import numpy as np
-from sentence_transformers import SentenceTransformer
+from typing import List
+
+from sentence_transformers import SentenceTransformer, util
 
 
-def semantic_sort(query, items, top_n=None):
+def semantic_sort(query: str, items: List[str], top_n: int = None) -> List[str]:
     """
     Sorts a list of strings by semantic similarity to a given query, using the Sentence Transformers library and the
     'sentence-transformers/all-MiniLM-L6-v2' pre-trained model.
@@ -20,17 +21,15 @@ def semantic_sort(query, items, top_n=None):
     # Load pre-trained language model
     model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    # Generate embeddings for query and items
+    # Encode query and items
     query_embedding = model.encode(query, convert_to_tensor=True)
     item_embeddings = model.encode(items, convert_to_tensor=True)
 
     # Calculate cosine similarity between query embedding and item embeddings
-    similarities = np.dot(query_embedding, item_embeddings.T) / (
-        np.linalg.norm(query_embedding) * np.linalg.norm(item_embeddings, axis=1)
-    )
+    cos_scores = util.cos_sim(query_embedding, item_embeddings)[0]
 
     # Sort items by similarity
-    sorted_pairs = sorted(zip(similarities, items), reverse=True)
+    sorted_pairs = sorted(zip(cos_scores, items), reverse=True)
     if top_n:
         sorted_pairs = sorted_pairs[:top_n]
     sorted_items = [item for _, item in sorted_pairs]
