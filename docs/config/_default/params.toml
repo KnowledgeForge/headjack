@@ -31,9 +31,9 @@ keywords = ["Headjack", "LLM", "NLP"]
   [home.profile]
     enable = true
     gravatarEmail = ""
-    avatarURL = "/images/headjack4_transparent_background.png"
+    avatarURL = "/images/headjack-logo.png"
     title = "Headjack"
-    subtitle = "An open-source platform for leveraging language models."
+    subtitle = "An open-source human interface to enterprise data."
     typeit = false
     social = true
     disclaimer = ""
@@ -41,8 +41,7 @@ keywords = ["Headjack", "LLM", "NLP"]
     enable = true
     paginate = 7
 [social]
-  GitHub = "https://github.com/CircArgs/headjack"
-  RSS = true
+  GitHub = "KnowledgeForge/headjack"
 [footer]
   enable = false
   custom = ''
