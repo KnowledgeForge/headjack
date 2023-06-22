@@ -40,20 +40,20 @@ async def people_search_agent(question: Utterance, n: int = 1, temp: float = 0.0
 async def _people_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Observation]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp)
-        "Given the following question or topic, use a term to search for people in the human resource system and create a list of people. "
-        "Use terms that would be found in a the job description of the person in the human resource system. That will help you find the people "
-        "that are most likely the right person to reach out to in order to answer the question or learn more about the topic."
+        "Given the following question or topic, use a comma-separated set of terms to search for people in the human resource system and create a list of people. "
+        "Use terms that would be found in a the job description and/or bio of the person in the human resource system. That will help you find people "
+        "that are most likely right people to reach out to in order to answer the question or learn more about the topic."
         "\n"
         "Question/Topic: {question.utterance}\n"
-        "Action: Let's search for the term '[TERM]\n"
+        "Action: Let's search for the terms [TERM]\n"
         result = await search_for_people(TERM)
         if result == 'No results':
-            return Response(utterance=result, parent_ = question)
+            return Response(utterance="There were no people found for `{question.utterance}`.", parent_ = question)
         "Result: {result}\n"
         "Final Answer:[ANSWER]\n"
-        return Observation(utterance={"summary": ANSWER, "people": result}, parent_ = question)
+        return Answer(utterance=ANSWER, metadata = {"people": result}, parent_ = question)
     FROM
         "chatgpt"
     WHERE
-        STOPS_AT(TERM, "'")
+        STOPS_AT(TERM, "\n")
     '''

@@ -124,19 +124,20 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
         _logger.info(f"Found metrics `{metric_results}`.")
         "A semantic search returned the following metrics.\n"
-        "<Metric Results>\n"
+        "<MetricResults>\n"
         "{metric_results}"
-        "\n</Metric Results>\n"
+        "\n</MetricResults>\n"
 
         selected_metrics=[]
         for term in terms:
-            "Is there a metric that appears to match '{term}'? [YESNO]"
+            "Explain in just a few words from these MetricResults which seem most likely to match '{term}' and why: [EXPLAIN]\n"
+            "Now, based on this explanation - Yes or No - Is there a metric for '{term}' from the MetricResults that seems similar enough or synonomous to be used to calculate it? [YESNO]"
             if YESNO=='Yes':
                 ", [METRIC].\n"
                 if METRIC not in selected_metrics:
                     selected_metrics.append(METRIC)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         _logger.info(f"Decided metrics `{selected_metrics}`.")
@@ -147,7 +148,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "\nThere are no shared dimensions for these metrics.\n"
             else:
                 "\nThere are no dimensions for this metric.\n"
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics you may have considered.\n"
             "Response: [RESPONSE]"
             return Response(utterance=RESPONSE, parent = question)
 
@@ -179,7 +180,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         _logger.info(f"Determined orderings of `{orderbys}`.")
 
         limit = None
-        "Does the user query '{question}' suggest there needs to be a limit? [YESNO]\n"
+        "Does the user query '{question}' suggest there needs to be a limit? Yes or No. [YESNO]\n"
         if YESNO=='Yes':
             _logger.info(f"Decided there needs to be a limit.")
             "The limit is <limit type=integer>[LIMIT]limit>\n"
@@ -216,11 +217,12 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             temp_dims=semantic_sort(term, common_dimensions, 10)
             dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
             """
-        <Dimensions terms={term}>
+        <DimensionOptions terms={term}>
         {dim_options}
-        </Dimensions>
+        </DimensionOptions>
             """
-            "\nIs there a dimension that that could be used for aggregating '{term}': [YESNO]"
+            "\nExplain in just a few words from these DimensionOptions which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nNow, based on this explanation - Yes or No - Is there a dimension from these DimensionOptions that appears similar enough to be used for aggregating '{term}'?: [YESNO]"
 
             if YESNO=='Yes':
                 for dim in list(_dimensions):
@@ -233,7 +235,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "\nExplain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and the dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
@@ -246,7 +248,8 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {dim_options}
         </OrderbyOptions>
             """
-            "\nIs there a dimension or selected metric from this list that could be used for ordering '{term}': [YESNO]"
+            "\nExplain in just a few words from these OrderbyOptions or one of your selected metrics (reminder: you have selected {selected_metrics}) which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nNow, based on this explanation - Yes or No - Is there a dimension from OrderbyOptions or a selected metric (reminder: you have selected {selected_metrics}) that appears similar enough to be used for ordering '{term}'?: [YESNO]"
             if YESNO=='Yes':
                 for dim in list(_dimensions):
                     _dimensions.remove(dim)
@@ -259,7 +262,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         selected_filters=[]
@@ -271,7 +274,8 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {dim_options}
         </FilterOptions >
             """
-            "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
+            "\nExplain in just a few words from these FilterOptions which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nAre there any dimensions from FilterOptions that appears similar enough to be used to filter '{term}'? Yes or No.: [YESNO]"
             if YESNO=='Yes':
                 for dim in list(_dimensions):
                     _dimensions.remove(dim)
@@ -295,14 +299,16 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 selected_filters.append(FILTER.split('</')[0])
                 _logger.info(f"Adding filter `{selected_filters[-1]}`.")
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
         results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
         if results == "Cannot calculate metric":
-            return Response(utterance=results, parent = question)
-        return Observation(utterance=results, parent = question)
+            return Response(utterance="There was a problem with the metric service, so I cannot calculate `{question.utterance}`.", parent = question)
+        "The metrics have been calculated. Explain in a few words all that you have done to complete this request.\n"
+        "[RESPONSE]"
+        return Observation(utterance=RESPONSE, metadata = results, parent = question)
 
     from
         "chatgpt"

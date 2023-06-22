@@ -103,7 +103,12 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
 
             Example interaction:
             User: what is the total sales for the products
-            Plan: The user has asked for something that sounds like a computable value and so I will dispatch the metric_calculate_agent.
+            Plan: The user has asked for something that sounds like a computable value and so I will dispatch the <agent>metric_calculate_agent</agent>.
+            Action: ...
+
+            Example interaction:
+            User: Find the average repair cost by company and then plot it with a bar plot with red and pink.
+            Plan: The <agent>metric_calculate_agent</agent> will calculate the average repair cost by company and then the <agent>plot_data_agent</agent> will make a bar plot with red and pink bars.
             Action: ...
 
             Example interaction:
@@ -119,7 +124,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-        If you ever refer to a specialist agent in a message for the user such as `some_agent` put it in tags `<agent>some_agent</agent>`.
+        If you ever refer to a specialist agent in a message for the user put it in tags like this: <agent>some_agent</agent>.
 
         Conversation:
         """
@@ -171,8 +176,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                     break
                 """
                 In a few words, explain what you are doing now and why. Keep it short and sweet.
-                Speak directly to the user using general terms.
-                If you refer to a specialist agent such as `some_agent` put it in tags `<agent>some_agent</agent>`.
+                Speak directly to the user using general terms. This is not a time to ask questions.
+                If you refer to a specialist agent put it in tags for example <agent>chosen agent</agent>.
                 Put your response in response tags `<logic>your logic response directly to the user</logic>
                 <logic>[USER_REASONING]"""
                 _logger.info(REASONING)
@@ -219,7 +224,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                         await args.queue.put(ChatRollupWrapper(result, agent_id))
                         break
             else:
-                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation.
+                """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation. Avoid repetition except to summarize.
                 Answer: [ANSWER]"""
                 answer = Answer(utterance=ANSWER, parent=parent)
                 await args.queue.put(ChatRollupWrapper(answer, agent_id))
