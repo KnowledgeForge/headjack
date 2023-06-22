@@ -1,6 +1,6 @@
 [submodule "docker/chroma"]
   path = docker/chroma
-  url = git@github.com:chroma-core/chroma.git
+  url = https://github.com/chroma-core/chroma.git
 [submodule "docs/themes/DoIt"]
 	path = docs/themes/DoIt
-	url = git@github.com:HEIGE-PCloud/DoIt.git
+	url = https://github.com/HEIGE-PCloud/DoIt.git
