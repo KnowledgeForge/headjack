@@ -317,7 +317,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             return Response(utterance="There was a problem with the metric service, so I cannot calculate `{question.utterance}`.", parent = question)
         "The metrics have been calculated. Briefly explain in less than 75 words on a single line to the user all that you have done to complete this request.\n"
         "Response: [RESPONSE]"
-        return Observation(utterance=RESPONSE, metadata = results, parent = question)
+        return Observation(utterance=RESPONSE, metadata = results, parent = question, notes="I have stored the data in the workspace for other agents to acquire as needed.")
 
     from
         "chatgpt"
