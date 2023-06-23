@@ -18,7 +18,6 @@ class Utterance(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     marker: Optional[str] = Field(default="")
     source: Optional[str] = None
-    direct_response: bool = False
     metadata: Optional[dict] = None
     notes: str = ""
 
@@ -58,7 +57,7 @@ class Utterance(BaseModel):
                     )
                 else:
                     utterance_str = str(utterance)
-                history.append(utterance_str+(f" Note (users should never see note information): {utterance.notes}") if utterance.notes else "")
+                history.append(utterance_str+(f" Note (users should never see note information): {utterance.notes}" if utterance.notes else ""))
             else:
                 history.append(utterance)
             if len(history) == n:

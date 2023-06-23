@@ -12,6 +12,7 @@ from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
 from headjack.models.utterance import Observation, Response, Utterance
 from headjack.utils import fetch
+from headjack.utils.basic import strip_whole
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
@@ -61,9 +62,10 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 
 
 @register_agent_function(
-    """This agent takes a question that requests a numeric value (e.g. metric)
+    """
+This agent takes a question that requests a numeric value (e.g. metric)
 that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
-This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own.
+**IMPORTANT: This agent is fully capable, you do not need to search for or otherwise provide a specific metric or data to this agent as it will determine everything necessary to complete your request on its own.**
 Use this for questions like:
     calculate the average...
     find the total...
@@ -91,9 +93,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         You must extract the necessary information from the user's query for the api request.
         User: {question.utterance}
 
-        First, reason about the user's query. What kind of metrics are there? Are there any things that would require grouping? Is ordering specified or is it required to use with a limit? Are there any filters? Answer these questions and explain your rationale.
-        Fit your reasoning on a single line.
-        [REASONING]
+        First, reason about the user's query. What are the metrics? Are there any groupings - put them in a numbered list? Is ordering specified or is it required to use with a limit - put them in a numbered list? Are there any filters - put them in a numbered list? Answer these questions and explain your rationale.
+        Put your reasoning in reasoning tags `<logic>your reasoning</logic>
+        <logic>[REASONING]logic>
         """
         _logger.info(f"Reasoning `{REASONING}`.")
         """
@@ -157,7 +159,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of group bys or aggregations from the user query '{question}'.
         Thought: There's [GROUPBY_COUNT] group by dimension(s).
-        List the terms that describe each group by.
+        """
+        """
+        List the terms that describe each group by. Be certain that you split your lists of terms onto new lines. This means you will have {GROUPBY_COUNT} lines of terms.
         <Group By>
         """
         groupbys=[]
@@ -169,7 +173,10 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of order bys or sortings from the user query '{question}'. You only need to order if it is obvious from the query.
         Thought: There's [ORDER_COUNT] order by dimension(s).
-        List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending.
+        """
+        """
+        List the terms that describe each orderby. Be certain that you split your lists of terms onto new lines. This means you will have {ORDER_COUNT} lines of terms.
+        Include in the terms some description of whether it should be ascending or descending.
         <Order By>
         """
         orderbys=[]
@@ -184,7 +191,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         if YESNO=='Yes':
             _logger.info(f"Decided there needs to be a limit.")
             "The limit is <limit type=integer>[LIMIT]limit>\n"
-            limit = int(LIMIT.strip('</'))
+            limit = int(strip_whole(LIMIT, '</'))
             _logger.info(f"Deciding to limit to `{limit}` results.")
         else:
             _logger.info(f"Decided there does NOT need to be a limit.")
@@ -203,7 +210,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {filter_consideration}
         With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
         Thought: There's still [FILTER_COUNT] filter(s) needed.
-        Describe each filter.
+        """
+        """
+        Describe each filter. Be certain that you split your lists of terms onto new lines. This means you will have {FILTER_COUNT} lines of terms.
         <Filter By>
         """
         filters=[]
@@ -306,8 +315,8 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
         if results == "Cannot calculate metric":
             return Response(utterance="There was a problem with the metric service, so I cannot calculate `{question.utterance}`.", parent = question)
-        "The metrics have been calculated. Explain in a few words all that you have done to complete this request.\n"
-        "[RESPONSE]"
+        "The metrics have been calculated. Briefly explain in less than 75 words on a single line to the user all that you have done to complete this request.\n"
+        "Response: [RESPONSE]"
         return Observation(utterance=RESPONSE, metadata = results, parent = question)
 
     from
@@ -319,7 +328,6 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         STOPS_AT(ORDERBY_TERM, "\n") and
         STOPS_AT(FILTER_TERM, "\n") and
         STOPS_AT(RESPONSE, "\n") and
-        len(RESPONSE)<300 and
         STOPS_AT(FILTER, "</") and
         STOPS_AT(LIMIT, "</") and
         METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and

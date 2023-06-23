@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
 from typing import AsyncGenerator, Dict, List, Optional, cast
 from uuid import UUID, uuid4  # noqa: F401
-
+from headjack.utils.basic import strip_whole
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
@@ -96,27 +96,33 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         """You are to play a chatbot named HeadJack that takes a conversation between you and a User and continues the conversation appropriately.
 
         # DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
-            Example interaction:
-            User: what are you capable of?/what can you help me with?/how can you help me?
-            Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
-            Answer: I have access to several specialist agents...
-
-            Example interaction:
-            User: what is the total sales for the products
-            Plan: The user has asked for something that sounds like a computable value and so I will dispatch the <agent>metric_calculate_agent</agent>.
-            Action: ...
-
-            Example interaction:
-            User: Find the average repair cost by company and then plot it with a bar plot with red and pink.
-            Plan: The <agent>metric_calculate_agent</agent> will calculate the average repair cost by company and then the <agent>plot_data_agent</agent> will make a bar plot with red and pink bars.
-            Action: ...
-
-            Example interaction:
-            User: is there any information about the company dj roads?
-            Plan: I will check with the knowledge search agent, but there may be information in the user messages so I will clarify with the user if I should search messages as well.
-            Response: Should I search the message system in addition to the knowledge repository?
-            User: yes
-            Action: ...uses knowledge search...
+        #    Example interaction:
+        #    User: what are you capable of?/what can you help me with?/how can you help me?
+        #    Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
+        #    Answer: I have access to several specialist agents including (agent)____(/agent)...
+        #
+        #    Example interaction:
+        #    User: what is the total sales for the products
+        #    Plan: The user has asked for something that sounds like a computable value and so I will dispatch the (agent)metric_calculate_agent(/agent).
+        #    Action: ...
+        #
+        #    Example interaction:
+        #    User: Find the average repair cost by company and then plot it with a bar plot with red and pink.
+        #    Plan: The (agent)metric_calculate_agent(/agent) will calculate the average repair cost by company and then the (agent)plot_data_agent(/agent) will make a bar plot with red and pink bars.
+        #    Action: ...
+        #
+        #    Example interaction:
+        #    ...
+        #    User: make a bar chart of the data 
+        #    Plan: Looking in the conversation history, I can see I have previously dispatched an agent that calculates things. I will dispatch (agent)plot_data_agent(/agent) who will handle discovering the actual data from earlier in the conversation perform the plotting on its own.
+        #    Action: ...
+        #
+        #    Example interaction:
+        #    User: is there any information about the company dj roads?
+        #    Plan: I will check with the knowledge search agent, but there may be information in the user messages so I will clarify with the user if I should search messages as well.
+        #    Response: Should I search the message system in addition to the knowledge repository?
+        #    User: yes
+        #    Action: ...uses knowledge search...
         #END OF EXAMPLE INFORMATION TO IGNORE
 
         To aid you in responding to the user, you have access to several helpful specialist AI agents that can help with tasks or questions you dispatch to them.
@@ -124,9 +130,10 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         {dispatchable_agents}
 
         If a specialist is unable to complete a task at any time, consider whether to stop or simply report the issue to the user.
-        If you ever refer to a specialist agent in a message for the user put it in tags like this: <agent>some_agent</agent>.
+        If you ever refer to a specialist agent in a message for the user put it in tags like this: (agent)some_agent(/agent).
 
-        Conversation:
+
+        Official Conversation:
         """
         convo = dedent(args.question.convo())
         """
@@ -142,16 +149,17 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         while args.max_steps>steps:
             steps+=1
             """
-            Consider the conversation history, the latest user message, and the specialists at your disposal.
-            Describe a high-level plan to continue to respond to the user.
+            Consider the official conversation history, the latest user message, and the specialists at your disposal.
+            Explain the user message and describe a high-level plan on how to formulate a response to the user.
             If the user is asking a question or telling you to do something and you cannot directly answer the user from the information already above you MUST use at least one specialist.
             You should be able to describe in less than 200 words and describe the order of all agents you will use.
             Only describe the agents you will use if you will use them to respond now.
-            Only plan for tasks necessary to repond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
+            Only plan for tasks necessary to respond to what is explicitly requested by the user UNLESS a task is required to to be completed to get to tasks that will ultimately fulfill the user's request.
             If you plan to use specialists, ensure they are the most specifically dedicated to fulfilling the user's request and the narrowest set of agents possible that can accomplish all tasks.
-            Do not use irrelevant specialists. Follow the agent descriptions exactly.
+            Do not use irrelevant specialists. Follow the agent descriptions exactly. You MUST explain what in the descriptions suggests their usage and contrast with a plan using a more limited set of specialists.
+            Using a specialist that is not suited to your task is a critical mistake that can result in catastrophic consequences.
             Put your plan in plan tags `<plan>your plan</plan>
-            <plan>[PLAN]
+            <plan>[PLAN]plan>
             """
             _logger.info(PLAN)
 
@@ -162,26 +170,15 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 """
                 In a few words, explain which specialists you think would be best for this and why based on their descriptions.
                 Put your reasoning in reasoning tags `<logic>your reasoning</logic>
-                <logic>[REASONING]
-
-                Based on your plan and any additional information above, do you need to ask any clarifying questions or whether the user would like something more done? You will need to explain to the user why you are asking and how you will use the information to help them.
-                Yes for clarifying information otherwise No.: [CLARIFY]
-                """
-                if CLARIFY=='Yes':
-                    "Ask and explain your question as tersely as possible in <response>your question and explanation for the user</response>: "
-                    "<response>[CLARIFICATION]\n"
-                    response = Response(utterance=CLARIFICATION.strip('</response>'), parent=parent)
-                    parent = response
-                    await args.queue.put(ChatRollupWrapper(response, agent_id))
-                    break
-                """
+                <logic>[REASONING]logic>
+                
                 In a few words, explain what you are doing now and why. Keep it short and sweet.
-                Speak directly to the user using general terms. This is not a time to ask questions.
-                If you refer to a specialist agent put it in tags for example <agent>chosen agent</agent>.
+                Speak directly to the user using general terms. Do not ask questions now.
+                If you refer to a specialist agent put it in tags for example (agent)chosen agent(/agent).
                 Put your response in response tags `<logic>your logic response directly to the user</logic>
-                <logic>[USER_REASONING]"""
+                <logic>[USER_REASONING]logic>"""
                 _logger.info(REASONING)
-                thought = Thought(utterance=USER_REASONING.strip('</logic>'), parent=parent)
+                thought = Thought(utterance=strip_whole(USER_REASONING, '</'), parent=parent)
                 await args.queue.put(ChatRollupWrapper(thought, agent_id))
                 parent = thought
                 """
@@ -192,37 +189,17 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
-                <task>[TASK]
+                <task>[TASK]task>
                 """
-                task = Action(utterance=TASK.strip('</task>'), parent=parent)
+                task = Action(utterance=strip_whole(TASK, '</'), parent=parent)
                 parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
                 result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
                 parent = result
-                """
-                The {AGENT} completed the task. Did your plan necessitate using any further specialists? Yes or No: [SPECIALIST]
-                """
-                result_str = str(result)[:500]
-                if SPECIALIST=='Yes':
-                    await args.queue.put(ChatRollupWrapper(result, agent_id))
-                    "The {AGENT} gave this (shown here truncated to the first 500 chars)\n"
-                    "{result_str}\n"
-                    continue
-
-                if result.direct_response:
-                    await args.queue.put(ChatRollupWrapper(result, agent_id))
-                    break
-                "Is the result of this {AGENT} the final part of your response to the user according to your plan? Yes or No.: [IS_DIRECT]"
-                if IS_DIRECT=='Yes':
-                    await args.queue.put(ChatRollupWrapper(result, agent_id))
-                    break
-                else:
-                    "(result shown here truncated to the first 500 chars)\n"
-                    "{result_str}\n"
-                    "Seeing this part of the result, is it likely it should be a direct response to the user's message? Yes or No.: [IS_DIRECT]"
-                    if IS_DIRECT=='Yes':
-                        await args.queue.put(ChatRollupWrapper(result, agent_id))
-                        break
+                await args.queue.put(ChatRollupWrapper(result, agent_id))
+                "The {AGENT} responded with the following\n"
+                "{result}\n\n"
+                "In a few words, explain how this reponse does or does not contribute to fulfilling your plan and whether you believe it changes your plan. [EXPLAIN]\n"
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation. Avoid repetition except to summarize.
                 Answer: [ANSWER]"""
@@ -237,10 +214,8 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
-        CLARIFY in ['Yes', 'No'] and
-        STOPS_AT(TASK, '</task>') and
-        STOPS_AT(PLAN, '</plan>') and
-        STOPS_AT(REASONING, '</logic>') and
-        STOPS_AT(USER_REASONING, '</logic>') and
-        STOPS_AT(CLARIFICATION, '</response>')
+        STOPS_AT(TASK, '</') and
+        STOPS_AT(PLAN, '</') and
+        STOPS_AT(REASONING, '</') and
+        STOPS_AT(USER_REASONING, '</')
     '''
