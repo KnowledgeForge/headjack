@@ -200,6 +200,9 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 "The {AGENT} responded with the following\n"
                 "{result}\n\n"
                 "In a few words, explain how this reponse does or does not contribute to fulfilling your plan and whether you believe it changes your plan. [EXPLAIN]\n"
+                "With this explanation in mind, do you need to dispatch to more specialists to complete your latest plan? Yes or No. [CONTINUE]\n"
+                if CONTINUE=='No':
+                    break
             else:
                 """Respond to the user in a few words (preferably less than 200) using information directly available to you in this conversation. Avoid repetition except to summarize.
                 Answer: [ANSWER]"""
@@ -214,6 +217,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
     where
         AGENT in [agent for agent in AGENT_REGISTRY.keys()] and
         SPECIALIST in ['Yes', 'No'] and
+        CONTINUE in ['Yes', 'No'] and
         STOPS_AT(TASK, '</') and
         STOPS_AT(PLAN, '</') and
         STOPS_AT(REASONING, '</') and
