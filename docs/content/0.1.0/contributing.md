@@ -23,7 +23,14 @@ to jump in and help!
 
 # Contributing Docs
 
-To run the headjack docs site locally, install hugo, change into the docs directory, then start up the hugo server.
+To run the headjack docs site locally, Make sure you have [Hugo](https://gohugo.io/installation/) installed.
+
+Pull down the [DoIt](https://github.com/HEIGE-PCloud/DoIt) theme which is included as a submodule.
+```sh
+git submodule update --init --recursive
+```
+
+Change into the docs directory, then start up the hugo server.
 ```sh
 cd docs
 hugo server --contentDir=content/0.1.0
