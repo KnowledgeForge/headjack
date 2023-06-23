@@ -2,7 +2,6 @@
 categories: ["docs"]
 weight: 10
 title: Getting Started
-authors: ["Headjack Devs"]
 tags: ["how-to", "integrations"]
 series: ["getting-started"]
 series_weight: 10
