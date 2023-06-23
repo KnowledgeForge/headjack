@@ -9,7 +9,8 @@ from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import consolidate_responses
-
+import asyncio
+from headjack.utils.basic import list_dedup
 _logger = logging.getLogger("uvicorn")
 
 
@@ -45,15 +46,35 @@ async def _people_search_agent(question: Utterance, n: int, temp: float) -> Unio
         "that are most likely right people to reach out to in order to answer the question or learn more about the topic."
         "\n"
         "Question/Topic: {question.utterance}\n"
-        "Action: Let's search for the terms [TERM]\n"
-        result = await search_for_people(TERM)
-        if result == 'No results':
-            return Response(utterance="There were no people found for `{question.utterance}`.", parent_ = question)
-        "Result: {result}\n"
-        "Final Answer:[ANSWER]\n"
-        return Answer(utterance=ANSWER, metadata = {"people": result}, parent_ = question)
+        "In just a few words on a single line, explain what the Question is asking: [EXPLAIN]"
+        "\nCreate several diverse queries that are likely to bring back people likely to be relevant based on the Question/Topic."
+        tasks = []
+        for i in range(3):
+            "Query: '[TERM]\n"
+            task = asyncio.create_task(search_for_people(TERM))
+            tasks.append(task)
+      
+        results = await asyncio.gather(*tasks)
+        results = list_dedup([doc for res in results for doc in res if res != 'No results'])
+        str_results = [str(doc) for doc in results]
+        
+        if not results:
+            return Response(utterance="There were no people found for `{question.utterance}`.", parent = question)
+        
+        knowledge = "\n\n".join(str_results)
+        """Here is the information from searching based on your queries.
+        
+        {knowledge}
+        
+        Some or all of these may be irrelvant towards replying to `{question.utterance}`.
+        If there are not relevant people, summarize what you found, but explain why you believe it is not relevant.
+        Summarize and explain all the information you found to the user including any recommendations on which people are most relevant to the Question/Topic.
+        Answer:[ANSWER]"""
+
+        return Answer(utterance=ANSWER, metadata = {"people": result}, parent = question)
     FROM
         "chatgpt"
     WHERE
-        STOPS_AT(TERM, "\n")
+        STOPS_AT(TERM, "\n") and
+        STOPS_AT(EXPLAIN, "\n")
     '''

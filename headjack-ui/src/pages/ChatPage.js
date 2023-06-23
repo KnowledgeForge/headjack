@@ -124,36 +124,52 @@ const MessageContent = ({ message }) => {
   }
 };
 
-const Pill = ({ children }) => (
-  <span className="bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2">
-    {children}
-  </span>
-);
+const TypeAnimationWithPills = ({ message }) => {
+  const [segments, setSegments] = useState([]);
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  const [currentSegment, setCurrentSegment] = useState("");
 
-const Message = ({ message }) => {
-  const segments = message.utterance.split(/(\(agent\).*?\(\/agent\))/g);
+  useEffect(() => {
+    const segments = message.utterance.split(/(\(agent\).*?\(\/agent\))/g);
+    setSegments(segments);
+  }, [message.utterance]);
+
+  const [typedText, setTypedText] = useState("");
+
+  useEffect(() => {
+    let interval;
+    if (currentSegmentIndex < segments.length) {
+      const segment = segments[currentSegmentIndex];
+      interval = setInterval(() => {
+        if (typedText.length < currentSegment.length) {
+          setTypedText((prevTypedText) => prevTypedText + currentSegment[typedText.length]);
+        } else {
+          clearInterval(interval);
+          setTimeout(() => {
+            setCurrentSegmentIndex((prevIndex) => prevIndex + 1);
+            setTypedText("");
+          }, 1000);
+        }
+      }, 10);
+    }
+    return () => clearInterval(interval);
+  }, [currentSegmentIndex, segments, currentSegment, typedText]);
 
   return (
-    <div className="flex flex-wrap">
-      {segments.map((segment, index) =>
-        segment.startsWith("(agent)") && segment.endsWith("(/agent)") ? (
-          <Pill key={index}>
-            {segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
-          </Pill>
-        ) : (
-          <TypeAnimation
-            key={index}
-            sequence={[segment]}
-            speed={90}
-            cursor={false}
-            repeat={0}
-          />
-        )
-      )}
+    <div className="flex flex-wrap" >
+      {segments.map((segment, index) => {
+          return segment.startsWith("(agent)") ? (
+            <span key={index} className="bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 ml-2 mr-2" style={{ whiteSpace: "nowrap" }}>
+              {segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
+            </span>
+          ) : (
+            <span key={index}>{segment}</span>
+          );
+       
+      })}
     </div>
   );
 };
-
 const ChatPage = () => {
   const [socketUrl] = useState("ws://localhost:8679/chat/");
   const [messageHistory, setMessageHistory] = useState([]);
@@ -265,7 +281,7 @@ const ChatPage = () => {
                       }}
                     >
                       <p className="text-gray-000 dark:text-gray-000">
-                        <Message message={message}/>
+                        <TypeAnimationWithPills message={message}/>
                       </p>
                       <MessageContent message={message} />
                     </div>
@@ -287,12 +303,12 @@ const ChatPage = () => {
                         textAlign: message.isUser ? "right" : "left",
                       }}
                     >
-                      <p className="font-medium mb-2">
-                        {message.isUser ? "You" : "HeadJack"}
-                      </p>
+
                       <p className="text-gray-900 dark:text-gray-900">
+                      {message.isUser ? message.utterance : <>                      <p className="font-medium mb-2">
+                        HeadJack
+                      </p><TypeAnimationWithPills message={message}/></>}
                         
-                        <Message message={message}/>
                       </p>
               
                     </div>
@@ -304,6 +320,7 @@ const ChatPage = () => {
           <form onSubmit={handleSubmit} className="mt-6 flex">
             <input
               type="text"
+              disabled={sendDisabled}
               value={inputValue}
               onChange={handleInputChange}
               className="flex-grow outline-none px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 dark:text-white"

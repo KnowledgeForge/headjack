@@ -9,7 +9,8 @@ from headjack.models.utterance import Answer, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import consolidate_responses
-
+from headjack.utils.basic import strip_whole, list_dedup
+import asyncio
 _logger = logging.getLogger("uvicorn")
 
 
@@ -40,23 +41,38 @@ async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Un
         "Try to find the names of the people in the conversation and include their names in the summary. Use quotes of the messages as examples "
         "of key points in your summary. If there's a clear sentiment across the conversations returned by the messaging system, make sure to include "
         "that in your answer.\n"
-        "Question: {question.utterance}\n"
-        "Action: Let's search for the term '[TERM]\n"
-        result = await search_for_messages(TERM)
-        if result == 'No results':
-            return Response(utterance=result, parent_ = question)
-        "Result: {result}\n"
-        "Final Answer:[ANSWER]\n"
-        "A list of names of participants involved in the conversation (only their names): \n"
-        participants=[]
+        "Question: {question.utterance}\n"    
+        "In just a few words on a single line, explain what the Question is asking: [EXPLAIN]"
+        "\nCreate several diverse queries that are likely to bring back messages likely to be relevant based on the Question/Topic."
+        tasks = []
         for i in range(3):
-            "-[PARTICIPANT]"
-            if len(PARTICIPANT) < 20:
-                participants.append(PARTICIPANT.strip())
-        return Answer(utterance=ANSWER, metadata={"participants": participants}, parent_ = question)
+            "Query: '[TERM]\n"
+            task = asyncio.create_task(search_for_messages(TERM))
+            tasks.append(task)
+      
+        results = await asyncio.gather(*tasks)
+        results = list_dedup([doc for res in results for doc in res if res != 'No results'])
+        str_results = [str(doc) for doc in results]
+        
+        if not results:
+            return Response(utterance="There were no people found for `{question.utterance}`.", parent = question)
+        
+        knowledge = "\n\n".join(str_results)
+        """Here are some potentially relevenant messages from the message system:
+        
+        {knowledge}
+        
+        Some or all of these may be irrelvant towards replying to `{question.utterance}`.
+        If there are not relevant messages, summarize what you found, but explain why you believe it is not relevant.
+        Summarize and explain all the information you found.
+        Answer:[ANSWER]"""
+        "In participants tags, generate a comma-separated list of the names of all participants explicitly or implicitly taking part in the conversation like `<participants>person 1, person 2,...</participants>`: \n"
+        "<participants>[PARTICIPANTS]participants>"
+        participants=[ptcp.strip() for ptcp in strip_whole(PARTICIPANTS, "</").split(",")]
+        return Answer(utterance=ANSWER, metadata={"participants": participants}, parent = question)
     FROM
         "chatgpt"
     WHERE
         STOPS_AT(TERM, "'") and
-        STOPS_AT(PARTICIPANT, "\n")
+        STOPS_AT(PARTICIPANTS, "</")
     '''
