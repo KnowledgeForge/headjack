@@ -57,13 +57,23 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
     It can create any plot that plotly express can.
     """,
 )
-async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    ret = await _plot_data_agent(question, n, temp)
+async def plot_data_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
+    ret = await _plot_data_agent(question, n, temp, chat_context)
     _logger.info(get_stats())
     return ret
 
 
-async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
+async def _plot_data_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
     cols = None
     for utterance in question.history():
         is_data = utterance_is_data(utterance)
@@ -74,7 +84,7 @@ async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -
         ret.source = "plot_data"
         return ret
     cols = cast(List[PlotDataColumn], cols)
-    code = await _plot_data(cols, question, n, temp)
+    code = await _plot_data(cols, question, n, temp, chat_context)
     if isinstance(code, Response):
         code.parent = question
         return code
@@ -83,7 +93,13 @@ async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -
     return ret
 
 
-async def _plot_data(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[Answer, Response]:
+async def _plot_data(
+    cols: List[PlotDataColumn],
+    question: Utterance,
+    n: int,
+    temp: float,
+    chat_context: bool,
+) -> Union[Answer, Response]:
     response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp))  # type: ignore
     _logger.info(get_stats())
     return response
@@ -91,7 +107,7 @@ async def _plot_data(cols: List[PlotDataColumn], question: Utterance, n: int, te
 
 # fmt: off
 @lmql.query
-async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
+async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float, chat_context: bool) -> Union[Answer, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp, max_len=3000)
         """You are given the following request to plot some data.
@@ -130,7 +146,9 @@ async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: 
             Make corrections to address the error and try again:
                 """
             else:
-                "\nExplain in a few words why you were unable to complete the request:\n[EXPLANATION]"
+                EXPLANATION=f"Plot created for `{question.utterance}`"
+                if chat_context:
+                    "\nExplain in a few words what you did to fulfill the customer request:\n[EXPLANATION]"
                 return Answer(utterance= EXPLANATION, metadata={"code":code})
         "\nExplain in a few words why you were unable to complete the request:\n[EXPLANATION]"
         return Response(utterance=EXPLANATION)

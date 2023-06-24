@@ -73,12 +73,13 @@ async def _metric_search_agent(question: Utterance, n: int, temp: float, chat_co
         result = await search_for_metrics(TERM)
         if result=='No results':
             return Response(utterance="There were no metrics found for `{question.utterance}`.", parent=question)
-        response = "Metric Search completed for `{question.utterance}`."
+        response = f"Metric Search completed for `{question.utterance}`."
         if chat_context:
+            knowledge = "\n".join(str(pair) for pair in zip(result['documents'][0], result['metadatas'][0]))
             "The search has been completed. Here are the results:\n"
-            {result}
-            "Summarize the resuls and explain in a few words all that you have done to complete this request.\n"
-            "[RESPONSE]"
+            "{result}\n"
+            "In just a few words and speaking directly to the user, summarize there results in the context of their message `{question.utterance}`.\n"
+            "Response:[RESPONSE]"
             response = RESPONSE
         return Observation(utterance=response, metadata=result, parent=question)
         "{chat_context}"

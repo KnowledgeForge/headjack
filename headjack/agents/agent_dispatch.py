@@ -4,6 +4,7 @@ from textwrap import dedent, indent  # noqa: F401
 from typing import List
 
 import lmql
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.registry import AGENT_REGISTRY
 from headjack.models.utterance import Utterance
@@ -19,7 +20,9 @@ dispatchable_agents = indent(
 
 
 async def agent_dispatch(question: Utterance, n: int = 1, temp: float = 0.0) -> Utterance:
-    return await consolidate_responses(await _agent_dispatch(AgentDispatchArgs(question, n, temp)))
+    ret = await consolidate_responses(await _agent_dispatch(AgentDispatchArgs(question, n, temp)))
+    _logger.info(get_stats())
+    return ret
 
 
 @dataclass

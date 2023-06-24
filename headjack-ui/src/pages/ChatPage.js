@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { TypeAnimation } from "react-type-animation";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
@@ -64,7 +63,7 @@ const MessageContent = ({ message }) => {
   } else if (
     message.source === "metric_search_agent" &&
     message.marker.startsWith("Obs") &&
-    message.utterance.metadatas.length > 0
+    message.metadata.metadatas.length > 0
   ) {
     const { metadatas, documents } = message.metadata;
 
@@ -89,28 +88,35 @@ const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
   const [displayText, setDisplayText] = useState('');
   const [complete, setComplete] = useState(false);
 
+  const randomDelay = () => {
+    const delays = [delay, delay * 2, delay * 3, delay * 4];
+    return delays[Math.floor(Math.random() * delays.length)];
+  };
+
   useEffect(() => {
-    if (!complete){
-    let currentIndex = 0;
+    if (!complete) {
+      let currentIndex = 0;
 
-    const intervalId = setInterval(() => {
-      setDisplayText(text.slice(0, currentIndex + 1));
-      currentIndex++;
+      const intervalId = setInterval(() => {
+        const randomChars = Math.floor(Math.random() * 4) + 1;
+        setDisplayText(text.slice(0, currentIndex + randomChars));
+        currentIndex += randomChars;
 
-      if (currentIndex === text.length) {
-        clearInterval(intervalId);
-        setComplete(true);
-        onAnimationComplete();
-      }
-    }, delay);
+        if (currentIndex >= text.length) {
+          clearInterval(intervalId);
+          setComplete(true);
+          onAnimationComplete();
+        }
+      }, randomDelay());
 
-    return () => clearInterval(intervalId);}
+      return () => clearInterval(intervalId);
+    }
   }, [text, delay, complete, onAnimationComplete]);
-    const trimmedDisplayText = displayText.replace(/"/g, '');
 
-    return <span>{trimmedDisplayText}</span>;
+  const trimmedDisplayText = displayText.replace(/"/g, '');
+
+  return <span>{trimmedDisplayText}</span>;
 };
-
 const TypeAnimationWithPills = ({ message }) => {
   const [allSegments, _] = useState(message.utterance.split(/(\(agent\).*?\(\/agent\))/g));
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -138,7 +144,7 @@ const TypeAnimationWithPills = ({ message }) => {
           >          <TypingAnimation
           key={index}
           text={segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
-          delay={60}
+          delay={35}
           onAnimationComplete={increment}
         />
 
@@ -147,7 +153,7 @@ const TypeAnimationWithPills = ({ message }) => {
           <TypingAnimation
             key={index}
             text={segment}
-            delay={60}
+            delay={35}
             onAnimationComplete={increment}
           />
         );

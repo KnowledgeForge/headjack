@@ -1,5 +1,6 @@
 import asyncio  # noqa: F401
 import logging
+from textwrap import dedent, indent  # noqa: F401
 from typing import Union
 
 import lmql
@@ -22,7 +23,10 @@ async def search_for_knowledge(q):
         q = q.strip("\n '.")
         _logger.info("Searching knowledge collection using the headjack search service")
         results = await fetch(f"{settings.search_service}/query?collection=knowledge&text={q}", "GET", return_json=True)
-        return [i for j in results["documents"] for i in j]
+        ret = []
+        for id, doc in (results['ids'][0], results['documents'][0]):
+            ret.append({"id": id, "document": doc})
+        return ret
     except Exception as e:
         _logger.info("Error while attempting to reach headjack search " f"service knowledge collection: {str(e)}")
         return "No results"
@@ -31,7 +35,12 @@ async def search_for_knowledge(q):
 @register_agent_function(
     "This is a general knowledge search. Provided a query, this will give a summary of information but CANNOT help you answer questions about you or the current conversation.",
 )
-async def knowledge_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:
+async def knowledge_search_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Response, Answer]:
     ret = await consolidate_responses(add_source_to_utterances(await _knowledge_search_agent(question, n, temp), "knowledge_search_agent"))  # type: ignore
     _logger.info(get_stats())
     return ret
@@ -52,7 +61,7 @@ async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> U
             tasks.append(task)
 
         results = await asyncio.gather(*tasks)
-        results = list_dedup([doc for res in results for doc in res if res != 'No results'])
+        results = list_dedup(sum(results, []))
 
         if not results:
             return Response(utterance="There were no relevant knowledge documents found or there is an issue with the knowledge service.", parent = question)
@@ -64,7 +73,7 @@ async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> U
         Some or all of this information may be irrelvant towards answering the question `{question.utterance}`. Do your best to determine whether the information is relevant.
         If there is not relevant information, summarize what you found but explain why you believe it is not relevant.
         Answer:[ANSWER]"""
-        return Answer(utterance=ANSWER, parent = question)
+        return Answer(utterance=ANSWER, parent = question, metadata = results)
     FROM
         "chatgpt"
     WHERE

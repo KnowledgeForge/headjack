@@ -197,7 +197,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 task = Action(utterance=strip_whole(TASK, '</'), parent=parent)
                 parent = task
                 _logger.info(f"Chat agent dispatching to {AGENT} for task `{task}`.")
-                result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp))
+                result = (await AGENT_REGISTRY[AGENT][1](task, args.agent_n, args.agent_temp, True))
                 parent = result
                 await args.queue.put(ChatRollupWrapper(result, agent_id))
                 "The {AGENT} responded with the following\n"

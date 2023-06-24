@@ -75,16 +75,21 @@ Use this for questions like:
     etc.
 """,
 )
-async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
+async def metric_calculate_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
     ret = await consolidate_responses(  # type: ignore
-        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),  # type: ignore
+        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp, chat_context), "metric_calculate_agent"),  # type: ignore
     )
     _logger.info(get_stats())
     return ret
 
 
 @lmql.query
-async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore
+async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float, chat_context: bool) -> Union[Observation, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp, max_len=4096)
         """You are given a User request to calculate a metric.
@@ -318,8 +323,10 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
         if results == "Cannot calculate metric":
             return Response(utterance="There was a problem with the metric service, so I cannot calculate `{question.utterance}`.", parent = question)
-        "The metrics have been calculated. Briefly explain in less than 75 words on a single line to the user all that you have done to complete this request.\n"
-        "Response: [RESPONSE]"
+        RESPONSE=f"Metric calculation complete for `{question.utterance}`."
+        if chat_context:
+            "The metrics have been calculated. Briefly explain in less than 75 words on a single line to the user all that you have done to complete this request.\n"
+            "Response:[RESPONSE]"
         return Observation(utterance=RESPONSE, metadata = results, parent = question, notes="I have stored the data in the workspace for other agents to acquire as needed.")
 
     from

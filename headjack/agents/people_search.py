@@ -35,14 +35,19 @@ async def search_for_people(q, n: int = 5):
     "This is a search over a human resources system with information on people within the organization. "
     "Provided a query, this will give a summary of conversations found in the messaging system.",
 )
-async def people_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:
-    ret = await consolidate_responses(add_source_to_utterances(await _people_search_agent(question, n, temp), "people_search_agent"))  # type: ignore
+async def people_search_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Response, Answer]:
+    ret = await consolidate_responses(add_source_to_utterances(await _people_search_agent(question, n, temp, chat_context), "people_search_agent"))  # type: ignore
     _logger.info(get_stats())
     return ret
 
 
 @lmql.query
-async def _people_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Observation]:  # type: ignore
+async def _people_search_agent(question: Utterance, n: int, temp: float, chat_context: bool = False) -> Union[Response, Observation]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp)
         "Given the following question or topic, use a comma-separated set of terms to search for people in the human resource system and create a list of people. "

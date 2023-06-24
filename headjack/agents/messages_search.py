@@ -31,8 +31,13 @@ async def search_for_messages(q):
 @register_agent_function(
     "This is a search over a messaging system. Provided a query, this will give a summary of conversations found in the messaging system.",
 )
-async def messages_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:
-    ret = await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp), "messages_search_agent"))  # type: ignore
+async def messages_search_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Response, Answer]:
+    ret = await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp, chat_context), "messages_search_agent"))  # type: ignore
     _logger.info(get_stats())
     return ret
 
