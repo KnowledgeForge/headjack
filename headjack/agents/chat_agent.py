@@ -191,7 +191,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 Be as plain in your task request/description as possible. Speak to them very plainly without courtesy.
                 Do not add anything to your task request that is not derived from above.
                 Be sure to include all the necessary information so long as it is from the above.
-                <task>[TASK]task>
+                <task>[TASK]
                 """
                 task = Action(utterance=strip_whole(TASK, '</'), parent=parent)
                 parent = task
