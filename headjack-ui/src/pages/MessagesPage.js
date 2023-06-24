@@ -33,8 +33,8 @@ export default function MessagesPage() {
     )
       .then((response) => response.json())
       .then((data) => {
-        setAnswer(data.utterance.summary);
-        setParticipantList(data.utterance.participants)
+        setAnswer(data.utterance);
+        setParticipantList(data.metadata.participants)
         setIsLoading(false);
       })
       .catch((err) => {
