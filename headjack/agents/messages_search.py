@@ -1,3 +1,4 @@
+import asyncio  # noqa: F401
 import logging
 from typing import Union
 

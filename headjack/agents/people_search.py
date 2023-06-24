@@ -1,3 +1,4 @@
+import asyncio  # noqa: F401
 import logging
 from typing import Union
 
@@ -15,12 +16,12 @@ from headjack.utils.consistency import consolidate_responses
 _logger = logging.getLogger("uvicorn")
 
 
-async def search_for_people(q):
+async def search_for_people(q, n: int = 5):
     settings = get_settings()
     try:
         q = q.strip("\n '.")
         _logger.info("Searching people collection using the headjack search service")
-        results = await fetch(f"{settings.search_service}/query?collection=people&n=4&text={q}", "GET", return_json=True)
+        results = await fetch(f"{settings.search_service}/query?collection=people&n={n}&text={q}", "GET", return_json=True)
         metadata = results["metadatas"][0]
         for i, m in enumerate(metadata):
             m["description"] = results["documents"][0][i]
@@ -74,7 +75,7 @@ async def _people_search_agent(question: Utterance, n: int, temp: float) -> Unio
         Summarize and explain all the information you found to the user including any recommendations on which people are most relevant to the Question/Topic.
         Answer:[ANSWER]"""
 
-        return Answer(utterance=ANSWER, metadata = {"people": result}, parent = question)
+        return Answer(utterance=ANSWER, metadata = {"people": results}, parent = question)
     FROM
         "chatgpt"
     WHERE
