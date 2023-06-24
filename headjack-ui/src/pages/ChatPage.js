@@ -308,7 +308,7 @@ const ChatPage = () => {
               disabled={sendDisabled}
               value={inputValue}
               onChange={handleInputChange}
-              className="flex-grow outline-none px-4 py-2 rounded-md bg-gray-200 dark:bg-gray-700 dark:text-white"
+              className={`flex-grow outline-none px-4 py-2 rounded-md ${sendDisabled ? "bg-neutral-400" : "bg-gray-800"} text-white`}
               placeholder="Type a message..."
             />
             <button
