@@ -124,48 +124,72 @@ const MessageContent = ({ message }) => {
   }
 };
 
+const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [complete, setComplete] = useState(false);
+
+  useEffect(() => {
+    if (!complete){
+    let currentIndex = 0;
+
+    const intervalId = setInterval(() => {
+      setDisplayText(text.slice(0, currentIndex + 1));
+      currentIndex++;
+
+      if (currentIndex === text.length) {
+        clearInterval(intervalId);
+        setComplete(true);
+        onAnimationComplete();
+      }
+    }, delay);
+
+    return () => clearInterval(intervalId);}
+  }, [text, delay, complete, onAnimationComplete]);
+    const trimmedDisplayText = displayText.replace(/"/g, '');
+
+    return <span>{trimmedDisplayText}</span>;
+};
+
 const TypeAnimationWithPills = ({ message }) => {
-  const [segments, setSegments] = useState([]);
+  const [allSegments, _] = useState(message.utterance.split(/(\(agent\).*?\(\/agent\))/g));
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
-  const [currentSegment, setCurrentSegment] = useState("");
 
-  useEffect(() => {
-    const segments = message.utterance.split(/(\(agent\).*?\(\/agent\))/g);
-    setSegments(segments);
-  }, [message.utterance]);
-
-  const [typedText, setTypedText] = useState("");
-
-  useEffect(() => {
-    let interval;
-    if (currentSegmentIndex < segments.length) {
-      const segment = segments[currentSegmentIndex];
-      interval = setInterval(() => {
-        if (typedText.length < currentSegment.length) {
-          setTypedText((prevTypedText) => prevTypedText + currentSegment[typedText.length]);
-        } else {
-          clearInterval(interval);
-          setTimeout(() => {
-            setCurrentSegmentIndex((prevIndex) => prevIndex + 1);
-            setTypedText("");
-          }, 1000);
-        }
-      }, 10);
-    }
-    return () => clearInterval(interval);
-  }, [currentSegmentIndex, segments, currentSegment, typedText]);
+  const increment = () => {
+    let newIndex = Math.min(currentSegmentIndex + 1, allSegments.length - 1);
+    // while (allSegments[newIndex].startsWith("(agent)")) {
+    //   newIndex = newIndex + 1;
+    // }
+    setCurrentSegmentIndex(Math.min(newIndex, allSegments.length - 1));
+  };
 
   return (
-    <div className="flex flex-wrap" >
-      {segments.map((segment, index) => {
-          return segment.startsWith("(agent)") ? (
-            <span key={index} className="bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 ml-2 mr-2" style={{ whiteSpace: "nowrap" }}>
-              {segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
-            </span>
-          ) : (
-            <span key={index}>{segment}</span>
-          );
-       
+    <div className="flex flex-wrap">
+      {allSegments.slice(0, currentSegmentIndex + 1).map((segment, index) => {
+        return segment.startsWith("(agent)") ? (
+          <span
+            key={index}
+            className="bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 ml-2 mr-2"
+            style={{
+              whiteSpace: "nowrap",
+              fontSize: "14px",
+              padding: "4px 8px",
+            }}
+          >          <TypingAnimation
+          key={index}
+          text={segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
+          delay={60}
+          onAnimationComplete={increment}
+        />
+            
+          </span>
+        ) : (
+          <TypingAnimation
+            key={index}
+            text={segment}
+            delay={60}
+            onAnimationComplete={increment}
+          />
+        );
       })}
     </div>
   );
