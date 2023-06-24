@@ -10,7 +10,7 @@ from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.basic import list_dedup, strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
-
+from lmql.runtime.bopenai import get_stats
 _logger = logging.getLogger("uvicorn")
 
 
@@ -30,7 +30,9 @@ async def search_for_messages(q):
     "This is a search over a messaging system. Provided a query, this will give a summary of conversations found in the messaging system.",
 )
 async def messages_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:
-    return await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp), "messages_search_agent"))  # type: ignore
+    ret = await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp), "messages_search_agent"))  # type: ignore
+    _logger.info(get_stats())
+    return ret
 
 
 @lmql.query

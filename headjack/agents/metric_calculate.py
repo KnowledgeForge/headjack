@@ -17,6 +17,7 @@ from headjack.utils.basic import strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
+from lmql.runtime.bopenai import get_stats
 _logger = logging.getLogger("uvicorn")
 
 
@@ -75,10 +76,11 @@ Use this for questions like:
 """,
 )
 async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    return await consolidate_responses(  # type: ignore
+    ret = await consolidate_responses(  # type: ignore
         add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),  # type: ignore
     )
-
+    _logger.info(get_stats())
+    return ret
 
 @lmql.query
 async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore

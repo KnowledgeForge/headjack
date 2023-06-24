@@ -9,6 +9,7 @@ from headjack.models.utterance import Answer, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.basic import list_dedup  # noqa: F401
+from lmql.runtime.bopenai import get_stats
 from headjack.utils.consistency import consolidate_responses
 
 _logger = logging.getLogger("uvicorn")
@@ -30,8 +31,9 @@ async def search_for_knowledge(q):
     "This is a general knowledge search. Provided a query, this will give a summary of information but CANNOT help you answer questions about you or the current conversation.",
 )
 async def knowledge_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Response, Answer]:
-    return await consolidate_responses(add_source_to_utterances(await _knowledge_search_agent(question, n, temp), "knowledge_search_agent"))  # type: ignore
-
+    ret = await consolidate_responses(add_source_to_utterances(await _knowledge_search_agent(question, n, temp), "knowledge_search_agent"))  # type: ignore
+    _logger.info(get_stats())
+    return ret
 
 @lmql.query
 async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Answer]:  # type: ignore

@@ -6,7 +6,7 @@ from typing import AsyncGenerator, Dict, List, Optional, cast
 from uuid import UUID, uuid4  # noqa: F401
 
 import lmql
-
+from lmql.runtime.bopenai import get_stats
 from headjack.agents.registry import AGENT_REGISTRY
 from headjack.models.utterance import (  # noqa: F401
     Action,
@@ -88,6 +88,7 @@ async def chat_agent(
 
         yield fin
         working_index += 1
+    _logger.info(get_stats())
 
 
 @lmql.query

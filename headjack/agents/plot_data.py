@@ -9,10 +9,11 @@ import plotly.express as px  # noqa: F401
 from headjack.agents.registry import register_agent_function
 from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils.consistency import consolidate_responses
-
+from lmql.runtime.bopenai import get_stats
 _logger = logging.getLogger("uvicorn")
 
 
+from lmql.runtime.bopenai import get_stats
 class PlotDataColumn(TypedDict):
     name: str
     type: str
@@ -57,7 +58,9 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
     """,
 )
 async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    return await _plot_data_agent(question, n, temp)
+    ret = await _plot_data_agent(question, n, temp)
+    _logger.info(get_stats())
+    return ret
 
 
 async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
@@ -82,6 +85,7 @@ async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -
 
 async def _plot_data(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[Answer, Response]:
     response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp))  # type: ignore
+    _logger.info(get_stats())
     return response
 
 
