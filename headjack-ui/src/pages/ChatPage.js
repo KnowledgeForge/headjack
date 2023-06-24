@@ -180,7 +180,7 @@ const TypeAnimationWithPills = ({ message }) => {
           delay={60}
           onAnimationComplete={increment}
         />
-            
+
           </span>
         ) : (
           <TypingAnimation
@@ -332,9 +332,9 @@ const ChatPage = () => {
                       {message.isUser ? message.utterance : <>                      <p className="font-medium mb-2">
                         HeadJack
                       </p><TypeAnimationWithPills message={message}/></>}
-                        
+
                       </p>
-              
+
                     </div>
                   </div>
                 );

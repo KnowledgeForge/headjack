@@ -12,8 +12,8 @@ from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
 from headjack.models.utterance import Observation, Response, Utterance
 from headjack.utils import fetch
-from headjack.utils.basic import strip_whole
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.basic import strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 

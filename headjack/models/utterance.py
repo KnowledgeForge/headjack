@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Any, Generator, Optional, Set, Type, Union
+from typing import Generator, Optional, Set, Type
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -57,7 +57,10 @@ class Utterance(BaseModel):
                     )
                 else:
                     utterance_str = str(utterance)
-                history.append(utterance_str+(f" Note (users should never see note information): {utterance.notes}" if utterance.notes else ""))
+                history.append(
+                    utterance_str
+                    + (f" Note (users should never see note information): {utterance.notes}" if utterance.notes else ""),
+                )
             else:
                 history.append(utterance)
             if len(history) == n:
@@ -106,6 +109,7 @@ class Thought(Utterance):
 
 class Answer(Utterance):
     marker = "Answer: "
+
 
 class Response(Utterance):
     marker = "Response: "

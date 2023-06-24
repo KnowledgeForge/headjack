@@ -8,9 +8,9 @@ from headjack.config import get_settings
 from headjack.models.utterance import Answer, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.basic import list_dedup, strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
-from headjack.utils.basic import strip_whole, list_dedup
-import asyncio
+
 _logger = logging.getLogger("uvicorn")
 
 
@@ -41,7 +41,7 @@ async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Un
         "Try to find the names of the people in the conversation and include their names in the summary. Use quotes of the messages as examples "
         "of key points in your summary. If there's a clear sentiment across the conversations returned by the messaging system, make sure to include "
         "that in your answer.\n"
-        "Question: {question.utterance}\n"    
+        "Question: {question.utterance}\n"
         "In just a few words on a single line, explain what the Question is asking: [EXPLAIN]"
         "\nCreate several diverse queries that are likely to bring back messages likely to be relevant based on the Question/Topic."
         tasks = []
@@ -49,19 +49,19 @@ async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Un
             "Query: '[TERM]\n"
             task = asyncio.create_task(search_for_messages(TERM))
             tasks.append(task)
-      
+
         results = await asyncio.gather(*tasks)
         results = list_dedup([doc for res in results for doc in res if res != 'No results'])
         str_results = [str(doc) for doc in results]
-        
+
         if not results:
             return Response(utterance="There were no people found for `{question.utterance}`.", parent = question)
-        
+
         knowledge = "\n\n".join(str_results)
         """Here are some potentially relevenant messages from the message system:
-        
+
         {knowledge}
-        
+
         Some or all of these may be irrelvant towards replying to `{question.utterance}`.
         If there are not relevant messages, summarize what you found, but explain why you believe it is not relevant.
         Summarize and explain all the information you found.

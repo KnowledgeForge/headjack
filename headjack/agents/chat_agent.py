@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from textwrap import dedent, indent  # noqa: F401
 from typing import AsyncGenerator, Dict, List, Optional, cast
 from uuid import UUID, uuid4  # noqa: F401
-from headjack.utils.basic import strip_whole
+
 import lmql
 
 from headjack.agents.registry import AGENT_REGISTRY
@@ -16,6 +16,7 @@ from headjack.models.utterance import (  # noqa: F401
     Utterance,
 )
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.basic import strip_whole  # noqa: F401
 from headjack.utils.consistency import Consistency, consolidate_responses
 
 _logger = logging.getLogger("uvicorn")
@@ -113,7 +114,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         #
         #    Example interaction:
         #    ...
-        #    User: make a bar chart of the data 
+        #    User: make a bar chart of the data
         #    Plan: Looking in the conversation history, I can see I have previously dispatched an agent that calculates things. I will dispatch (agent)plot_data_agent(/agent) who will handle discovering the actual data from earlier in the conversation perform the plotting on its own.
         #    Action: ...
         #
@@ -171,7 +172,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
                 In a few words, explain which specialists you think would be best for this and why based on their descriptions.
                 Put your reasoning in reasoning tags `<logic>your reasoning</logic>
                 <logic>[REASONING]logic>
-                
+
                 In a few words, explain what you are doing now and why. Keep it short and sweet.
                 Speak directly to the user using general terms. Do not ask questions now.
                 If you refer to a specialist agent put it in tags for example (agent)chosen agent(/agent).

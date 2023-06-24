@@ -8,9 +8,9 @@ from headjack.config import get_settings
 from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.basic import list_dedup  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
-import asyncio
-from headjack.utils.basic import list_dedup
+
 _logger = logging.getLogger("uvicorn")
 
 
@@ -53,19 +53,19 @@ async def _people_search_agent(question: Utterance, n: int, temp: float) -> Unio
             "Query: '[TERM]\n"
             task = asyncio.create_task(search_for_people(TERM))
             tasks.append(task)
-      
+
         results = await asyncio.gather(*tasks)
         results = list_dedup([doc for res in results for doc in res if res != 'No results'])
         str_results = [str(doc) for doc in results]
-        
+
         if not results:
             return Response(utterance="There were no people found for `{question.utterance}`.", parent = question)
-        
+
         knowledge = "\n\n".join(str_results)
         """Here is the information from searching based on your queries.
-        
+
         {knowledge}
-        
+
         Some or all of these may be irrelvant towards replying to `{question.utterance}`.
         If there are not relevant people, summarize what you found, but explain why you believe it is not relevant.
         Summarize and explain all the information you found to the user including any recommendations on which people are most relevant to the Question/Topic.

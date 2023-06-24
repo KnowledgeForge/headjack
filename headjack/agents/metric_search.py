@@ -18,7 +18,7 @@ from headjack.utils.consistency import consolidate_responses
 _logger = logging.getLogger("uvicorn")
 
 
-async def search_for_metrics(q, n: int = 5):
+async def search_for_metrics(q, n: int = 15):
     settings = get_settings()
     try:
         q = q.strip("\n '.")
@@ -35,7 +35,12 @@ async def search_for_metrics(q, n: int = 5):
     This is NOT an agent for calculation nor is it needed before running a calculation. It is used only for discovering metrics.
     This agent needs a specific metric or topic to work best i.e. NOT "find some metrics".""",
 )
-async def metric_search_agent(question: Utterance, n: int = 1, temp: float = 0.0, chat_context: bool = False) -> Union[Answer, Response]:
+async def metric_search_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Answer, Response]:
     return await consolidate_responses(add_source_to_utterances(await _metric_search_agent(question, n, temp, chat_context), "metric_search_agent"))  # type: ignore
 
 

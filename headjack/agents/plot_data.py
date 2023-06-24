@@ -21,9 +21,9 @@ class PlotDataColumn(TypedDict):
 
 def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
-        columns = utterance.metadata["results"][0]["columns"]
-        if 'rows' in utterance.metadata["results"][0]:
-            for row in utterance.metadata["results"][0]['rows']:
+        columns = utterance.metadata["results"][0]["columns"]  # type: ignore
+        if 'rows' in utterance.metadata["results"][0]:  # type: ignore
+            for row in utterance.metadata["results"][0]['rows']:  # type: ignore
                 for i, col in enumerate(columns):
                     col['values'] = col.get('values') or []
                     col['values'].append(row[i])
@@ -59,6 +59,7 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
 async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
     return await _plot_data_agent(question, n, temp)
 
+
 async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
     cols = None
     for utterance in question.history():
@@ -74,7 +75,7 @@ async def _plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -
     if isinstance(code, Response):
         code.parent = question
         return code
-    ret = Observation(utterance= code.utterance, metadata=plot_json(cols, code.metadata['code']), parent=question)
+    ret = Observation(utterance=code.utterance, metadata=plot_json(cols, code.metadata['code']), parent=question)  # type: ignore
     ret.source = "plot_data"
     return ret
 
