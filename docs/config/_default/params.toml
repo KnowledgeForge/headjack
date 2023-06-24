@@ -31,7 +31,7 @@ keywords = ["Headjack", "LLM", "NLP"]
   [home.profile]
     enable = true
     gravatarEmail = ""
-    avatarURL = "/images/headjack-logo.png"
+    avatarURL = "/images/headjack-logo-small.webp"
     title = "Headjack"
     subtitle = "An open-source human interface to enterprise data."
     typeit = false
