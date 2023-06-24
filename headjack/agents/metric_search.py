@@ -2,6 +2,7 @@ import logging
 from typing import Union
 
 import lmql
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
@@ -14,7 +15,7 @@ from headjack.models.utterance import (  # noqa: F401
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
 from headjack.utils.consistency import consolidate_responses
-from lmql.runtime.bopenai import get_stats
+
 _logger = logging.getLogger("uvicorn")
 
 

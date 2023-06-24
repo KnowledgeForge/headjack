@@ -3,6 +3,7 @@ from textwrap import dedent, indent  # noqa: F401
 from typing import List, Set, Union
 
 import lmql
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.examples.metric_calculate_examples import (  # noqa: F401
     get_metric_calculate_examples,
@@ -17,7 +18,6 @@ from headjack.utils.basic import strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
-from lmql.runtime.bopenai import get_stats
 _logger = logging.getLogger("uvicorn")
 
 
@@ -81,6 +81,7 @@ async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 
     )
     _logger.info(get_stats())
     return ret
+
 
 @lmql.query
 async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore

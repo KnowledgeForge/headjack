@@ -5,15 +5,15 @@ from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 
 import lmql
 import plotly.express as px  # noqa: F401
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.registry import register_agent_function
 from headjack.models.utterance import Answer, Observation, Response, Utterance
 from headjack.utils.consistency import consolidate_responses
-from lmql.runtime.bopenai import get_stats
+
 _logger = logging.getLogger("uvicorn")
 
 
-from lmql.runtime.bopenai import get_stats
 class PlotDataColumn(TypedDict):
     name: str
     type: str
