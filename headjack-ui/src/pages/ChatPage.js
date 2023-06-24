@@ -5,7 +5,36 @@ import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
 import Plot from "react-plotly.js";
 import DataTable from "../components/dataTable";
-
+const PeopleTable = ({ metadatas }) => {
+  return (
+    <table className="w-full border-collapse border border-gray-300">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="py-2 px-4 border border-gray-300">First Name</th>
+          <th className="py-2 px-4 border border-gray-300">Last Name</th>
+          <th className="py-2 px-4 border border-gray-300">Position</th>
+          <th className="py-2 px-4 border border-gray-300">Manager ID</th>
+          <th className="py-2 px-4 border border-gray-300">Hire Date</th>
+          <th className="py-2 px-4 border border-gray-300">Employee</th>
+          <th className="py-2 px-4 border border-gray-300">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {metadatas.map((metadata, index) => (
+          <tr key={index} className="bg-white">
+            <td className="py-2 px-4 border border-gray-300">{metadata.first_name}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.last_name}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.position}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.manager_id}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.hire_date}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.employee.toString()}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 const MessageContent = ({ message }) => {
   const [showQuery, setShowQuery] = useState(false);
   const [showSql, setShowSql] = useState([]);
@@ -75,6 +104,12 @@ const MessageContent = ({ message }) => {
       });
     };
     return <DataTable metadatas={metadatas} documents={documents} />;
+  }else if (
+    message.source === "people_search_agent" &&
+    message.marker.startsWith("Ans") &&
+    message.metadata.people.length > 0
+  ) {
+    return <PeopleTable metadatas={message.metadata.people} />;
   } else if (
     message.source === "plot_data" &&
     message.marker.startsWith("Obs")
@@ -259,7 +294,7 @@ const ChatPage = () => {
                 return (
                   <div
                     key={index}
-                    className={`flex ${
+                    className={`flex max-h-4xl overflow-y-auto ${
                       message.isUser ? "justify-end" : "justify-start"
                     }`}
                   >
