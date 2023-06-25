@@ -83,6 +83,7 @@ async def _plot_data_agent(
         ret = Response(utterance="There was no data in the conversation history to plot.", parent=question)
         ret.source = "plot_data"
         return ret
+    import pdb; pdb.set_trace()
     cols = cast(List[PlotDataColumn], cols)
     code = await _plot_data(cols, question, n, temp, chat_context)
     if isinstance(code, Response):
@@ -100,7 +101,7 @@ async def _plot_data(
     temp: float,
     chat_context: bool,
 ) -> Union[Answer, Response]:
-    response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp))  # type: ignore
+    response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp, chat_context))  # type: ignore
     _logger.info(get_stats())
     return response
 

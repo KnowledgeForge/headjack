@@ -7,7 +7,7 @@ import Plot from "react-plotly.js";
 import DataTable from "../components/dataTable";
 const PeopleTable = ({ metadatas }) => {
   return (
-    <table className="w-full border-collapse border border-gray-300">
+    <table className="w-full border-collapse border border-gray-300 max-h-4xl">
       <thead className="bg-gray-50">
         <tr>
           <th className="py-2 px-4 border border-gray-300">First Name</th>
@@ -145,6 +145,8 @@ const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
       }, randomDelay());
 
       return () => clearInterval(intervalId);
+    }else{
+      setDisplayText(text)
     }
   }, [text, delay, complete, onAnimationComplete]);
 
@@ -294,23 +296,23 @@ const ChatPage = () => {
                 return (
                   <div
                     key={index}
-                    className={`flex max-h-4xl overflow-y-auto ${
+                    className={`flex ${
                       message.isUser ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
-                      className={`${
-                        message.isUser ? "bg-blue-300" : "bg-white"
-                      } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
-                      style={{
-                        textAlign: message.isUser ? "right" : "left",
-                      }}
-                    >
-                      <p className="text-gray-000 dark:text-gray-000">
-                        <TypeAnimationWithPills message={message}/>
-                      </p>
-                      <MessageContent message={message} />
-                    </div>
+  className={`${
+    message.isUser ? "bg-blue-300" : "bg-white"
+  } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4`}
+  style={{
+    textAlign: message.isUser ? "right" : "left",
+  }}
+>
+  <p className="text-gray-000 dark:text-gray-000">
+    <TypeAnimationWithPills message={message}/>
+  </p>
+  <MessageContent message={message} />
+</div>
                   </div>
                 );
               } else {
