@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef, useLayoutEffect} from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
@@ -204,7 +204,7 @@ const ChatPage = () => {
   const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const chatContainerRef = useRef();
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
   const addToMessageHistory = (message) => {
@@ -221,6 +221,12 @@ const ChatPage = () => {
       console.log(messageHistory);
     }
   }, [lastMessage]);
+
+  useLayoutEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messageHistory]);
 
   const handleSubmit = useCallback(
     (e) => {
@@ -290,7 +296,7 @@ const ChatPage = () => {
       </div>
       <div className="flex flex-col flex-grow bg-gray-100 w-full overflow-y-auto">
         <div className="py-6 px-4 sm:px-6 lg:py-12 lg:px-8 h-full flex flex-col w-full">
-          <div className="flex-grow overflow-y-auto">
+          <div className="flex-grow overflow-y-auto" ref={chatContainerRef}>
             {messageHistory.map((message, index) => {
               if (message.metadata != null) {
                 return (
