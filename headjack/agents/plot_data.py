@@ -1,10 +1,12 @@
 import json
 import logging
+from copy import deepcopy
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 
 import lmql
 import plotly.express as px  # noqa: F401
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.registry import register_agent_function
 from headjack.models.utterance import Answer, Observation, Response, Utterance
@@ -21,15 +23,25 @@ class PlotDataColumn(TypedDict):
 
 def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
-        columns = utterance.utterance["results"][0]["columns"]
-        if 'rows' in utterance.utterance["results"][0]:
-            for row in utterance.utterance["results"][0]['rows']:
+        metadata = deepcopy(utterance.metadata)
+        columns = metadata["results"][0]["columns"]  # type: ignore
+        if 'rows' in metadata["results"][0]:  # type: ignore
+            for row in metadata["results"][0]['rows']:  # type: ignore
                 for i, col in enumerate(columns):
                     col['values'] = col.get('values') or []
                     col['values'].append(row[i])
         return columns
     except Exception:
         return False
+
+
+def get_data_from_history(question: Utterance) -> Optional[List[PlotDataColumn]]:
+    cols = None
+    for utterance in question.history():
+        is_data = utterance_is_data(utterance)
+        if is_data != False:  # noqa: E712
+            cols = is_data
+    return cols  # type: ignore
 
 
 def code_valid(cols: List[PlotDataColumn], code: str) -> Optional[Exception]:
@@ -50,39 +62,59 @@ def plot_json(cols: List[PlotDataColumn], code: str) -> dict:
 
 
 @register_agent_function(
-    """This function takes a request such as 'make a bar plot' WITHOUT providing any data and creates a plot using plotly express.
-    Data will be automatically deduced by the specialist.""",
+    """This agent takes a request such as 'make a bar plot' WITHOUT providing any data and creates a plot using plotly express.
+    **IMPORTANT: no explicit data is needed to be provided to this agent and no search is generally necessary**
+    Data will be automatically deduced by the specialist.
+    It can create any plot that plotly express can.
+    """,
 )
-async def plot_data_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    cols = None
-    for utterance in question.history():
-        is_data = utterance_is_data(utterance)
-        if is_data is not False:
-            cols = is_data
+async def plot_data_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
+    ret = await _plot_data_agent(question, n, temp, chat_context)
+    _logger.info(get_stats())
+    return ret
+
+
+async def _plot_data_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
+    cols = get_data_from_history(question)
     if cols is None:
         ret = Response(utterance="There was no data in the conversation history to plot.", parent=question)
         ret.source = "plot_data"
         return ret
     cols = cast(List[PlotDataColumn], cols)
-    code = await _plot_data(cols, question, n, temp)
+    code = await _plot_data(cols, question, n, temp, chat_context)
     if isinstance(code, Response):
         code.parent = question
         return code
-    ret = Observation(utterance=plot_json(cols, code), parent=question)
+    ret = Observation(utterance=code.utterance, metadata=plot_json(cols, code.metadata['code']), parent=question)  # type: ignore
     ret.source = "plot_data"
     return ret
 
 
-async def _plot_data(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[str, Response]:
-    response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp))  # type: ignore
-    if isinstance(response, Answer):
-        return response.utterance
+async def _plot_data(
+    cols: List[PlotDataColumn],
+    question: Utterance,
+    n: int,
+    temp: float,
+    chat_context: bool,
+) -> Union[Answer, Response]:
+    response = await consolidate_responses(await _plot_data_prompt(cols, question, n, temp, chat_context))  # type: ignore
+    _logger.info(get_stats())
     return response
 
 
 # fmt: off
 @lmql.query
-async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
+async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float, chat_context: bool) -> Union[Answer, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp, max_len=3000)
         """You are given the following request to plot some data.
@@ -121,7 +153,10 @@ async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: 
             Make corrections to address the error and try again:
                 """
             else:
-                return Answer(utterance=code)
+                EXPLANATION=f"Plot created for `{question.utterance}`"
+                if chat_context:
+                    "\nExplain in a few words what you did to fulfill the customer request:\n[EXPLANATION]"
+                return Answer(utterance= EXPLANATION, metadata={"code":code})
         "\nExplain in a few words why you were unable to complete the request:\n[EXPLANATION]"
         return Response(utterance=EXPLANATION)
 

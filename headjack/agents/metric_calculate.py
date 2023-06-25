@@ -3,6 +3,7 @@ from textwrap import dedent, indent  # noqa: F401
 from typing import List, Set, Union
 
 import lmql
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.examples.metric_calculate_examples import (  # noqa: F401
     get_metric_calculate_examples,
@@ -13,6 +14,7 @@ from headjack.config import get_settings
 from headjack.models.utterance import Observation, Response, Utterance
 from headjack.utils import fetch
 from headjack.utils.add_source_to_utterances import add_source_to_utterances
+from headjack.utils.basic import strip_whole  # noqa: F401
 from headjack.utils.consistency import consolidate_responses
 from headjack.utils.semantic_sort import semantic_sort  # noqa: F401
 
@@ -61,9 +63,10 @@ async def calculate_metric(metrics, dimensions, filters, orderbys, limit=None):
 
 
 @register_agent_function(
-    """This agent takes a question that requests a numeric value (e.g. metric)
+    """
+This agent takes a question that requests a numeric value (e.g. metric)
 that may include aggregations, filters, orderbys and limiting and actually runs the calculation.
-This agent is fully capable, you do not need to search for or otherwise provide a specific metric to this agent as it will determine everything necessary to complete your request on its own.
+**IMPORTANT: This agent is fully capable, you do not need to search for or otherwise provide a specific metric or data to this agent as it will determine everything necessary to complete your request on its own.**
 Use this for questions like:
     calculate the average...
     find the total...
@@ -72,14 +75,21 @@ Use this for questions like:
     etc.
 """,
 )
-async def metric_calculate_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Observation, Response]:
-    return await consolidate_responses(  # type: ignore
-        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp), "metric_calculate_agent"),  # type: ignore
+async def metric_calculate_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Observation, Response]:
+    ret = await consolidate_responses(  # type: ignore
+        add_source_to_utterances(await _metric_calculate_agent(question, [], set(), n, temp, chat_context), "metric_calculate_agent"),  # type: ignore
     )
+    _logger.info(get_stats())
+    return ret
 
 
 @lmql.query
-async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float) -> Union[Observation, Response]:  # type: ignore
+async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dimensions: Set[str], n: int, temp: float, chat_context: bool) -> Union[Observation, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp, max_len=4096)
         """You are given a User request to calculate a metric.
@@ -91,9 +101,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         You must extract the necessary information from the user's query for the api request.
         User: {question.utterance}
 
-        First, reason about the user's query. What kind of metrics are there? Are there any things that would require grouping? Is ordering specified or is it required to use with a limit? Are there any filters? Answer these questions and explain your rationale.
-        Fit your reasoning on a single line.
-        [REASONING]
+        First, reason about the user's query. What are the metrics? Are there any groupings - put them in a numbered list? Is ordering specified or is it required to use with a limit - put them in a numbered list? Are there any filters - put them in a numbered list? Answer these questions and explain your rationale.
+        Put your reasoning in reasoning tags `<logic>your reasoning</logic>
+        <logic>[REASONING]logic>
         """
         _logger.info(f"Reasoning `{REASONING}`.")
         """
@@ -124,19 +134,20 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         metric_results=indent(dedent("\n".join(metric_results)), ' '*4)
         _logger.info(f"Found metrics `{metric_results}`.")
         "A semantic search returned the following metrics.\n"
-        "<Metric Results>\n"
+        "<MetricResults>\n"
         "{metric_results}"
-        "\n</Metric Results>\n"
+        "\n</MetricResults>\n"
 
         selected_metrics=[]
         for term in terms:
-            "Is there a metric that appears to match '{term}'? [YESNO]"
+            "Explain in just a few words from these MetricResults which seem most likely to match '{term}' and why: [EXPLAIN]\n"
+            "Now, based on this explanation - Yes or No - Is there a metric for '{term}' from the MetricResults that seems similar enough or synonomous to be used to calculate it? [YESNO]"
             if YESNO=='Yes':
                 ", [METRIC].\n"
                 if METRIC not in selected_metrics:
                     selected_metrics.append(METRIC)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         _logger.info(f"Decided metrics `{selected_metrics}`.")
@@ -147,7 +158,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 "\nThere are no shared dimensions for these metrics.\n"
             else:
                 "\nThere are no dimensions for this metric.\n"
-            "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+            "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics you may have considered.\n"
             "Response: [RESPONSE]"
             return Response(utterance=RESPONSE, parent = question)
 
@@ -156,7 +167,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of group bys or aggregations from the user query '{question}'.
         Thought: There's [GROUPBY_COUNT] group by dimension(s).
-        List the terms that describe each group by.
+        """
+        """
+        List the terms that describe each group by. Be certain that you split your lists of terms onto new lines. This means you will have {GROUPBY_COUNT} lines of terms.
         <Group By>
         """
         groupbys=[]
@@ -168,7 +181,10 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         """
         Count the number of order bys or sortings from the user query '{question}'. You only need to order if it is obvious from the query.
         Thought: There's [ORDER_COUNT] order by dimension(s).
-        List the terms that describe each order by. Include in the terms some description of whether it should be ascending or descending.
+        """
+        """
+        List the terms that describe each orderby. Be certain that you split your lists of terms onto new lines. This means you will have {ORDER_COUNT} lines of terms.
+        Include in the terms some description of whether it should be ascending or descending.
         <Order By>
         """
         orderbys=[]
@@ -179,11 +195,11 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         _logger.info(f"Determined orderings of `{orderbys}`.")
 
         limit = None
-        "Does the user query '{question}' suggest there needs to be a limit? [YESNO]\n"
+        "Does the user query '{question}' suggest there needs to be a limit? Yes or No. [YESNO]\n"
         if YESNO=='Yes':
             _logger.info(f"Decided there needs to be a limit.")
             "The limit is <limit type=integer>[LIMIT]limit>\n"
-            limit = int(LIMIT.strip('</'))
+            limit = int(strip_whole(LIMIT, '</'))
             _logger.info(f"Deciding to limit to `{limit}` results.")
         else:
             _logger.info(f"Decided there does NOT need to be a limit.")
@@ -202,7 +218,9 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {filter_consideration}
         With this in mind, determine the number of filters needed from the user query '{question}' not handled by any orderings and limit already determined.
         Thought: There's still [FILTER_COUNT] filter(s) needed.
-        Describe each filter.
+        """
+        """
+        Describe each filter. Be certain that you split your lists of terms onto new lines. This means you will have {FILTER_COUNT} lines of terms.
         <Filter By>
         """
         filters=[]
@@ -216,11 +234,12 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
             temp_dims=semantic_sort(term, common_dimensions, 10)
             dim_options=indent(dedent("\n".join(temp_dims)), ' '*4)
             """
-        <Dimensions terms={term}>
+        <DimensionOptions terms={term}>
         {dim_options}
-        </Dimensions>
+        </DimensionOptions>
             """
-            "\nIs there a dimension that that could be used for aggregating '{term}': [YESNO]"
+            "\nExplain in just a few words from these DimensionOptions which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nNow, based on this explanation - Yes or No - Is there a dimension from these DimensionOptions that appears similar enough to be used for aggregating '{term}'?: [YESNO]"
 
             if YESNO=='Yes':
                 for dim in list(_dimensions):
@@ -233,7 +252,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "\nExplain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "\nExplain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and the dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
@@ -246,7 +265,8 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {dim_options}
         </OrderbyOptions>
             """
-            "\nIs there a dimension or selected metric from this list that could be used for ordering '{term}': [YESNO]"
+            "\nExplain in just a few words from these OrderbyOptions or one of your selected metrics (reminder: you have selected {selected_metrics}) which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nNow, based on this explanation - Yes or No - Is there a dimension from OrderbyOptions or a selected metric (reminder: you have selected {selected_metrics}) that appears similar enough to be used for ordering '{term}'?: [YESNO]"
             if YESNO=='Yes':
                 for dim in list(_dimensions):
                     _dimensions.remove(dim)
@@ -259,7 +279,7 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 for dim in common_dimensions:
                     _dimensions.add(dim)
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
         selected_filters=[]
@@ -271,7 +291,8 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         {dim_options}
         </FilterOptions >
             """
-            "\nAre there any dimensions that could be used to filter '{term}'? [YESNO]"
+            "\nExplain in just a few words from these FilterOptions which seem most likely to match '{term}' and why: [EXPLAIN]"
+            "\nAre there any dimensions from FilterOptions that appears similar enough to be used to filter '{term}'? Yes or No.: [YESNO]"
             if YESNO=='Yes':
                 for dim in list(_dimensions):
                     _dimensions.remove(dim)
@@ -295,14 +316,18 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
                 selected_filters.append(FILTER.split('</')[0])
                 _logger.info(f"Adding filter `{selected_filters[-1]}`.")
             else:
-                "Explain in less than 50 words to the user why you are unable to continue with their request.\n"
+                "Explain in less than 50 words to the user why you are unable to continue with their request including information about the metrics and dimensions you may have considered.\n"
                 "Response: [RESPONSE]"
                 return Response(utterance=RESPONSE, parent = question)
 
         results = await calculate_metric(selected_metrics, selected_groupbys, selected_filters, selected_orderbys, limit)
         if results == "Cannot calculate metric":
-            return Response(utterance=results, parent = question)
-        return Observation(utterance=results, parent = question)
+            return Response(utterance="There was a problem with the metric service, so I cannot calculate `{question.utterance}`.", parent = question)
+        RESPONSE=f"Metric calculation complete for `{question.utterance}`."
+        if chat_context:
+            "The metrics have been calculated. Briefly explain in less than 75 words on a single line to the user all that you have done to complete this request.\n"
+            "Response:[RESPONSE]"
+        return Observation(utterance=RESPONSE, metadata = results, parent = question, notes="I have stored the data in the workspace for other agents to acquire as needed.")
 
     from
         "chatgpt"
@@ -313,7 +338,6 @@ async def _metric_calculate_agent(question: Utterance, _metrics: List[str], _dim
         STOPS_AT(ORDERBY_TERM, "\n") and
         STOPS_AT(FILTER_TERM, "\n") and
         STOPS_AT(RESPONSE, "\n") and
-        len(RESPONSE)<300 and
         STOPS_AT(FILTER, "</") and
         STOPS_AT(LIMIT, "</") and
         METRIC_COUNT in ['0', '1', '2', '3', '4', '5'] and GROUPBY_COUNT in ['0', '1', '2', '3', '4', '5'] and FILTER_COUNT in ['0', '1', '2', '3', '4', '5'] and ORDER_COUNT in ['0', '1', '2', '3', '4', '5'] and SQL_FILTER_COUNT in ['0', '1', '2', '3'] and

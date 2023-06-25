@@ -1,12 +1,40 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef, useLayoutEffect} from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { TypeAnimation } from "react-type-animation";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
 import Plot from "react-plotly.js";
 import DataTable from "../components/dataTable";
-
+const PeopleTable = ({ metadatas }) => {
+  return (
+    <table className="w-full border-collapse border border-gray-300 max-h-4xl">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="py-2 px-4 border border-gray-300">First Name</th>
+          <th className="py-2 px-4 border border-gray-300">Last Name</th>
+          <th className="py-2 px-4 border border-gray-300">Position</th>
+          <th className="py-2 px-4 border border-gray-300">Manager ID</th>
+          <th className="py-2 px-4 border border-gray-300">Hire Date</th>
+          <th className="py-2 px-4 border border-gray-300">Employee</th>
+          <th className="py-2 px-4 border border-gray-300">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {metadatas.map((metadata, index) => (
+          <tr key={index} className="bg-white">
+            <td className="py-2 px-4 border border-gray-300">{metadata.first_name}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.last_name}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.position}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.manager_id}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.hire_date}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.employee.toString()}</td>
+            <td className="py-2 px-4 border border-gray-300">{metadata.description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 const MessageContent = ({ message }) => {
   const [showQuery, setShowQuery] = useState(false);
   const [showSql, setShowSql] = useState([]);
@@ -14,9 +42,9 @@ const MessageContent = ({ message }) => {
   if (
     message.source === "metric_calculate_agent" &&
     message.marker.startsWith("Obs") &&
-    message.utterance.results.length > 0
+    message.metadata.results.length > 0
   ) {
-    const { results, submitted_query } = message.utterance;
+    const { results, submitted_query } = message.metadata;
     const columns = results[0].columns;
     const rows = results[0].rows;
     return (
@@ -64,9 +92,9 @@ const MessageContent = ({ message }) => {
   } else if (
     message.source === "metric_search_agent" &&
     message.marker.startsWith("Obs") &&
-    message.utterance.metadatas.length > 0
+    message.metadata.metadatas.length > 0
   ) {
-    const { metadatas, documents } = message.utterance;
+    const { metadatas, documents } = message.metadata;
 
     const handleShowSql = (index) => {
       setShowSql((prevShowSql) => {
@@ -76,40 +104,107 @@ const MessageContent = ({ message }) => {
       });
     };
     return <DataTable metadatas={metadatas} documents={documents} />;
+  }else if (
+    message.source === "people_search_agent" &&
+    message.marker.startsWith("Ans") &&
+    message.metadata.people.length > 0
+  ) {
+    return <PeopleTable metadatas={message.metadata.people} />;
   } else if (
     message.source === "plot_data" &&
     message.marker.startsWith("Obs")
   ) {
-    const plotData = message.utterance;
+    const plotData = message.metadata;
     return <Plot data={plotData.data} layout={plotData.layout} />;
-  } else {
-    console.log(message);
-    return message.isUser ? (
-      message.utterance
-    ) : (
-      <p>
-        <TypeAnimation
-          sequence={[
-            typeof message.utterance !== "string"
-              ? JSON.stringify(message.utterance)
-              : message.utterance,
-          ]}
-          speed={90}
-          cursor={false}
-          repeat={0}
-        />
-      </p>
-    );
   }
 };
 
+const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [complete, setComplete] = useState(false);
+
+  const randomDelay = () => {
+    const delays = [delay, delay * 2, delay * 3, delay * 4];
+    return delays[Math.floor(Math.random() * delays.length)];
+  };
+
+  useEffect(() => {
+    if (!complete) {
+      let currentIndex = 0;
+
+      const intervalId = setInterval(() => {
+        const randomChars = Math.floor(Math.random() * 4) + 1;
+        setDisplayText(text.slice(0, currentIndex + randomChars));
+        currentIndex += randomChars;
+
+        if (currentIndex >= text.length) {
+          clearInterval(intervalId);
+          setComplete(true);
+          onAnimationComplete();
+        }
+      }, randomDelay());
+
+      return () => clearInterval(intervalId);
+    }else{
+      setDisplayText(text)
+    }
+  }, [text, delay, complete, onAnimationComplete]);
+
+  const trimmedDisplayText = displayText.replace(/"/g, '');
+
+  return <span>{trimmedDisplayText}</span>;
+};
+const TypeAnimationWithPills = ({ message }) => {
+  const [allSegments, _] = useState(message.utterance.split(/(\(agent\).*?\(\/agent\))/g));
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+
+  const increment = () => {
+    let newIndex = Math.min(currentSegmentIndex + 1, allSegments.length - 1);
+    // while (allSegments[newIndex].startsWith("(agent)")) {
+    //   newIndex = newIndex + 1;
+    // }
+    setCurrentSegmentIndex(Math.min(newIndex, allSegments.length - 1));
+  };
+
+  return (
+    <div className="flex flex-wrap">
+      {allSegments.slice(0, currentSegmentIndex + 1).map((segment, index) => {
+        return segment.startsWith("(agent)") ? (
+          <span
+            key={index}
+            className="bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 ml-2 mr-2"
+            style={{
+              whiteSpace: "nowrap",
+              fontSize: "14px",
+              padding: "4px 8px",
+            }}
+          >          <TypingAnimation
+          key={index}
+          text={segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
+          delay={35}
+          onAnimationComplete={increment}
+        />
+
+          </span>
+        ) : (
+          <TypingAnimation
+            key={index}
+            text={segment}
+            delay={35}
+            onAnimationComplete={increment}
+          />
+        );
+      })}
+    </div>
+  );
+};
 const ChatPage = () => {
   const [socketUrl] = useState("ws://localhost:8679/chat/");
   const [messageHistory, setMessageHistory] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const chatContainerRef = useRef();
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
   const addToMessageHistory = (message) => {
@@ -126,6 +221,12 @@ const ChatPage = () => {
       console.log(messageHistory);
     }
   }, [lastMessage]);
+
+  useLayoutEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messageHistory]);
 
   const handleSubmit = useCallback(
     (e) => {
@@ -193,76 +294,85 @@ const ChatPage = () => {
           style={{ height: "50px", width: "50px" }}
         />
       </div>
-      <div className="flex flex-col flex-grow bg-gray-100 w-full">
+      <div className="flex flex-col flex-grow bg-gray-100 w-full overflow-y-auto">
         <div className="py-6 px-4 sm:px-6 lg:py-12 lg:px-8 h-full flex flex-col w-full">
-          <div className="flex-grow overflow-y-auto">
-            {messageHistory.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.isUser ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`${
-                    message.isUser ? "bg-blue-300" : "bg-white"
-                  } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
-                  style={{ textAlign: message.isUser ? "right" : "left" }}
-                >
-                  <MessageContent message={message} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <form onSubmit={handleSubmit} className="mt-4">
-            <div className="flex">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                className="block w-full rounded-md border-gray-300 shadow-lg px-4 py-2 focus:ring-blue-100 sm:text-sm"
-                placeholder="Type your message here..."
-                disabled={sendDisabled}
-              />
-              <button
-                type="submit"
-                className={`ml-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                  sendDisabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                disabled={sendDisabled}
-              >
-                {isLoading ? (
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
+          <div className="flex-grow overflow-y-auto" ref={chatContainerRef}>
+            {messageHistory.map((message, index) => {
+              if (message.metadata != null) {
+                return (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      message.isUser ? "justify-end" : "justify-start"
+                    }`}
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm12 0a8 8 0 100-16 8 8 0 000 16z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <span>Send</span>
-                )}
-              </button>
-            </div>
-          </form>
-          <div className="bg-gray-900 text-white py-2 px-4 fixed bottom-0 left-0 w-full">
-            {renderWSBadge(connectionStatus)}
-            WebSocket Connection Status
+                    <div
+  className={`${
+    message.isUser ? "bg-blue-300" : "bg-white"
+  } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4`}
+  style={{
+    textAlign: message.isUser ? "right" : "left",
+  }}
+>
+  <p className="text-gray-000 dark:text-gray-000">
+    <TypeAnimationWithPills message={message}/>
+  </p>
+  <MessageContent message={message} />
+</div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div
+                    key={index}
+                    className={`flex ${
+                      message.isUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`${
+                        message.isUser ? "bg-blue-300" : "bg-white"
+                      } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
+                     style={{
+                        textAlign: message.isUser ? "right" : "left",
+                      }}
+                    >
+
+                      <p className="text-gray-900 dark:text-gray-900">
+                      {message.isUser ? message.utterance : <>                      <p className="font-medium mb-2">
+                        HeadJack
+                      </p><TypeAnimationWithPills message={message}/></>}
+
+                      </p>
+
+                    </div>
+                  </div>
+                );
+              }
+            })}
           </div>
+          <form onSubmit={handleSubmit} className="mt-6 flex">
+            <input
+              type="text"
+              disabled={sendDisabled}
+              value={inputValue}
+              onChange={handleInputChange}
+              className={`flex-grow outline-none px-4 py-2 rounded-md ${sendDisabled ? "bg-neutral-400" : "bg-gray-800"} text-white`}
+              placeholder="Type a message..."
+            />
+            <button
+              type="submit"
+              disabled={sendDisabled}
+              className={`ml-4 px-4 py-2 rounded-md bg-blue-500 text-white font-medium
+                ${sendDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              Send
+            </button>
+          </form>
         </div>
+      </div>
+      <div className="flex items-center justify-center bg-gray-200 h-16">
+        <span className="text-sm">Chat connection is &nbsp;</span>{renderWSBadge(connectionStatus)}
       </div>
     </div>
   );

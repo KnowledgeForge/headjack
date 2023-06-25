@@ -33,8 +33,8 @@ export default function PeoplePage() {
     )
       .then((response) => response.json())
       .then((data) => {
-        setAnswer(data.utterance.summary);
-        setPeopleList(data.utterance.people);
+        setAnswer(data.utterance);
+        setPeopleList(data.metadata.people);
         setIsLoading(false);
       })
       .catch((err) => {

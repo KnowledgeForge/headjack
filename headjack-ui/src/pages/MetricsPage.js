@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
+import { TypeAnimation } from "react-type-animation";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
 import DataTable from "../components/dataTable";
@@ -31,7 +32,7 @@ export default function MetricsPage() {
     )
       .then((response) => response.json())
       .then((data) => {
-        setAnswer(data.utterance);
+        setAnswer(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -101,11 +102,22 @@ export default function MetricsPage() {
           loop
         />
       </div>
+
       {answer ? (
+              <><blockquote className="p-4 my-4 border-l-4 border-gray-300 bg-gray-50">
+              <p className="text-l italic font-medium leading-relaxed text-gray-900">
+                <TypeAnimation
+                  sequence={[answer.utterance]}
+                  speed={90}
+                  cursor={false}
+                  repeat={0}
+                />
+              </p>
+            </blockquote>
           <DataTable
-            metadatas={answer.metadatas}
-            documents={answer.documents}
-          />
+            metadatas={answer.metadata.metadatas}
+            documents={answer.metadata.documents}
+          /></>
         ) : (
           <></>
         )}

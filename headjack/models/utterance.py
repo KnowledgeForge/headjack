@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Any, Generator, Optional, Set, Type, Union
+from typing import Generator, Optional, Set, Type
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -12,13 +12,14 @@ _logger = logging.getLogger("headjack")
 
 
 class Utterance(BaseModel):
-    utterance: Any
+    utterance: str
     # timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     parent: Optional["Utterance"] = None
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     marker: Optional[str] = Field(default="")
     source: Optional[str] = None
-    direct_response: bool = False
+    metadata: Optional[dict] = None
+    notes: str = ""
 
     def _logged(self):
         return getattr(self, "__logged", False)
@@ -56,7 +57,10 @@ class Utterance(BaseModel):
                     )
                 else:
                     utterance_str = str(utterance)
-                history.append(utterance_str)
+                history.append(
+                    utterance_str
+                    + (f" Note (users should never see note information): {utterance.notes}" if utterance.notes else ""),
+                )
             else:
                 history.append(utterance)
             if len(history) == n:
@@ -87,39 +91,28 @@ class Utterance(BaseModel):
 
 
 class User(Utterance):
-    utterance: str
     marker = "User: "
 
 
 class Observation(Utterance):
-    utterance: dict
     marker = "Observation: "
     direct_response = True
 
 
 class Action(Utterance):
-    utterance: Union[str, dict]
     marker = "Action: "
 
 
 class Thought(Utterance):
-    utterance: str
     marker = "Thought: "
 
 
 class Answer(Utterance):
-    utterance: str
     marker = "Answer: "
 
 
-class StructuredAnswer(Utterance):
-    utterance: dict
-    marker = ""
-
-
 class Response(Utterance):
-    utterance: str
     marker = "Response: "
 
 
-UTTERANCES = {User, Observation, Action, Thought, Answer, StructuredAnswer, Response}
+UTTERANCES = {User, Observation, Action, Thought, Answer, Response}

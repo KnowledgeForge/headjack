@@ -2,6 +2,7 @@ import logging
 from typing import Union
 
 import lmql
+from lmql.runtime.bopenai import get_stats
 
 from headjack.agents.registry import register_agent_function
 from headjack.config import get_settings
@@ -18,7 +19,7 @@ from headjack.utils.consistency import consolidate_responses
 _logger = logging.getLogger("uvicorn")
 
 
-async def search_for_metrics(q, n: int = 5):
+async def search_for_metrics(q, n: int = 15):
     settings = get_settings()
     try:
         q = q.strip("\n '.")
@@ -31,15 +32,23 @@ async def search_for_metrics(q, n: int = 5):
 
 
 @register_agent_function(
-    """This function takes a query to search for some metric which DEFINES something like an average, total, etc. over some data.
-    This is NOT an agent for calculation nor is it needed before running a calculation. It is used only for discovering metrics.""",
+    """This agent takes a query to search for some metric which DEFINES something like an average, total, etc. over some data.
+    This is NOT an agent for calculation nor is it needed before running a calculation. It is used only for discovering metrics.
+    This agent needs a specific metric or topic to work best i.e. NOT "find some metrics".""",
 )
-async def metric_search_agent(question: Utterance, n: int = 1, temp: float = 0.0) -> Union[Answer, Response]:
-    return await consolidate_responses(add_source_to_utterances(await _metric_search_agent(question, n, temp), "metric_search_agent"))  # type: ignore
+async def metric_search_agent(
+    question: Utterance,
+    n: int = 1,
+    temp: float = 0.0,
+    chat_context: bool = False,
+) -> Union[Answer, Response]:
+    ret = await consolidate_responses(add_source_to_utterances(await _metric_search_agent(question, n, temp, chat_context), "metric_search_agent"))  # type: ignore
+    _logger.info(get_stats())
+    return ret
 
 
 @lmql.query
-async def _metric_search_agent(question: Utterance, n: int, temp: float) -> Union[Answer, Response]:  # type: ignore
+async def _metric_search_agent(question: Utterance, n: int, temp: float, chat_context: bool) -> Union[Answer, Response]:  # type: ignore
     '''lmql
     sample(n = n, temperature = temp)
         """You are given some statement, terms or question below from the User.
@@ -63,8 +72,17 @@ async def _metric_search_agent(question: Utterance, n: int, temp: float) -> Unio
         "Terms: '[TERM]\n"
         result = await search_for_metrics(TERM)
         if result=='No results':
-            return Response(utterance=result, parent=question)
-        return Observation(utterance=result, parent=question)
+            return Response(utterance="There were no metrics found for `{question.utterance}`.", parent=question)
+        response = f"Metric Search completed for `{question.utterance}`."
+        if chat_context:
+            knowledge = "\n".join(str(pair) for pair in zip(result['documents'][0], result['metadatas'][0]))
+            "The search has been completed. Here are the results:\n"
+            "{result}\n"
+            "In just a few words and speaking directly to the user, summarize there results in the context of their message `{question.utterance}`.\n"
+            "Response:[RESPONSE]"
+            response = RESPONSE
+        return Observation(utterance=response, metadata=result, parent=question)
+        "{chat_context}"
     FROM
         "chatgpt"
     WHERE
