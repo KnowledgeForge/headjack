@@ -1,5 +1,6 @@
 import json
 import logging
+from copy import deepcopy
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, TypedDict, Union, cast
 
@@ -22,15 +23,25 @@ class PlotDataColumn(TypedDict):
 
 def utterance_is_data(utterance: Utterance) -> Union[bool, List[PlotDataColumn]]:
     try:
-        columns = utterance.metadata["results"][0]["columns"]  # type: ignore
-        if 'rows' in utterance.metadata["results"][0]:  # type: ignore
-            for row in utterance.metadata["results"][0]['rows']:  # type: ignore
+        metadata = deepcopy(utterance.metadata)
+        columns = metadata["results"][0]["columns"]  # type: ignore
+        if 'rows' in metadata["results"][0]:  # type: ignore
+            for row in metadata["results"][0]['rows']:  # type: ignore
                 for i, col in enumerate(columns):
                     col['values'] = col.get('values') or []
                     col['values'].append(row[i])
         return columns
     except Exception:
         return False
+
+
+def get_data_from_history(question: Utterance) -> Optional[List[PlotDataColumn]]:
+    cols = None
+    for utterance in question.history():
+        is_data = utterance_is_data(utterance)
+        if is_data != False:  # noqa: E712
+            cols = is_data
+    return cols  # type: ignore
 
 
 def code_valid(cols: List[PlotDataColumn], code: str) -> Optional[Exception]:
@@ -74,16 +85,11 @@ async def _plot_data_agent(
     temp: float = 0.0,
     chat_context: bool = False,
 ) -> Union[Observation, Response]:
-    cols = None
-    for utterance in question.history():
-        is_data = utterance_is_data(utterance)
-        if is_data is not False:
-            cols = is_data
+    cols = get_data_from_history(question)
     if cols is None:
         ret = Response(utterance="There was no data in the conversation history to plot.", parent=question)
         ret.source = "plot_data"
         return ret
-    import pdb; pdb.set_trace()
     cols = cast(List[PlotDataColumn], cols)
     code = await _plot_data(cols, question, n, temp, chat_context)
     if isinstance(code, Response):
