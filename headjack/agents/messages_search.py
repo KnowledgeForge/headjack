@@ -37,7 +37,7 @@ async def messages_search_agent(
     temp: float = 0.0,
     chat_context: bool = False,
 ) -> Union[Response, Answer]:
-    ret = await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp, chat_context), "messages_search_agent"))  # type: ignore
+    ret = await consolidate_responses(add_source_to_utterances(await _messages_search_agent(question, n, temp), "messages_search_agent"))  # type: ignore
     _logger.info(get_stats())
     return ret
 

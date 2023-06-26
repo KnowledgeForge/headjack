@@ -100,7 +100,7 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
 
         # DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
         #    Example interaction:
-        #    User: what are you capable of?/what can you help me with?/how can you help me?
+        #    User: what are you capable of?/what can you help me with?/how can you help me?/I have to do something/ i need help
         #    Plan: I will tell the user about my available agents. I do not need to dispatch any specialist to do this.
         #    Answer: I have access to several specialist agents including (agent)____(/agent)...
         #
@@ -110,8 +110,13 @@ async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
         #    Action: ...
         #
         #    Example interaction:
+        #    User: find metrics related to cost
+        #    Plan: The user has only asked me to find metrics. The (agent)metric_search_agent(/agent) is all I need to accomplish searching for metrics related to cost.
+        #    Action: ...
+        #
+        #    Example interaction:
         #    User: Find the average repair cost by company and then plot it with a bar plot with red and pink.
-        #    Plan: The (agent)metric_calculate_agent(/agent) will calculate the average repair cost by company and then the (agent)plot_data_agent(/agent) will make a bar plot with red and pink bars.
+        #    Plan: The user has asked to find the value of something. The (agent)metric_calculate_agent(/agent) will calculate the average repair cost by company and then the (agent)plot_data_agent(/agent) will make a bar plot with red and pink bars.
         #    Action: ...
         #
         #    Example interaction:
