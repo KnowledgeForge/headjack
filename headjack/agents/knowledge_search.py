@@ -29,7 +29,7 @@ async def search_for_knowledge(q):
         return ret
     except Exception as e:
         _logger.info("Error while attempting to reach headjack search " f"service knowledge collection: {str(e)}")
-        return "No results"
+        return []
 
 
 @register_agent_function(
@@ -49,7 +49,7 @@ async def knowledge_search_agent(
 @lmql.query
 async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Answer]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp)
+    sample(n = n, temperature = temp, openai_chunksize=4)
         "Given the following question, use several diverse search queries to search for relevant information and create a summary answer.\n"
         "Question: {question.utterance}\n"
         "In just a few words on a single line, explain what the Question is asking: [EXPLAIN]"

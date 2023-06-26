@@ -49,7 +49,7 @@ async def people_search_agent(
 @lmql.query
 async def _people_search_agent(question: Utterance, n: int, temp: float, chat_context: bool = False) -> Union[Response, Observation]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp)
+    sample(n = n, temperature = temp, openai_chunksize=4)
         "Given the following question or topic, use a comma-separated set of terms to search for people in the human resource system and create a list of people. "
         "Use terms that would be found in a the job description and/or bio of the person in the human resource system. That will help you find people "
         "that are most likely right people to reach out to in order to answer the question or learn more about the topic."

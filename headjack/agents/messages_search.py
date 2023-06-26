@@ -45,7 +45,7 @@ async def messages_search_agent(
 @lmql.query
 async def _messages_search_agent(question: Utterance, n: int, temp: float) -> Union[Response, Answer]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp)
+    sample(n = n, temperature = temp, openai_chunksize=4)
         "Given the following question, use a term to search for relevant conversations in the messaging system and create a summary answer. "
         "Try to find the names of the people in the conversation and include their names in the summary. Use quotes of the messages as examples "
         "of key points in your summary. If there's a clear sentiment across the conversations returned by the messaging system, make sure to include "

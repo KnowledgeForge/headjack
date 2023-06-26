@@ -116,7 +116,7 @@ async def _plot_data(
 @lmql.query
 async def _plot_data_prompt(cols: List[PlotDataColumn], question: Utterance, n: int, temp: float, chat_context: bool) -> Union[Answer, Response]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp, max_len=3000)
+    sample(n = n, temperature = temp, max_len=3000, openai_chunksize=4)
         """You are given the following request to plot some data.
         Request: {question.utterance}
         The data you will plot is in a dictionary {{columns: lists of data}} `df`. plotly express is available as px.

@@ -95,7 +95,7 @@ async def chat_agent(
 @lmql.query
 async def _chat_agent(args: ChatAgentArgs) -> lmql.LMQLResult:  # type: ignore
     '''lmql
-    sample(n = args.n, temperature = args.temp, max_len=4096)
+    sample(n = args.n, temperature = args.temp, max_len=4096, openai_chunksize=4)
         """You are to play a chatbot named HeadJack that takes a conversation between you and a User and continues the conversation appropriately.
 
         # DO NOT USE INFORMATION FROM THIS SECTION TO RESPOND TO THE USER ONLY USE IT TO HELP INFORM YOUR PLAN AND SPECIALIST CHOICE
