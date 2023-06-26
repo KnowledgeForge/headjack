@@ -5,6 +5,8 @@ import React, {
   useRef,
   useLayoutEffect,
 } from "react";
+
+import { TypeAnimation } from "react-type-animation";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
@@ -218,6 +220,7 @@ const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
   return <span>{trimmedDisplayText}</span>;
 };
 const TypeAnimationWithPills = ({ message }) => {
+  const [complete, setComplete] = useState(false);
   const [allSegments, _] = useState(
     message.utterance.split(/(\(agent\).*?\(\/agent\))/g)
   );
@@ -229,6 +232,7 @@ const TypeAnimationWithPills = ({ message }) => {
     //   newIndex = newIndex + 1;
     // }
     setCurrentSegmentIndex(Math.min(newIndex, allSegments.length - 1));
+    if(newIndex>=allSegments.length){setComplete(true)}
   };
 
   return (
@@ -244,7 +248,7 @@ const TypeAnimationWithPills = ({ message }) => {
               padding: "4px 8px",
             }}
           >
-            {" "}
+            {!complete? <>{" "}
             <TypingAnimation
               key={index}
               text={segment
@@ -252,15 +256,17 @@ const TypeAnimationWithPills = ({ message }) => {
                 .replace(/\(\/agent\)/g, "")}
               delay={35}
               onAnimationComplete={increment}
-            />
+            /></>:segment
+            .replace(/\(agent\)/g, "")
+            .replace(/\(\/agent\)/g, "")}
           </span>
         ) : (
-          <TypingAnimation
+          !complete?<TypingAnimation
             key={index}
             text={segment}
             delay={35}
             onAnimationComplete={increment}
-          />
+          />:segment
         );
       })}
     </div>
@@ -271,7 +277,6 @@ const ChatPage = () => {
   const [messageHistory, setMessageHistory] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef();
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
@@ -287,10 +292,9 @@ const ChatPage = () => {
         addToMessageHistory(message);
       }
       setSendDisabled(!reply_finished);
-      setIsLoading(!reply_finished);
       console.log(messageHistory);
     }
-  }, [lastMessage]);
+  }, [lastMessage, sendDisabled]);
 
   useLayoutEffect(() => {
     if (chatContainerRef.current) {
@@ -304,14 +308,14 @@ const ChatPage = () => {
       e.preventDefault();
       const message = { utterance: inputValue.trim(), isUser: true };
       if (message.utterance !== "") {
-        setIsLoading(true);
+        setSendDisabled(true);
         sendMessage(JSON.stringify(message));
         addToMessageHistory(message);
         setInputValue("");
-        setSendDisabled(true);
+
       }
     },
-    [inputValue, sendMessage]
+    [inputValue, sendMessage, sendDisabled]
   );
 
   const handleInputChange = useCallback((e) => {
@@ -376,8 +380,8 @@ const ChatPage = () => {
         <Player
           autoplay
           loop
-          src={isLoading ? animatedPurpleRobot : animatedYellowRobot}
-          speed={isLoading ? 2 : 1}
+          src={sendDisabled ? animatedPurpleRobot : animatedYellowRobot}
+          speed={sendDisabled ? 2 : 1}
           style={{ height: "50px", width: "50px" }}
         />
       </div>
@@ -386,44 +390,7 @@ const ChatPage = () => {
           <div className="flex-grow overflow-y-auto" ref={chatContainerRef}>
 
             {messageHistory.map((message, index) => {
-              if (message.metadata != null) {
-                return (
-                  <div
-                    key={index}
-                    className={`flex ${message.isUser ? "justify-end" : "justify-start"
-                      }`}
-                  >
-                    <div
-                      className={`${message.isUser ? "bg-blue-300" : "bg-white"
-                        } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4`}
-                      style={{
-                        textAlign: message.isUser ? "right" : "left",
-                      }}
-                    >
-                      <p className="font-medium mb-2">HeadJack</p>
-                      <TypeAnimationWithPills message={message} />
 
-                      <MessageContent message={message} />
-                    </div>
-                    {!message.isUser && (
-                      <div className="flex float-right">
-                        <button
-                          className="px-2 py-2 font-large"
-                          onClick={() => submitFeedback(message, true)}
-                        >
-                          👍
-                        </button>
-                        <button
-                          className="px-2 py-2 font-large"
-                          onClick={() => submitFeedback(message, false)}
-                        >
-                          👎
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              } else {
                 return (
                   <div
                     key={index}
@@ -432,30 +399,36 @@ const ChatPage = () => {
                   >
                     <div
                       className={`${message.isUser ? "bg-blue-300" : "bg-white"
-                        } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
+                        } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4 overflow-y-auto`}
                       style={{
                         textAlign: message.isUser ? "right" : "left",
                       }}
                     >
-                      <p className="text-gray-900 dark:text-gray-900">
-                        {message.isUser ? (
-                          message.utterance
-                        ) : (
-                          <>
-                            <p className="font-medium mb-2">HeadJack</p>
-                            <TypeAnimationWithPills message={message} />
-                          </>
-                        )}
-                      </p>
+
+                      {!message.isUser ? <>
+                      <p className="font-medium mb-2">HeadJack</p>
+                      {(message.metadata == null)?<TypeAnimationWithPills message={message} />:<>
+                      <TypeAnimation
+                        sequence={[message.utterance]}
+                        speed={70}
+                        cursor={false}
+                        repeat={0}
+                      />
+                      <MessageContent message={message} /></>}
+
+                      </> : message.utterance}
+
+
                       {!message.isUser && (
-                        <Feedback submitFeedback={submitFeedback} />
-                      )}
+                      <Feedback submitFeedback={submitFeedback} />
+                    )}
                     </div>
+
                   </div>
                 );
-              }
+
             })}
-            {isLoading ? (
+            {sendDisabled && connectionStatus === 'Open' ? (
               <div className="bg-white shadow-lg rounded-lg p-4 max-w-xs max-h-4xl mb-4">
                 <p className="font-medium mb-2">HeadJack</p>
                 <Player

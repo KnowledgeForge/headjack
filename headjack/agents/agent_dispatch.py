@@ -35,7 +35,7 @@ class AgentDispatchArgs:
 @lmql.query
 async def _agent_dispatch(args: AgentDispatchArgs) -> List[Utterance]:  # type: ignore
     '''lmql
-    sample(n = args.n, temperature = args.temp, max_len=4096, openai_chunksize=4)
+    sample(n = args.n, temperature = args.temp, max_len=4096)
         """You are an agent that interprets a user request and determines what specialist is best suited to handle the request.
 
         The specialists at your disposal to dispatch to are:

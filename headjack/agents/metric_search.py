@@ -50,7 +50,7 @@ async def metric_search_agent(
 @lmql.query
 async def _metric_search_agent(question: Utterance, n: int, temp: float, chat_context: bool) -> Union[Answer, Response]:  # type: ignore
     '''lmql
-    sample(n = n, temperature = temp, openai_chunksize=4)
+    sample(n = n, temperature = temp)
         """You are given some statement, terms or question below from the User.
         You will generate a list of diverse potential search terms that will be searched.
 
