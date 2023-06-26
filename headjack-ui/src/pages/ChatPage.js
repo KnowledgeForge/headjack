@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef, useLayoutEffect} from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
@@ -23,13 +29,27 @@ const PeopleTable = ({ metadatas }) => {
       <tbody>
         {metadatas.map((metadata, index) => (
           <tr key={index} className="bg-white">
-            <td className="py-2 px-4 border border-gray-300">{metadata.first_name}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.last_name}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.position}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.manager_id}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.hire_date}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.employee.toString()}</td>
-            <td className="py-2 px-4 border border-gray-300">{metadata.description}</td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.first_name}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.last_name}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.position}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.manager_id}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.hire_date}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.employee.toString()}
+            </td>
+            <td className="py-2 px-4 border border-gray-300">
+              {metadata.description}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -105,7 +125,7 @@ const MessageContent = ({ message }) => {
       });
     };
     return <DataTable metadatas={metadatas} documents={documents} />;
-  }else if (
+  } else if (
     message.source === "people_search_agent" &&
     message.marker.startsWith("Ans") &&
     message.metadata.people.length > 0
@@ -121,7 +141,7 @@ const MessageContent = ({ message }) => {
 };
 
 const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
-  const [displayText, setDisplayText] = useState('');
+  const [displayText, setDisplayText] = useState("");
   const [complete, setComplete] = useState(false);
 
   const randomDelay = () => {
@@ -146,17 +166,19 @@ const TypingAnimation = ({ text, delay, onAnimationComplete }) => {
       }, randomDelay());
 
       return () => clearInterval(intervalId);
-    }else{
-      setDisplayText(text)
+    } else {
+      setDisplayText(text);
     }
   }, [text, delay, complete, onAnimationComplete]);
 
-  const trimmedDisplayText = displayText.replace(/"/g, '');
+  const trimmedDisplayText = displayText.replace(/"/g, "");
 
   return <span>{trimmedDisplayText}</span>;
 };
 const TypeAnimationWithPills = ({ message }) => {
-  const [allSegments, _] = useState(message.utterance.split(/(\(agent\).*?\(\/agent\))/g));
+  const [allSegments, _] = useState(
+    message.utterance.split(/(\(agent\).*?\(\/agent\))/g)
+  );
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
 
   const increment = () => {
@@ -179,13 +201,16 @@ const TypeAnimationWithPills = ({ message }) => {
               fontSize: "14px",
               padding: "4px 8px",
             }}
-          >          <TypingAnimation
-          key={index}
-          text={segment.replace(/\(agent\)/g, "").replace(/\(\/agent\)/g, "")}
-          delay={35}
-          onAnimationComplete={increment}
-        />
-
+          >
+            {" "}
+            <TypingAnimation
+              key={index}
+              text={segment
+                .replace(/\(agent\)/g, "")
+                .replace(/\(\/agent\)/g, "")}
+              delay={35}
+              onAnimationComplete={increment}
+            />
           </span>
         ) : (
           <TypingAnimation
@@ -215,8 +240,10 @@ const ChatPage = () => {
   useEffect(() => {
     if (lastMessage !== null) {
       const message = JSON.parse(lastMessage.data);
-      let reply_finished = message.utterance==null
-      if (!reply_finished){addToMessageHistory(message)}
+      let reply_finished = message.utterance == null;
+      if (!reply_finished) {
+        addToMessageHistory(message);
+      }
       setSendDisabled(!reply_finished);
       setIsLoading(!reply_finished);
       console.log(messageHistory);
@@ -225,7 +252,8 @@ const ChatPage = () => {
 
   useLayoutEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [messageHistory]);
 
@@ -288,16 +316,19 @@ const ChatPage = () => {
     setTimeout(() => {
       setToast(false);
     }, 3000);
-  }
+  };
   return (
     <div className="flex flex-col h-screen w-full">
-            {toast && 
+      {toast && (
         <div className="fixed bottom-0 right-0 m-4">
-          <div className="bg-blue-500 text-white px-4 py-2 rounded" role="alert">
+          <div
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            role="alert"
+          >
             <strong>Feedback Submitted!</strong>
           </div>
-        </div>  
-      }
+        </div>
+      )}
       <div className="flex items-center justify-center bg-gray-200 h-24">
         <h2 className="text-2xl font-bold">HeadJack Chat</h2>
         <Player
@@ -321,18 +352,18 @@ const ChatPage = () => {
                     }`}
                   >
                     <div
-  className={`${
-    message.isUser ? "bg-blue-300" : "bg-white"
-  } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4`}
-  style={{
-    textAlign: message.isUser ? "right" : "left",
-  }}
->
-  <p className="text-gray-000 dark:text-gray-000">
-    <TypeAnimationWithPills message={message}/>
-  </p>
-  <MessageContent message={message} />
-</div>
+                      className={`${
+                        message.isUser ? "bg-blue-300" : "bg-white"
+                      } shadow-lg rounded-lg p-4 max-w-4xl max-h-4xl mb-4`}
+                      style={{
+                        textAlign: message.isUser ? "right" : "left",
+                      }}
+                    >
+                      <p className="text-gray-000 dark:text-gray-000">
+                        <TypeAnimationWithPills message={message} />
+                      </p>
+                      <MessageContent message={message} />
+                    </div>
                   </div>
                 );
               } else {
@@ -347,26 +378,36 @@ const ChatPage = () => {
                       className={`${
                         message.isUser ? "bg-blue-300" : "bg-white"
                       } shadow-lg rounded-lg p-4 max-w-4xl mb-4`}
-                     style={{
+                      style={{
                         textAlign: message.isUser ? "right" : "left",
                       }}
                     >
-
                       <p className="text-gray-900 dark:text-gray-900">
-
-                      {message.isUser ? message.utterance : <>                      
-                      <p className="font-medium mb-2">
-                        HeadJack
+                        {message.isUser ? (
+                          message.utterance
+                        ) : (
+                          <>
+                            <p className="font-medium mb-2">HeadJack</p>
+                            <TypeAnimationWithPills message={message} />
+                          </>
+                        )}
                       </p>
-                      <TypeAnimationWithPills message={message}/></>}
-
-                      </p>
-                      {!message.isUser && 
-              <div className="flex float-right">
-                <button className="px-2 py-2 font-large" onClick={() => submitFeedback(message, true)}>👍</button>
-                <button className="px-2 py-2 font-large" onClick={() => submitFeedback(message, false)}>👎</button>
-              </div>
-            }
+                      {!message.isUser && (
+                        <div className="flex float-right">
+                          <button
+                            className="px-2 py-2 font-large"
+                            onClick={() => submitFeedback(message, true)}
+                          >
+                            👍
+                          </button>
+                          <button
+                            className="px-2 py-2 font-large"
+                            onClick={() => submitFeedback(message, false)}
+                          >
+                            👎
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -378,7 +419,7 @@ const ChatPage = () => {
               autoplay
               loop
               src={typingHands}
-              style={{ height: "200px", width: "400px", padding: "0px"}}
+              style={{ height: "200px", width: "400px", padding: "0px" }}
             />
           ) : (
             <></>
@@ -389,7 +430,9 @@ const ChatPage = () => {
               disabled={sendDisabled}
               value={inputValue}
               onChange={handleInputChange}
-              className={`flex-grow outline-none px-4 py-2 rounded-md ${sendDisabled ? "bg-neutral-400" : "bg-gray-800"} text-white`}
+              className={`flex-grow outline-none px-4 py-2 rounded-md ${
+                sendDisabled ? "bg-neutral-400" : "bg-gray-800"
+              } text-white`}
               placeholder="Type a message..."
             />
             <button
@@ -404,7 +447,8 @@ const ChatPage = () => {
         </div>
       </div>
       <div className="flex items-center justify-center bg-gray-200 h-16">
-        <span className="text-sm">Chat connection is &nbsp;</span>{renderWSBadge(connectionStatus)}
+        <span className="text-sm">Chat connection is &nbsp;</span>
+        {renderWSBadge(connectionStatus)}
       </div>
     </div>
   );
