@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/KnowledgeForge/headjack/main/docs/assets/images/headjack-logo-small.png" alt="Headjack logo"></a>
+  <img src="https://raw.githubusercontent.com/KnowledgeForge/headjack/main/docs/assets/images/headjack-logo-small.webp" alt="Headjack logo"></a>
 </p>
 <p align="center">
     <b>Headjack</b>

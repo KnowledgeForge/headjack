@@ -3,6 +3,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Player } from "@lottiefiles/react-lottie-player";
 import animatedYellowRobot from "../lottie/yellowRobot.json";
 import animatedPurpleRobot from "../lottie/purpleRobot.json";
+import typingHands from "../lottie/typingHands.json";
 import Plot from "react-plotly.js";
 import DataTable from "../components/dataTable";
 const PeopleTable = ({ metadatas }) => {
@@ -352,6 +353,7 @@ const ChatPage = () => {
                     >
 
                       <p className="text-gray-900 dark:text-gray-900">
+
                       {message.isUser ? message.utterance : <>                      
                       <p className="font-medium mb-2">
                         HeadJack
@@ -371,6 +373,16 @@ const ChatPage = () => {
               }
             })}
           </div>
+          {!isLoading ? (
+            <Player
+              autoplay
+              loop
+              src={typingHands}
+              style={{ height: "200px", width: "400px", padding: "0px"}}
+            />
+          ) : (
+            <></>
+          )}
           <form onSubmit={handleSubmit} className="mt-6 flex">
             <input
               type="text"
