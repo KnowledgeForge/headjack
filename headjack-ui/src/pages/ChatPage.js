@@ -281,9 +281,22 @@ const ChatPage = () => {
         return null;
     }
   };
-
+  const [toast, setToast] = useState(false);
+  const submitFeedback = (message, isUpvote) => {
+    setToast(true);
+    setTimeout(() => {
+      setToast(false);
+    }, 3000);
+  }
   return (
     <div className="flex flex-col h-screen w-full">
+            {toast && 
+        <div className="fixed bottom-0 right-0 m-4">
+          <div className="bg-blue-500 text-white px-4 py-2 rounded" role="alert">
+            <strong>Feedback Submitted!</strong>
+          </div>
+        </div>  
+      }
       <div className="flex items-center justify-center bg-gray-200 h-24">
         <h2 className="text-2xl font-bold">HeadJack Chat</h2>
         <Player
@@ -339,12 +352,19 @@ const ChatPage = () => {
                     >
 
                       <p className="text-gray-900 dark:text-gray-900">
-                      {message.isUser ? message.utterance : <>                      <p className="font-medium mb-2">
+                      {message.isUser ? message.utterance : <>                      
+                      <p className="font-medium mb-2">
                         HeadJack
-                      </p><TypeAnimationWithPills message={message}/></>}
+                      </p>
+                      <TypeAnimationWithPills message={message}/></>}
 
                       </p>
-
+                      {!message.isUser && 
+              <div className="flex float-right">
+                <button className="px-2 py-2 font-large" onClick={() => submitFeedback(message, true)}>👍</button>
+                <button className="px-2 py-2 font-large" onClick={() => submitFeedback(message, false)}>👎</button>
+              </div>
+            }
                     </div>
                   </div>
                 );
