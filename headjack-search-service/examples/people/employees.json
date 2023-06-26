@@ -1,5 +1,15 @@
 [
   {
+    "id": "1",
+    "first_name": "Tony",
+    "last_name": "Stark",
+    "position": "CEO",
+    "manager_id": "",
+    "description": "Tony is our glorious CEO who runs the DataJunction roads repair company while also destroying roads while saving the Earth from villains. He's also known as Iron Man, and he knows who he is.",
+    "hire_date": 19900101,
+    "employee": true
+  },
+  {
     "id": "200172",
     "first_name": "John",
     "last_name": "Smith",
