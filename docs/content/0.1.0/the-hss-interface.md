@@ -8,8 +8,8 @@ series_weight: 3
 lightgallery: true
 ---
 
-Headjack is designed to enable plugging in any semantic search to be used for retrieval. It accomplishes this by prescribing
-a headjack search service (HSS) API specification. You can wrap any semantic search solution, even a highly customized one, with
+Headjack is designed to enable plugging in any search to be used for retrieval. It accomplishes this by prescribing
+a headjack search service (HSS) API specification. You can wrap any search solution, even a highly customized one, with
 a thin API layer that implements a few endpoints defined in the HSS specification. Headjack can then be configured to use the wrapper
 API to retrieve information while creating prompts to send to the language model.
 
@@ -23,9 +23,10 @@ When a semantic question or command is sent to Headjack, it performs a semantic 
 - Message threads
 - and more...
 
-Once headjack has filtered the potentially vast amounts of embedded data down to those pieces of information that are most relevant to
-the question or command, it utilizes that information through an assortment of LangChain tools. These tools then leverage available
-large language models such as `chatgpt`, `BARD`, or `MT-NLG` to determine specific scoped actions. These scoped actions are what power Headjacks core features.
+Once headjack has filtered the potentially vast amounts of embedded data down to those pieces of information that are most
+relevant to the question or command, it utilizes that information through an assortment of tools. These tools then leverage
+available large language models such as any OpenAI or huggingface models to determine specific scoped actions. These scoped
+actions are what power Headjacks core features.
 
 - Summarize business terms and concepts
 - Find relevant conversations

@@ -1,8 +1,13 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/KnowledgeForge/headjack/main/docs/assets/images/headjack-logo-small.webp" alt="Headjack logo"></a>
+  <a href="https://www.headjack.ai">
+    <img src="https://raw.githubusercontent.com/KnowledgeForge/headjack/main/docs/assets/images/headjack-logo-small.webp" alt="Headjack logo">
+  </a>
 </p>
 <p align="center">
     <b>Headjack</b>
+    <a href="https://www.headjack.ai">
+      <p align="center">headjack.ai</p>
+    </a>
 </p>
 
 <p align="center">
