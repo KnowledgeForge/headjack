@@ -322,7 +322,7 @@ const ChatPage = () => {
 
       }
     },
-    [inputValue, sendMessage]
+    [inputValue, sendMessage, sendDisabled]
   );
 
   const handleInputChange = useCallback((e) => {
@@ -429,6 +429,7 @@ const ChatPage = () => {
                       <Feedback submitFeedback={submitFeedback} />
                     )}
                     </div>
+
                   </div>
                 );
             })}
