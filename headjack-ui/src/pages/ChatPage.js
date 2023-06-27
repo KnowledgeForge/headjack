@@ -275,15 +275,22 @@ const TypeAnimationWithPills = ({ message }) => {
 const ChatPage = () => {
   const [socketUrl] = useState("ws://localhost:8679/chat/");
   const [messageHistory, setMessageHistory] = useState([]);
+  const [messageIds, setMessageIds] = useState(new Set());
   const [inputValue, setInputValue] = useState("");
   const [sendDisabled, setSendDisabled] = useState(false);
   const chatContainerRef = useRef();
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
   const addToMessageHistory = (message) => {
-    setMessageHistory((prev) => [...prev, message]);
+    if (message.isUser){
+      setMessageHistory((prev) => [...prev, message]);
+      setSendDisabled(true);
+    }
+    if (!message.isUser && !messageIds.has(message.id)) {
+      setMessageHistory((prev) => [...prev, message]);
+      setMessageIds((prev) => new Set(prev.add(message.id)));
+    }
   };
-
   useEffect(() => {
     if (lastMessage !== null) {
       const message = JSON.parse(lastMessage.data);
@@ -315,7 +322,7 @@ const ChatPage = () => {
 
       }
     },
-    [inputValue, sendMessage, sendDisabled]
+    [inputValue, sendMessage]
   );
 
   const handleInputChange = useCallback((e) => {
@@ -404,10 +411,12 @@ const ChatPage = () => {
                         textAlign: message.isUser ? "right" : "left",
                       }}
                     >
-
                       {!message.isUser ? <>
                       <p className="font-medium mb-2">HeadJack</p>
-                      {(message.metadata == null)?<TypeAnimationWithPills message={message} />:<>
+                      {(message.metadata == null)?
+                      <TypeAnimationWithPills message={message} />
+                      :
+                      <>
                       <TypeAnimation
                         sequence={[message.utterance]}
                         speed={70}
@@ -415,18 +424,13 @@ const ChatPage = () => {
                         repeat={0}
                       />
                       <MessageContent message={message} /></>}
-
                       </> : message.utterance}
-
-
                       {!message.isUser && (
                       <Feedback submitFeedback={submitFeedback} />
                     )}
                     </div>
-
                   </div>
                 );
-
             })}
             {sendDisabled && connectionStatus === 'Open' ? (
               <div className="bg-white shadow-lg rounded-lg p-4 max-w-xs max-h-4xl mb-4">

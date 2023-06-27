@@ -70,7 +70,8 @@ async def _knowledge_search_agent(question: Utterance, n: int, temp: float) -> U
 
         {results}
 
-        Some or all of this information may be irrelvant towards answering the question `{question.utterance}`. Do your best to determine whether the information is relevant.
+        Some or all of this information may be irrelvant towards answering the question `{question.utterance}`.
+        Do your best to determine whether the information is relevant. If there is relevant information, provide a targeted summarization to the User.
         If there is not relevant information, summarize what you found but explain why you believe it is not relevant.
         You may only use information available in the above results from searching your queries in your answer.
         Answer:[ANSWER]"""
